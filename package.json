@@ -10,7 +10,7 @@
     "netlify": "npm run clean && npm run build"
   },
   "hexo": {
-    "version": ""
+    "version": "8.1.1"
   },
   "dependencies": {
     "hexo": "^8.0.0",
@@ -22,6 +22,7 @@
     "hexo-renderer-marked": "^7.0.0",
     "hexo-renderer-stylus": "^3.0.1",
     "hexo-server": "^3.0.0",
-    "hexo-theme-landscape": "^1.0.0"
+    "hexo-theme-landscape": "^1.0.0",
+    "probe-image-size": "^7.2.3"
   }
 }
