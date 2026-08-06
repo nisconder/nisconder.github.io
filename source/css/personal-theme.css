@@ -405,7 +405,7 @@ body {
    Structure classes below cover only what the variables cannot reach.
    ============================================ */
 
-:root {
+#waline-wrap {
   --waline-theme-color: #1f6f78;
   --waline-active-color: #2e8a99;
   --waline-bg-color: var(--card-bg);
@@ -416,7 +416,7 @@ body {
   --waline-radius: 10px;
 }
 
-[data-theme='dark'] {
+[data-theme='dark'] #waline-wrap {
   --waline-bg-color: rgba(28, 30, 34, 0.86);
   --waline-bg-color-light: rgba(28, 30, 34, 0.6);
   --waline-border-color: rgba(46, 138, 153, 0.25);
