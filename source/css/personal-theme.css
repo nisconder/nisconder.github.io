@@ -39,6 +39,35 @@
   --code-inset: inset 0 1px 3px rgba(0, 0, 0, .3);
   --card-box-shadow: var(--elev-2);
   --card-hover-box-shadow: var(--elev-3);
+  /* fix dark-mode bug: override light card bg so cards aren't white on dark */
+  --card-bg: rgba(28, 30, 34, 0.86);
+  --card-border: rgba(122, 194, 205, 0.14);
+  --paper-bg: #121212;
+}
+
+/* T10: dark-mode body + component background overrides (fix white-card bug) */
+[data-theme='dark'] body {
+  background: radial-gradient(circle at 12% 18%, rgba(46, 138, 153, 0.10), transparent 34%),
+              radial-gradient(circle at 88% 10%, rgba(31, 111, 120, 0.10), transparent 30%),
+              #121212;
+}
+
+[data-theme='dark'] #post blockquote,
+[data-theme='dark'] #page blockquote {
+  background: rgba(40, 44, 50, 0.7);
+}
+
+[data-theme='dark'] #post .wl-editor {
+  background: rgba(40, 44, 50, 0.6);
+}
+
+[data-theme='dark'] #page-header.nav-fixed #nav,
+[data-theme='dark'] #page-header.not-top-img #nav {
+  background: rgba(18, 18, 18, 0.85);
+}
+
+[data-theme='dark'] #footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
 }
 
 /* a11y: kill all motion for reduced-motion users (only !important exemption) */
