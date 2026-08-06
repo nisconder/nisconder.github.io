@@ -155,7 +155,7 @@ index_top_img_height:
 subtitle:
   enable: true
   # Typewriter Effect
-  effect: true
+  effect: false
   # Customize typed.js
   # https://github.com/mattboldt/typed.js/#customization
   typed_option:
@@ -599,6 +599,7 @@ waline:
   # Use Waline pageview count as the page view count
   pageview: false
   option:
+    login: force
 
 # Utterances
 # https://utteranc.es/
@@ -913,7 +914,7 @@ clickShowText:
 # https://github.com/francoischalifour/medium-zoom
 # https://fancyapps.com/fancybox/
 # Leave it empty if you don't need lightbox
-lightbox: fancybox
+lightbox: medium_zoom
 
 # --------------------------------------
 # Tag Plugins settings
