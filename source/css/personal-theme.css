@@ -473,3 +473,23 @@ body {
 [data-theme='dark'] .card-widget a {
   color: #4fb8c4;
 }
+
+/* ============================================
+   Login user info layout — avatar left shift + single-line nick
+   .wl-user/.wl-avatar/.wl-nick render only in logged-in state.
+   ============================================ */
+.wl-user {
+  display: flex;
+  align-items: center;
+}
+
+.wl-user .wl-avatar {
+  margin-right: 4px;
+}
+
+.wl-user .wl-nick {
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
