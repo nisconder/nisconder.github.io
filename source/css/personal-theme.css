@@ -493,3 +493,33 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ============================================
+   Mobile social icons — white circular micro-3D buttons
+   #site_social_icons only renders at max-width 768px (theme head.styl),
+   so this never affects desktop. The two !important below are the ONLY
+   allowed ones: they override the theme's link-hover color shift to white.
+   ============================================ */
+#site_social_icons .social-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 0 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: #24292e !important;
+  font-size: 1.25em;
+  box-shadow: var(--elev-1), var(--highlight-top);
+  transition: transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out);
+}
+
+#site_social_icons .social-icon:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--elev-2);
+}
+
+#site_social_icons .social-icon .fab.fa-envelope {
+  color: #4a7dbe !important;
+}
