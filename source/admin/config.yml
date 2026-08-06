@@ -1,0 +1,29 @@
+backend:
+  name: git-gateway
+  branch: main
+  commit_messages:
+    create: 'Create {{collection}} "{{slug}}"'
+    update: 'Update {{collection}} "{{slug}}"'
+    delete: 'Delete {{collection}} "{{slug}}"'
+    uploadMedia: 'Upload "{{path}}"'
+    deleteMedia: 'Delete "{{path}}"'
+site_url: https://nisconder-blog.netlify.app
+display_url: https://nisconder-blog.netlify.app
+media_folder: source/images/uploads
+public_folder: /images/uploads
+collections:
+  - name: posts
+    label: Posts
+    label_singular: Post
+    folder: source/_posts
+    create: true
+    slug: '{{slug}}'
+    extension: md
+    format: yaml-frontmatter
+    fields:
+      - { label: Title, name: title, widget: string, pattern: ['.{3,}', 'Title must have at least 3 characters'] }
+      - { label: Date, name: date, widget: datetime, format: 'YYYY-MM-DD HH:mm:ss', date_format: 'YYYY-MM-DD', time_format: 'HH:mm:ss' }
+      - { label: Updated, name: updated, widget: datetime, format: 'YYYY-MM-DD HH:mm:ss', required: false }
+      - { label: Categories, name: categories, widget: list, required: false }
+      - { label: Tags, name: tags, widget: list, required: false }
+      - { label: Body, name: body, widget: markdown }
