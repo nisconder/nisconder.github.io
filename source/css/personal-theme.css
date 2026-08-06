@@ -22,6 +22,8 @@
   --focus-ring: 0 0 0 3px rgba(46, 138, 153, .4);
   /* code block inset (recessed feel) */
   --code-inset: inset 0 1px 3px rgba(0, 0, 0, .06);
+  /* press state: collapsed near-hard shadow for active feedback */
+  --elev-press: 0 1px 2px rgba(15, 35, 45, .06);
   /* redefine theme card shadows so all .cardHover consumers auto-upgrade */
   --card-box-shadow: var(--elev-2);
   --card-hover-box-shadow: var(--elev-3);
@@ -37,6 +39,7 @@
   --highlight-top: inset 0 1px 0 rgba(255, 255, 255, .08);
   --focus-ring: 0 0 0 3px rgba(122, 194, 205, .5);
   --code-inset: inset 0 1px 3px rgba(0, 0, 0, .3);
+  --elev-press: 0 1px 2px rgba(0, 0, 0, .3);
   --card-box-shadow: var(--elev-2);
   --card-hover-box-shadow: var(--elev-3);
   /* fix dark-mode bug: override light card bg so cards aren't white on dark */
@@ -240,7 +243,7 @@ body {
 
 #card-info-btn:active {
   transform: translateY(1px);
-  box-shadow: 0 1px 2px rgba(15, 35, 45, .06);
+  box-shadow: var(--elev-press);
 }
 
 /* tag cloud / archive list items hover micro-lift */
@@ -325,7 +328,7 @@ body {
 #rightside > div > a:active,
 #go-up:active {
   transform: translateY(1px);
-  box-shadow: 0 1px 2px rgba(15, 35, 45, .06);
+  box-shadow: var(--elev-press);
 }
 
 /* T9: standalone pages — tag cloud pills, category list, flink cards, 404 */
@@ -376,6 +379,22 @@ body {
 
   #site-info .site-subtitle {
     font-size: 0.92rem;
+  }
+
+  /* T11: mobile safeguards — touch has no hover, lifts degrade naturally;
+     keep cards within viewport (no horizontal overflow from shadows) */
+  #recent-posts > .recent-post-item,
+  .card-widget,
+  #post,
+  #page,
+  #archive {
+    box-shadow: var(--elev-1);
+  }
+
+  #rightside > div > button,
+  #rightside > div > a,
+  #go-up {
+    box-shadow: var(--elev-1);
   }
 }
 
