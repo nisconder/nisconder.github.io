@@ -5,6 +5,13 @@
   --paper-bg: #f4f7f8;
   --card-bg: rgba(255, 255, 255, 0.84);
   --card-border: rgba(31, 111, 120, 0.16);
+  /* Elevation tokens — soft shadow scale for cards & comment section */
+  --elev-1: 0 2px 8px rgba(14, 24, 32, 0.06);
+  --elev-2: 0 8px 24px rgba(14, 24, 32, 0.08);
+  --elev-3: 0 14px 36px rgba(14, 24, 32, 0.10);
+  --elev-4: 0 18px 42px rgba(14, 24, 32, 0.14);
+  --elev-5: 0 24px 56px rgba(14, 24, 32, 0.18);
+  --highlight-top: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, transparent 100%);
 }
 
 body {
@@ -142,5 +149,161 @@ body {
 
   #site-info .site-subtitle {
     font-size: 0.92rem;
+  }
+}
+
+/* ============================================
+   Waline comment section — high-specificity overrides
+   Selectors use #post prefix (specificity 1,1,0 ≥ 0,2,0) to override
+   Waline runtime CSS which is injected dynamically after this file
+   via btf.getCSS. Tokens: --elev-*, --accent-*, --card-bg, --card-border.
+   ============================================ */
+
+#post .wl-panel {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  box-shadow: var(--elev-2);
+  backdrop-filter: blur(6px);
+  padding: 20px 24px;
+}
+
+#post .wl-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+#post .wl-header-item label {
+  color: var(--accent-main);
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+#post .wl-editor {
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: var(--elev-1);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#post .wl-editor:focus {
+  border-color: var(--accent-soft);
+  box-shadow: var(--elev-2);
+  outline: none;
+}
+
+#post .wl-btn {
+  border-radius: 999px;
+  border: 1px solid var(--accent-main);
+  background: var(--accent-main);
+  color: #fff;
+  font-size: 0.92rem;
+  letter-spacing: 0.04em;
+  padding: 8px 22px;
+  box-shadow: var(--elev-1);
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+#post .wl-btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+  box-shadow: var(--elev-3);
+  transform: translateY(-1px);
+}
+
+#post .wl-btn:active {
+  transform: translateY(0);
+  box-shadow: var(--elev-1);
+}
+
+#post .wl-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  box-shadow: var(--elev-1);
+  backdrop-filter: blur(4px);
+  padding: 16px 20px;
+  margin-bottom: 14px;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+#post .wl-card:hover {
+  box-shadow: var(--elev-3);
+  transform: translateY(-2px);
+}
+
+#post .wl-card .wl-head .wl-meta {
+  color: var(--accent-main);
+  font-size: 0.88rem;
+}
+
+#post .wl-card .wl-content {
+  color: #2c3e50;
+  line-height: 1.72;
+}
+
+#post .wl-card .wl-user {
+  color: var(--accent-main);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+#post .wl-avatar,
+#post .wl-card .wl-avatar {
+  border-radius: 50%;
+  box-shadow: var(--elev-1);
+}
+
+#post .wl-count {
+  color: var(--accent-main);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border-bottom: 2px solid var(--card-border);
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+#post .wl-reply,
+#post .wl-like,
+#post .wl-reply-btn {
+  color: var(--accent-soft);
+  font-size: 0.86rem;
+  transition: color 0.2s ease;
+}
+
+#post .wl-reply:hover,
+#post .wl-like:hover,
+#post .wl-reply-btn:hover {
+  color: var(--accent-warm);
+}
+
+#post .wl-power {
+  color: var(--card-border);
+  font-size: 0.78rem;
+  opacity: 0.7;
+}
+
+#post .wl-comment-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  #post .wl-panel {
+    padding: 16px 18px;
+  }
+
+  #post .wl-card {
+    padding: 14px 16px;
+  }
+
+  #post .wl-btn {
+    padding: 7px 18px;
+    font-size: 0.88rem;
   }
 }
