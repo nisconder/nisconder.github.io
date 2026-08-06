@@ -299,6 +299,29 @@ body {
   box-shadow: 0 1px 2px rgba(15, 35, 45, .06);
 }
 
+/* T9: standalone pages — tag cloud pills, category list, flink cards, 404 */
+.tag-cloud-list a {
+  box-shadow: var(--elev-1), var(--highlight-top);
+}
+
+.category-list a {
+  box-shadow: var(--elev-1), var(--highlight-top);
+}
+
+.flink-item-card {
+  box-shadow: var(--elev-2), var(--highlight-top);
+  transition: box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+}
+
+.flink-item-card:hover {
+  box-shadow: var(--elev-3);
+  transform: translateY(-2px);
+}
+
+.error-img {
+  box-shadow: var(--elev-2), var(--highlight-top);
+}
+
 .page .aplayer,
 .post .aplayer {
   border-radius: 12px;
