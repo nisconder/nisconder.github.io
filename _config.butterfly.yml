@@ -594,7 +594,7 @@ valine:
 # Waline - A simple comment system with backend support fork from Valine
 # https://waline.js.org/
 waline:
-  serverURL: https://your-waline-backend.vercel.app
+  serverURL: https://my-waline-9uvuuvnty-nisconders-projects.vercel.app
   bg:
   # Use Waline pageview count as the page view count
   pageview: false
