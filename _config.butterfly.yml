@@ -58,7 +58,7 @@ social:
 # Image Settings
 # --------------------------------------
 
-favicon: /img/favicon.png
+favicon: /img/favicon.ico
 
 avatar:
   img: /img/butterfly-icon.png
@@ -765,7 +765,7 @@ theme_color:
   enable: true
   main: "#1f6f78"
   paginator: "#2e8a99"
-  button_hover: "#e07a5f"
+  button_hover: "#15575e"
   text_selection: "#2e8a99"
   link_color: "#4f6d7a"
   meta_color: "#657786"
@@ -832,7 +832,6 @@ font:
 
 # Font settings for the site title and site subtitle
 blog_title_font:
-  font_link: https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap
   font_family: ZCOOL XiaoWei, Noto Serif SC, serif
 
 # The setting of divider icon
@@ -993,7 +992,7 @@ pjax:
 # Inject the css and script (aplayer/meting)
 aplayerInject:
   enable: true
-  per_page: true
+  per_page: false
 
 # Snackbar - Toast Notification
 # https://github.com/polonel/SnackBar
