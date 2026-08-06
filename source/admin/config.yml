@@ -1,6 +1,9 @@
 backend:
-  name: git-gateway
+  name: github
+  repo: nisconder/nisconder.github.io
   branch: main
+  base_url: https://netlify-cms-github-oauth-provider-qt36928cs-nisconders-projects.vercel.app
+  auth_endpoint: /auth
   commit_messages:
     create: 'Create {{collection}} "{{slug}}"'
     update: 'Update {{collection}} "{{slug}}"'

@@ -103,42 +103,27 @@ url: https://nisconder-blog.netlify.app/
 
 > 参考文档：[Waline Vercel 部署](https://waline.js.org/guide/deploy/vercel.html) | [Waline 多数据库支持](https://waline.js.org/guide/database.html)
 
-## Netlify Identity 设置
+## GitHub 登录认证设置（写作后台）
 
-Decap CMS 写作后台通过 Netlify Identity 进行管理员认证，采用邀请制——只有被邀请的邮箱才能登录 `/admin/` 写文章。以下为一次性设置步骤（约 5 分钟）：
+Decap CMS 写作后台已切换为 GitHub OAuth 认证，使用免费的第三方 OAuth Provider 替代需要付费的 Netlify Identity。
 
-### 1. 启用 Identity
+### 前置准备（已完成）
 
-1. 登录 [Netlify](https://app.netlify.com/)，进入本博客站点（`nisconder-blog`）。
-2. 顶部导航点击 `Site settings` → 左侧 `Identity`。
-3. 点击 `Enable Identity`。
+1. **GitHub OAuth App** 已创建，Callback URL 设置为 `https://netlify-cms-github-oauth-provider-qt36928cs-nisconders-projects.vercel.app/callback`。
+2. **OAuth Provider** 已部署到 Vercel：`https://netlify-cms-github-oauth-provider-qt36928cs-nisconders-projects.vercel.app`，环境变量包含 `OAUTH_CLIENT_ID`、`OAUTH_CLIENT_SECRET`、`ORIGINS`、`REDIRECT_URL`。
+3. Vercel 项目部署保护已设为 Public（确保 `/auth` 端点可公开访问）。
 
-### 2. 设置注册方式为邀请制
+### 使用方式
 
-1. 在 Identity 设置页，`Registration` 区域将 `Open` 改为 `Invite only`。这样只有被邀请的邮箱才能注册，防止陌生人注册。
-2. 点击 `Save`。
+1. 浏览器访问 `https://nisconder-blog.netlify.app/admin/`。
+2. 点击 **"Login with GitHub"** 按钮，授权 GitHub OAuth。
+3. 授权完成后即可在线新建和编辑文章，所有操作直接提交到 GitHub 仓库。
 
-### 3. 启用 Git Gateway
+> 只有对 `nisconder/nisconder.github.io` 仓库有写入权限的 GitHub 账户才能保存内容，即仅管理员可操作。
 
-1. 在 Identity 设置页，`Services` 区域找到 `Git Gateway`，点击 `Enable`。Git Gateway 允许 Decap CMS 通过 Netlify Identity 认证后直接读写 GitHub 仓库，无需用户配置 GitHub OAuth App。
+### 注意
 
-### 4. 邀请管理员
-
-1. 在 Netlify 控制台顶部点击 `Identity` 标签页（非 Site settings 中的 Identity）。
-2. 点击 `Invite users`，输入管理员邮箱地址，发送邀请。
-3. 管理员邮箱会收到邀请邮件，点击邮件中的链接设置密码，完成账号激活。
-
-### 5. （可选）修改邮件模板
-
-如果邀请邮件中的确认链接不正确，可在 `Site settings` → `Identity` → `Registration` 区域编辑邀请邮件模板，将确认链接改为：
-
-```
-{{ siteURL }}/admin/#confirmation_token={{token}}
-```
-
-这样用户点击邮件链接后会直接跳转到博客的 `/admin/` 页面完成确认。
-
-> 参考文档：[Netlify Identity 文档](https://docs.netlify.com/manage/security/secure-access-to-sites/identity/overview/)
+此方式完全替代了 Netlify Identity 邀请制方案。Netlify Identity 需要付费套餐才可使用，而 GitHub OAuth 方案免费且无需在 Netlify 后台进行额外配置。
 
 ## Decap CMS 写作说明
 
