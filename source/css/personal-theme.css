@@ -264,11 +264,39 @@ body {
 
 #footer {
   background: linear-gradient(120deg, rgba(31, 111, 120, 0.95), rgba(46, 138, 153, 0.9));
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 #footer-wrap,
 #footer-wrap a {
   color: #f5fbfd;
+}
+
+/* T8: pagination hover micro-lift (page items inherit elev-2 via .cardHover token) */
+.layout .pagination > *:not(.space):hover {
+  transform: translateY(-2px);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+/* T8: rightside buttons + go-up — elevate + press feedback */
+#rightside > div > button,
+#rightside > div > a,
+#go-up {
+  box-shadow: var(--elev-2), var(--highlight-top);
+  transition: box-shadow var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+#rightside > div > button:hover,
+#rightside > div > a:hover,
+#go-up:hover {
+  box-shadow: var(--elev-3);
+}
+
+#rightside > div > button:active,
+#rightside > div > a:active,
+#go-up:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(15, 35, 45, .06);
 }
 
 .page .aplayer,
