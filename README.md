@@ -67,3 +67,98 @@ url: https://nisconder-blog.netlify.app/
 ## 发布说明
 
 本项目输出静态文件到 public 目录，可直接用于 Netlify 部署。
+
+## Waline 评论部署
+
+本博客使用 [Waline](https://waline.js.org/) 提供评论与浏览量服务。Waline 后端独立部署在 Vercel，评论数据存储在 Neon PostgreSQL 数据库，不放入本仓库。以下为一次性部署步骤（约 15 分钟）：
+
+### 1. 部署 Waline 服务端到 Vercel
+
+1. 打开 [Waline Vercel 部署页面](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fwalinejs%2Fwaline%2Ftree%2Fmain%2Fexample)，使用 GitHub 账户登录 Vercel。
+2. 输入一个喜欢的项目名称（如 `my-waline`），点击 `Create`。Vercel 会基于 Waline 模板自动创建并初始化仓库。
+3. 等待一两分钟，部署成功后点击 `Go to Dashboard` 进入控制台。
+
+### 2. 创建 Neon 数据库并建表
+
+1. 在 Vercel 控制台点击顶部 `Storage` → `Create Database`，在 `Marketplace Database Providers` 中选择 `Neon`，点击 `Continue`。
+2. 按提示创建 Neon 账号（选择 `Accept and Create`），地区和额度可保持默认，点击 `Continue`。
+3. 定义数据库名称（可保持默认），点击 `Continue`。
+4. 在 `Storage` 下点击刚创建的数据库，选择 `Open in Neon` 跳转到 Neon 控制台。
+5. 在 Neon 左侧选择 `SQL Editor`，将 [waline.pgsql](https://github.com/walinejs/waline/blob/main/assets/waline.pgsql) 中的建表 SQL 粘贴进编辑器，点击 `Run` 执行。等待提示创建成功。
+
+### 3. 重新部署使数据库生效
+
+1. 回到 Vercel 控制台，点击顶部 `Deployments`，在最新一次部署右侧点击 `Redeploy`。
+2. 等待 `STATUS` 变为 `Ready`，点击 `Visit` 打开部署地址——此地址即为 Waline 服务端地址（形如 `https://your-waline-backend.vercel.app`）。
+
+### 4. 注册管理员
+
+1. 访问 `<服务端地址>/ui/register`，使用管理员邮箱注册。**首个注册的用户自动成为管理员**。
+2. 登录后即可在 `/ui` 管理面板中审核、编辑、标记或删除评论。
+
+### 5. 将真实地址填入博客配置
+
+1. 将 `_config.butterfly.yml` 中 `waline.serverURL` 的占位符 `https://your-waline-backend.vercel.app` 替换为上一步获得的真实 Vercel 地址。
+2. 提交并推送到 GitHub（`git push`），Netlify 会自动触发重建，评论区即可上线。
+
+> 参考文档：[Waline Vercel 部署](https://waline.js.org/guide/deploy/vercel.html) | [Waline 多数据库支持](https://waline.js.org/guide/database.html)
+
+## Netlify Identity 设置
+
+Decap CMS 写作后台通过 Netlify Identity 进行管理员认证，采用邀请制——只有被邀请的邮箱才能登录 `/admin/` 写文章。以下为一次性设置步骤（约 5 分钟）：
+
+### 1. 启用 Identity
+
+1. 登录 [Netlify](https://app.netlify.com/)，进入本博客站点（`nisconder-blog`）。
+2. 顶部导航点击 `Site settings` → 左侧 `Identity`。
+3. 点击 `Enable Identity`。
+
+### 2. 设置注册方式为邀请制
+
+1. 在 Identity 设置页，`Registration` 区域将 `Open` 改为 `Invite only`。这样只有被邀请的邮箱才能注册，防止陌生人注册。
+2. 点击 `Save`。
+
+### 3. 启用 Git Gateway
+
+1. 在 Identity 设置页，`Services` 区域找到 `Git Gateway`，点击 `Enable`。Git Gateway 允许 Decap CMS 通过 Netlify Identity 认证后直接读写 GitHub 仓库，无需用户配置 GitHub OAuth App。
+
+### 4. 邀请管理员
+
+1. 在 Netlify 控制台顶部点击 `Identity` 标签页（非 Site settings 中的 Identity）。
+2. 点击 `Invite users`，输入管理员邮箱地址，发送邀请。
+3. 管理员邮箱会收到邀请邮件，点击邮件中的链接设置密码，完成账号激活。
+
+### 5. （可选）修改邮件模板
+
+如果邀请邮件中的确认链接不正确，可在 `Site settings` → `Identity` → `Registration` 区域编辑邀请邮件模板，将确认链接改为：
+
+```
+{{ siteURL }}/admin/#confirmation_token={{token}}
+```
+
+这样用户点击邮件链接后会直接跳转到博客的 `/admin/` 页面完成确认。
+
+> 参考文档：[Netlify Identity 文档](https://docs.netlify.com/manage/security/secure-access-to-sites/identity/overview/)
+
+## Decap CMS 写作说明
+
+本博客集成了 [Decap CMS](https://decapcms.org/) 写作后台，管理员可通过浏览器在线新建和编辑文章，无需本地环境。
+
+### 访问写作后台
+
+1. 浏览器打开 `https://nisconder-blog.netlify.app/admin/`。
+2. 使用被 Netlify Identity 邀请的管理员邮箱和密码登录。
+
+### 新建 / 编辑文章
+
+1. 登录后左侧菜单选择 `Posts`，点击 `New Post` 新建文章，或点击已有文章进行编辑。
+2. 填写标题、日期、分类、标签和正文。**文章 slug 使用纯 `{{slug}}`（不带日期前缀）**，Decap CMS 会根据标题自动生成 slug，编辑现有文章时不会因日期变化而重命名文件。
+3. 日期格式固定为 `YYYY-MM-DD HH:mm:ss`，避免时区偏移导致文章排序错乱。
+4. 点击右上角 `Publish` → 选择 `Publish now`，Decap CMS 会自动提交一个 commit 到 GitHub `main` 分支。
+5. GitHub 收到 commit 后自动触发 Netlify 重建，几分钟后文章即上线。
+
+### 注意事项
+
+- **不要手动改动文章 slug 的前缀约定**：Decap CMS 配置中 slug 为纯 `{{slug}}`（无日期前缀），文件名由 slug 决定。如果手动在文件名前加日期前缀，下次用 Decap CMS 编辑时文件会被重命名。
+- 图片上传功能（`media_folder`）已配置占位字段 `source/images/uploads`，如需启用图片上传请在 Decap CMS 配置中补充实际路径。
+- 所有写作操作通过 Git Gateway 直接提交到 GitHub，可在 GitHub 仓库的 commit 历史中查看。
