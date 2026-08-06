@@ -186,6 +186,42 @@ body {
   box-shadow: var(--elev-3), var(--highlight-top);
 }
 
+/* T6: sidebar cards — hover lift + author avatar disc + card-info-btn press */
+.card-widget {
+  transition: box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+}
+
+.card-widget:hover {
+  box-shadow: var(--elev-3), var(--highlight-top);
+}
+
+#aside-content .card-info .avatar-img {
+  box-shadow: var(--elev-2), var(--highlight-top);
+  border-radius: 50%;
+}
+
+#card-info-btn {
+  box-shadow: var(--elev-1), var(--highlight-top);
+  transition: box-shadow var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+#card-info-btn:hover {
+  box-shadow: var(--elev-2);
+}
+
+#card-info-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(15, 35, 45, .06);
+}
+
+/* tag cloud / archive list items hover micro-lift */
+#aside-content .card-tag-cloud a:hover,
+#aside-content .card-archives a:hover,
+#aside-content .card-categories a:hover {
+  transform: translateY(-1px);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
 #aside-content .card-widget .card-content a:hover,
 #post a:hover,
 #page a:hover {
