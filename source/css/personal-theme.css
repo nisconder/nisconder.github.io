@@ -1,17 +1,63 @@
 :root {
   --accent-main: #1f6f78;
   --accent-soft: #2e8a99;
-  --accent-warm: #e07a5f;
+  /* deep teal accent for hover/emphasis (replaces warm orange #e07a5f) */
+  --accent-warm: #15575e;
   --paper-bg: #f4f7f8;
   --card-bg: rgba(255, 255, 255, 0.84);
   --card-border: rgba(31, 111, 120, 0.16);
-  /* Elevation tokens — soft shadow scale for cards & comment section */
-  --elev-1: 0 2px 8px rgba(14, 24, 32, 0.06);
-  --elev-2: 0 8px 24px rgba(14, 24, 32, 0.08);
-  --elev-3: 0 14px 36px rgba(14, 24, 32, 0.10);
-  --elev-4: 0 18px 42px rgba(14, 24, 32, 0.14);
-  --elev-5: 0 24px 56px rgba(14, 24, 32, 0.18);
-  --highlight-top: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, transparent 100%);
+  /* Soft-Flat 3D elevation — light source top-left; each level = near hard + far soft */
+  --elev-1: 0 1px 2px rgba(15, 35, 45, .06), 0 1px 3px rgba(15, 35, 45, .04);
+  --elev-2: 0 2px 4px rgba(15, 35, 45, .07), 0 4px 12px rgba(15, 35, 45, .05);
+  --elev-3: 0 4px 8px rgba(15, 35, 45, .10), 0 12px 28px rgba(15, 35, 45, .09);
+  --elev-4: 0 8px 16px rgba(15, 35, 45, .12), 0 20px 44px rgba(15, 35, 45, .12);
+  --elev-5: 0 12px 24px rgba(15, 35, 45, .16), 0 28px 60px rgba(15, 35, 45, .16);
+  /* inset top highlight: light catching the card's top edge */
+  --highlight-top: inset 0 1px 0 rgba(255, 255, 255, .6);
+  /* transitions */
+  --dur-fast: 150ms; --dur-base: 250ms; --dur-slow: 350ms;
+  --ease-out: cubic-bezier(.22, .61, .36, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  /* focus ring */
+  --focus-ring: 0 0 0 3px rgba(46, 138, 153, .4);
+  /* code block inset (recessed feel) */
+  --code-inset: inset 0 1px 3px rgba(0, 0, 0, .06);
+  /* redefine theme card shadows so all .cardHover consumers auto-upgrade */
+  --card-box-shadow: var(--elev-2);
+  --card-hover-box-shadow: var(--elev-3);
+}
+
+[data-theme='dark'] {
+  /* dark reversal: black shadow + faint white glow (black-on-black is invisible) */
+  --elev-1: 0 1px 2px rgba(0, 0, 0, .4), 0 1px 3px rgba(255, 255, 255, .04);
+  --elev-2: 0 2px 4px rgba(0, 0, 0, .45), 0 4px 12px rgba(255, 255, 255, .03);
+  --elev-3: 0 4px 8px rgba(0, 0, 0, .5), 0 12px 28px rgba(255, 255, 255, .05);
+  --elev-4: 0 8px 16px rgba(0, 0, 0, .55), 0 20px 44px rgba(255, 255, 255, .06);
+  --elev-5: 0 12px 24px rgba(0, 0, 0, .6), 0 28px 60px rgba(255, 255, 255, .08);
+  --highlight-top: inset 0 1px 0 rgba(255, 255, 255, .08);
+  --focus-ring: 0 0 0 3px rgba(122, 194, 205, .5);
+  --code-inset: inset 0 1px 3px rgba(0, 0, 0, .3);
+  --card-box-shadow: var(--elev-2);
+  --card-hover-box-shadow: var(--elev-3);
+}
+
+/* a11y: kill all motion for reduced-motion users (only !important exemption) */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* a11y: visible focus ring on keyboard focus */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 4px;
 }
 
 body {
@@ -53,7 +99,7 @@ body {
 
 #nav #blog-info .nav-site-title:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--elev-1);
 }
 
 #nav #blog-info .site-icon {
@@ -63,7 +109,7 @@ body {
   padding: 3px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 3px 10px rgba(8, 26, 36, 0.22);
+  box-shadow: var(--elev-1);
 }
 
 #nav #blog-info .site-name {
@@ -96,17 +142,17 @@ body {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 16px;
-  box-shadow: 0 14px 36px rgba(14, 24, 32, 0.08);
+  box-shadow: var(--elev-2), var(--highlight-top);
   backdrop-filter: blur(6px);
 }
 
 #recent-posts > .recent-post-item {
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
 }
 
 #recent-posts > .recent-post-item:hover {
   transform: translateY(-4px);
-  box-shadow: 0 18px 42px rgba(14, 24, 32, 0.14);
+  box-shadow: var(--elev-3), var(--highlight-top);
 }
 
 #aside-content .card-widget .card-content a:hover,
@@ -128,7 +174,7 @@ body {
 .post .aplayer {
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--elev-2);
 }
 
 @media (max-width: 768px) {
