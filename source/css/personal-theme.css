@@ -222,6 +222,40 @@ body {
   transition: transform var(--dur-fast) var(--ease-out);
 }
 
+/* T7: post page typography — blockquote raise, code inset, tag pill, copyright, toc */
+#post blockquote,
+#page blockquote {
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: var(--elev-1);
+  border-radius: 8px;
+}
+
+#post figure.highlight,
+#post pre,
+#page figure.highlight,
+#page pre {
+  box-shadow: var(--code-inset);
+}
+
+#post .post-meta__tags,
+#page .post-meta__tags {
+  box-shadow: var(--elev-1);
+}
+
+#post .post-copyright,
+#page .post-copyright {
+  transition: box-shadow var(--dur-base) var(--ease-out);
+}
+
+#post .post-copyright:hover,
+#page .post-copyright:hover {
+  box-shadow: var(--elev-2);
+}
+
+#card-toc {
+  box-shadow: var(--elev-2), var(--highlight-top);
+}
+
 #aside-content .card-widget .card-content a:hover,
 #post a:hover,
 #page a:hover {
