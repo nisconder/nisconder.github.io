@@ -441,3 +441,16 @@ body {
 .wl-empty {
   color: #858585;
 }
+
+/* ============================================
+   Body font-weight — light 450 / dark 380
+   No font-synthesis set (keep default; none would break bold synthesis).
+   Headings keep their own bold; only body text affected.
+   ============================================ */
+body {
+  font-weight: 450;
+}
+
+[data-theme='dark'] body {
+  font-weight: 380;
+}
