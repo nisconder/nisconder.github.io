@@ -454,3 +454,22 @@ body {
 [data-theme='dark'] body {
   font-weight: 380;
 }
+
+/* ============================================
+   Dark-mode Waline editor/button + aside link colors
+   Variables already set in T1; these cover class-layer + link color.
+   ============================================ */
+[data-theme='dark'] #waline-wrap .wl-editor {
+  background: rgba(28, 30, 34, 0.6);
+  border-color: rgba(46, 138, 153, 0.25);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme='dark'] #waline-wrap .wl-btn.primary {
+  background: linear-gradient(135deg, #2e8a99, #3fa5b3);
+}
+
+[data-theme='dark'] #aside-content a,
+[data-theme='dark'] .card-widget a {
+  color: #4fb8c4;
+}
