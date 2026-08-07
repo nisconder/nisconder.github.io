@@ -482,17 +482,26 @@ body {
 #waline-wrap .wl-login-info {
   display: flex;
   align-items: center;
+  max-width: none; /* remove Waline's 80px cap so the nick fits 10 letters */
+  gap: 4px;
 }
 
+/* Shift avatar LEFT by 6px (user request) */
 #waline-wrap .wl-login-info .wl-avatar {
-  margin-right: 4px;
+  transform: translateX(-6px);
+  flex-shrink: 0;
 }
 
-#waline-wrap .wl-login-info > .wl-login-nick:last-of-type {
-  white-space: nowrap;
-  max-width: 140px;
+/* Nickname: single line, fits ~10 latin letters, ellipsis on overflow.
+   MUST use direct-child > so it hits ONLY the nickname text link,
+   NOT the avatar-wrapping a.wl-login-nick inside .wl-avatar. */
+#waline-wrap .wl-login-info > .wl-login-nick {
+  display: block;
+  max-width: 160px;
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
+  word-break: normal; /* override Waline's break-all */
 }
 
 /* ============================================
