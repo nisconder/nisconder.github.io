@@ -479,16 +479,16 @@ body {
    Waline v3.7.1 DOM: .wl-login-info > .wl-avatar + .wl-login-nick
    (NOT .wl-user — that's the comment-list author area)
    ============================================ */
-.wl-login-info {
+#waline-wrap .wl-login-info {
   display: flex;
   align-items: center;
 }
 
-.wl-login-info .wl-avatar {
+#waline-wrap .wl-login-info .wl-avatar {
   margin-right: 4px;
 }
 
-.wl-login-info > .wl-login-nick:last-of-type {
+#waline-wrap .wl-login-info > .wl-login-nick:last-of-type {
   white-space: nowrap;
   max-width: 140px;
   overflow: hidden;
@@ -501,7 +501,7 @@ body {
    so this never affects desktop. The two !important below are the ONLY
    allowed ones: they override the theme's link-hover color shift to white.
    ============================================ */
-#site_social_icons {
+#page-header #site_social_icons {
   margin-top: 12px;
 }
 
