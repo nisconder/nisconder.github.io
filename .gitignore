@@ -6,6 +6,5 @@ node_modules/
 public/
 .deploy*/
 _multiconfig.yml
-.github/
 .omo/
 .playwright-mcp/
