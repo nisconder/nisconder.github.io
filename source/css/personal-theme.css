@@ -496,6 +496,67 @@ body {
 }
 
 /* ============================================
+   Comment editor definition — give the textarea a clear bordered look
+   !important needed: Waline's own CSS loads dynamically AFTER
+   personal-theme.css and overrides these at equal specificity.
+   ============================================ */
+#waline-wrap .wl-editor {
+  border: 1.5px solid rgba(31, 111, 120, 0.15) !important;
+  background: rgba(255, 255, 255, 0.7) !important;
+  border-radius: 10px !important;
+  padding: 10px 12px;
+}
+#waline-wrap .wl-editor:focus {
+  border-color: #2e8a99 !important;
+  box-shadow: 0 0 0 3px rgba(46, 138, 153, 0.12) !important;
+}
+
+/* Login button — make it visually prominent with brand color */
+#waline-wrap .wl-btn {
+  background: linear-gradient(135deg, #1f6f78, #2e8a99) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 6px 16px !important;
+  font-weight: 500;
+}
+#waline-wrap .wl-btn:hover {
+  box-shadow: 0 2px 8px rgba(31, 111, 120, 0.3);
+}
+
+/* Footer / bottom toolbar — subtle separator */
+#waline-wrap .wl-footer {
+  border-top: 1px solid rgba(31, 111, 120, 0.08);
+  padding-top: 8px;
+  margin-top: 8px;
+}
+
+/* Sort bar styling */
+#waline-wrap .wl-tab-wrapper a {
+  color: #858585 !important;
+  transition: color 0.2s;
+}
+#waline-wrap .wl-tab-wrapper a.active,
+#waline-wrap .wl-tab-wrapper a:hover {
+  color: #1f6f78 !important;
+}
+
+/* Dark mode adjustments for the editor */
+[data-theme='dark'] #waline-wrap .wl-editor {
+  background: rgba(28, 30, 34, 0.6) !important;
+  border-color: rgba(46, 138, 153, 0.25) !important;
+}
+[data-theme='dark'] #waline-wrap .wl-editor:focus {
+  border-color: #2e8a99 !important;
+}
+[data-theme='dark'] #waline-wrap .wl-btn {
+  background: linear-gradient(135deg, #2e8a99, #3fa5b3) !important;
+}
+[data-theme='dark'] #waline-wrap .wl-footer {
+  border-top-color: rgba(46, 138, 153, 0.12);
+}
+
+/* ============================================
    Mobile social icons — white circular micro-3D buttons
    #site_social_icons only renders at max-width 768px (theme head.styl),
    so this never affects desktop. The two !important below are the ONLY
