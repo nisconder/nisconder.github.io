@@ -481,14 +481,15 @@ body {
    ============================================ */
 #waline-wrap .wl-login-info {
   display: flex;
+  flex-direction: column; /* avatar on top, nickname below */
   align-items: center;
-  max-width: none; /* remove Waline's 80px cap so the nick fits 10 letters */
-  gap: 4px;
+  max-width: none; /* keep: lets the nick fit ~10 letters */
+  gap: 2px;
+  text-align: center;
 }
 
-/* Shift avatar LEFT by 6px (user request) */
+/* Avatar: centered (no horizontal shift needed in vertical layout) */
 #waline-wrap .wl-login-info .wl-avatar {
-  transform: translateX(-6px);
   flex-shrink: 0;
 }
 
