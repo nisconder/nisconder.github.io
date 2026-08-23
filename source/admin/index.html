@@ -8,7 +8,7 @@
   <title>写作后台｜不知名博客</title>
   <link rel="icon" href="/img/favicon.ico">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="/admin/admin-theme.css?v=5">
+  <link rel="stylesheet" href="/admin/admin-theme.css?v=6">
 </head>
 <body>
   <div id="admin-loading" role="status" aria-live="polite">
@@ -26,9 +26,10 @@
   </noscript>
 
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.15.1/dist/decap-cms.js"></script>
+  <script src="/admin/admin-ui.js?v=6"></script>
   <script>
     if (window.CMS) {
-      CMS.registerPreviewStyle('/admin/editor-preview.css?v=5');
+      CMS.registerPreviewStyle('/admin/editor-preview.css?v=6');
 
       window.__BLOG_TAGS = [];
 
@@ -57,10 +58,13 @@
           this.forceUpdate();
         },
 
-        addTag: function () {
-          var tag = this.state.draft.trim().replace(/^#/, '');
+        addTag: function (tagValue) {
+          var tag = String(tagValue || this.state.draft).trim().replace(/^#/, '');
           var tags = normalizeTags(this.props.value);
-          if (tag && tags.indexOf(tag) === -1) {
+          var alreadyExists = tags.some(function (existingTag) {
+            return existingTag.toLowerCase() === tag.toLowerCase();
+          });
+          if (tag && !alreadyExists) {
             this.props.onChange(tags.concat(tag));
           }
           this.setState({ draft: '' });
@@ -73,6 +77,7 @@
         },
 
         handleKeyDown: function (event) {
+          if (event.isComposing) return;
           if (event.key === 'Enter' || event.key === ',') {
             event.preventDefault();
             this.addTag();
@@ -83,14 +88,15 @@
           var self = this;
           var tags = normalizeTags(this.props.value);
           var inputId = this.props.forID + '-input';
-          var optionsId = this.props.forID + '-options';
+          var draftQuery = this.state.draft.trim().toLowerCase();
+          var selectedTags = tags.map(function (tag) { return tag.toLowerCase(); });
           var suggestions = window.__BLOG_TAGS.filter(function (tag) {
-            return tags.indexOf(tag) === -1;
-          });
+            return selectedTags.indexOf(tag.toLowerCase()) === -1 && (!draftQuery || tag.toLowerCase().indexOf(draftQuery) !== -1);
+          }).slice(0, 10);
 
           return window.h(
             'div',
-            { className: (this.props.classNameWrapper || '') + ' admin-tag-control' },
+            { className: 'admin-tag-control' },
             window.h(
               'div',
               { className: 'admin-tag-control__tags', 'aria-live': 'polite' },
@@ -112,30 +118,46 @@
                 );
               })
             ),
+            suggestions.length
+              ? window.h(
+                  'div',
+                  { className: 'admin-tag-control__suggestions' },
+                  window.h('span', { className: 'admin-tag-control__suggestions-label' }, draftQuery ? '匹配标签' : '已有标签'),
+                  window.h(
+                    'div',
+                    { className: 'admin-tag-control__suggestion-list' },
+                    suggestions.map(function (tag) {
+                      return window.h(
+                        'button',
+                        {
+                          type: 'button',
+                          className: 'admin-tag-control__suggestion',
+                          key: tag,
+                          onClick: function () { self.addTag(tag); }
+                        },
+                        tag
+                      );
+                    })
+                  )
+                )
+              : null,
             window.h(
               'div',
               { className: 'admin-tag-control__input-row' },
               window.h('input', {
                 id: inputId,
                 type: 'text',
-                list: optionsId,
                 value: this.state.draft,
-                placeholder: '输入或选择标签',
+                placeholder: '输入新标签',
+                'aria-label': '输入新标签',
                 onChange: function (event) { self.setState({ draft: event.target.value }); },
                 onKeyDown: this.handleKeyDown
               }),
               window.h(
                 'button',
-                { type: 'button', onClick: this.addTag, disabled: !this.state.draft.trim() },
+                { type: 'button', onClick: function () { self.addTag(); }, disabled: !this.state.draft.trim() },
                 '添加'
               )
-            ),
-            window.h(
-              'datalist',
-              { id: optionsId },
-              suggestions.map(function (tag) {
-                return window.h('option', { value: tag, key: tag });
-              })
             )
           );
         }
@@ -143,48 +165,73 @@
 
       CMS.registerWidget('taglist', TagListControl);
 
+      var normalizeOptions = function (value) {
+        var options = value;
+        if (!options) return [];
+        if (typeof options.toJS === 'function') options = options.toJS();
+        if (!Array.isArray(options)) return [];
+        return options.map(function (option) {
+          return typeof option === 'string'
+            ? { label: option, value: option }
+            : { label: option.label || option.value, value: option.value || option.label };
+        });
+      };
+
+      var CategoryControl = window.createClass({
+        render: function () {
+          var value = this.props.value || '';
+          var options = normalizeOptions(this.props.field.get('options'));
+          var onChange = this.props.onChange;
+
+          return window.h(
+            'div',
+            { className: 'admin-category-control' },
+            window.h(
+              'select',
+              {
+                id: this.props.forID,
+                value: value,
+                onChange: function (event) { onChange(event.target.value || null); },
+                'aria-label': this.props.field.get('label') || '分类'
+              },
+              window.h('option', { value: '', disabled: true }, '选择分类'),
+              options.map(function (option) {
+                return window.h('option', { value: option.value, key: option.value }, option.label);
+              })
+            )
+          );
+        }
+      });
+
+      CMS.registerWidget('categoryselect', CategoryControl);
+
       var normalizePinned = function (value) {
         return value === true || value === 'true' || value === 1;
       };
 
       var PinControl = window.createClass({
-        choose: function (pinned) {
-          this.props.onChange(pinned);
-        },
-
-        renderOption: function (pinned, title, description) {
-          var active = normalizePinned(this.props.value) === pinned;
-          var self = this;
-
-          return window.h(
-            'button',
-            {
-              type: 'button',
-              role: 'radio',
-              'aria-checked': String(active),
-              className: 'admin-pin-control__option' + (active ? ' is-active' : ''),
-              onClick: function () { self.choose(pinned); }
-            },
-            window.h('span', { className: 'admin-pin-control__mark', 'aria-hidden': 'true' }),
-            window.h(
-              'span',
-              { className: 'admin-pin-control__copy' },
-              window.h('strong', null, title),
-              window.h('small', null, description)
-            )
-          );
-        },
-
         render: function () {
+          var active = normalizePinned(this.props.value);
+          var onChange = this.props.onChange;
           return window.h(
             'div',
-            {
-              className: (this.props.classNameWrapper || '') + ' admin-pin-control',
-              role: 'radiogroup',
-              'aria-label': this.props.field.get('label') || '首页排序'
-            },
-            this.renderOption(false, '普通排序', '按发布时间排列'),
-            this.renderOption(true, '置顶首页', '显示在普通文章之前')
+            { className: 'admin-pin-control' },
+            window.h(
+              'label',
+              { className: 'admin-pin-control__option' },
+              window.h('input', {
+                type: 'checkbox',
+                checked: active,
+                onChange: function (event) { onChange(event.target.checked); }
+              }),
+              window.h('span', { className: 'admin-pin-control__box', 'aria-hidden': 'true' }),
+              window.h(
+                'span',
+                { className: 'admin-pin-control__copy' },
+                window.h('strong', null, '置顶到首页'),
+                window.h('small', null, '显示在普通文章之前')
+              )
+            )
           );
         }
       });
@@ -203,6 +250,7 @@
     }
 
     (function () {
+      if (window.__ADMIN_UI_V6__) return;
       var loading = document.getElementById('admin-loading');
       var decorationFrame = 0;
 

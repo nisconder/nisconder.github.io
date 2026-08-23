@@ -37,8 +37,8 @@ collections:
     format: yaml-frontmatter
     fields:
       - { label: 标题, name: title, widget: string, hint: 用一句清晰的话概括文章主题。, pattern: ['.{3,}', '标题至少需要 3 个字符'] }
-      - { label: 发布时间, name: date, widget: datetime, default: '{{now}}', format: 'YYYY-MM-DD HH:mm:ss', date_format: 'YYYY-MM-DD', time_format: 'HH:mm', picker_utc: false, hint: 新文章自动使用当前时间；需要预约发布时再修改。 }
-      - { label: 首页排序, name: sticky, widget: pincontrol, default: false, required: false, hint: 选择这篇文章在首页的排列方式。 }
-      - { label: 分类, name: categories, widget: select, options: ['随笔', '公告', '技术', '阅读', '观影', '生活'], required: false, hint: 每篇文章选择一个主分类。 }
+      - { label: 文章日期, name: date, widget: datetime, default: '{{now}}', format: 'YYYY-MM-DD HH:mm:ss', date_format: 'YYYY-MM-DD', time_format: 'HH:mm', picker_utc: false, hint: 新文章自动使用当前时间；需要回溯日期时再修改。 }
+      - { label: 首页位置, name: sticky, widget: pincontrol, default: false, required: false, hint: 普通文章按时间排序；置顶文章优先显示。 }
+      - { label: 分类, name: categories, widget: categoryselect, options: ['随笔', '公告', '技术', '阅读', '观影', '生活'], required: true, hint: 选择一个主分类。 }
       - { label: 标签, name: tags, widget: taglist, required: false, hint: 输入后按 Enter 添加；输入时会联想已有标签。 }
-      - { label: 正文, name: body, widget: markdown, hint: 支持 Markdown；右侧预览会模拟主站文章排版。 }
+      - { label: 正文, name: body, widget: richtext, modes: ['raw'], hint: 使用 Markdown 写作；右侧预览会模拟主站文章排版。 }
