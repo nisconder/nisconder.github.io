@@ -389,6 +389,93 @@ body::before {
   background: var(--admin-brand-050) !important;
 }
 
+/* List/grid are one view switch, not two unrelated icon buttons. */
+#nc-root[data-admin-page="collection"] [data-admin-section="view-switch"] {
+  display: inline-flex !important;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px !important;
+  margin: 0 !important;
+  padding: 3px !important;
+  background: var(--admin-surface) !important;
+  border: 1px solid var(--admin-line) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+#nc-root[data-admin-page="collection"] [data-admin-action="view-mode"] {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 44px !important;
+  min-width: 44px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--admin-muted) !important;
+  background: var(--admin-surface) !important;
+  border: 1px solid var(--admin-line) !important;
+  border-radius: var(--admin-radius-control) !important;
+  box-shadow: none !important;
+  transition: color var(--admin-fast) ease, background var(--admin-fast) ease, border-color var(--admin-fast) ease;
+}
+
+#nc-root[data-admin-page="collection"] [data-admin-section="view-switch"] [data-admin-action="view-mode"] {
+  background: transparent !important;
+  border-color: transparent !important;
+  border-radius: 5px !important;
+}
+
+#nc-root[data-admin-page="collection"] [data-admin-view-group="inline"][data-admin-view="list"] {
+  border-radius: var(--admin-radius-control) 0 0 var(--admin-radius-control) !important;
+}
+
+#nc-root[data-admin-page="collection"] [data-admin-view-group="inline"][data-admin-view="grid"] {
+  border-radius: 0 var(--admin-radius-control) var(--admin-radius-control) 0 !important;
+}
+
+#nc-root[data-admin-page="collection"] [data-admin-section="list-toolbar"] [data-admin-view-group="inline"] {
+  background: var(--admin-surface) !important;
+  border-color: var(--admin-line) !important;
+}
+
+#nc-root[data-admin-page="collection"] [data-admin-section="list-toolbar"] [data-admin-view-branch="grid"] {
+  margin-left: -9px !important;
+}
+
+#nc-root[data-admin-page="collection"] [data-admin-view-group="inline"][data-admin-active="true"] {
+  position: relative;
+  z-index: 1;
+}
+
+#nc-root[data-admin-page="collection"] [data-admin-action="view-mode"]:hover {
+  color: var(--admin-heading) !important;
+  background: var(--admin-surface-muted) !important;
+}
+
+#nc-root[data-admin-page="collection"] [data-admin-action="view-mode"][data-admin-active="true"] {
+  color: var(--admin-brand-700) !important;
+  background: var(--admin-brand-050) !important;
+  border-color: rgba(31, 111, 120, .2) !important;
+  box-shadow: inset 0 0 0 1px rgba(31, 111, 120, .08) !important;
+}
+
+#nc-root[data-admin-page="collection"] [data-admin-action="view-mode"] svg {
+  width: 20px !important;
+  height: 20px !important;
+  color: inherit !important;
+  fill: currentColor !important;
+}
+
+#nc-root[data-admin-page="collection"] [data-admin-action="view-mode"] svg [fill]:not([fill="none"]) {
+  fill: currentColor !important;
+}
+
+#nc-root[data-admin-page="collection"] [data-admin-action="view-mode"] svg [stroke]:not([stroke="none"]) {
+  stroke: currentColor !important;
+}
+
 #nc-root[data-admin-page="collection"] [data-admin-section="entry-list"] {
   width: 100% !important;
   height: auto !important;

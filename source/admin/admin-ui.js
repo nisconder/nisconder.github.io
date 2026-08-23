@@ -5,6 +5,7 @@
 
   var loading = document.getElementById('admin-loading');
   var decorationFrame = 0;
+  var preferredViewMode = null;
 
   var cleanText = function (value) {
     return String(value || '').replace(/\s+/g, ' ').trim();
@@ -194,6 +195,92 @@
     });
   };
 
+  var decorateViewControls = function (toolbar) {
+    if (!toolbar) return;
+
+    var candidates = Array.prototype.slice.call(toolbar.querySelectorAll('button, [role="button"]')).filter(function (control) {
+      return !control.closest('[data-admin-action="list-control"]') &&
+        !control.closest('.admin-list-search') &&
+        Boolean(control.querySelector('svg'));
+    });
+    var listControl = null;
+    var gridControl = null;
+
+    candidates.forEach(function (control) {
+      var label = accessibleName(control).toLowerCase();
+      if (!listControl && /(list|\u5217\u8868)/.test(label)) listControl = control;
+      if (!gridControl && /(grid|\u7f51\u683c)/.test(label)) gridControl = control;
+    });
+
+    var iconOnlyControls = candidates.filter(function (control) {
+      return !cleanText(control.textContent);
+    });
+    if ((!listControl || !gridControl) && iconOnlyControls.length >= 2) {
+      listControl = listControl || iconOnlyControls[iconOnlyControls.length - 2];
+      gridControl = gridControl || iconOnlyControls[iconOnlyControls.length - 1];
+    }
+    if (!listControl || !gridControl || listControl === gridControl) return;
+
+    var controls = [listControl, gridControl];
+    var inferredMode = null;
+    controls.forEach(function (control, index) {
+      var mode = index === 0 ? 'list' : 'grid';
+      var stateText = [
+        control.getAttribute('aria-pressed'),
+        control.getAttribute('aria-selected'),
+        control.getAttribute('data-state'),
+        control.className
+      ].join(' ').toLowerCase();
+      if (/(^|\s)(true|active|selected|on)(\s|$)/.test(stateText)) inferredMode = mode;
+    });
+
+    var selectedMode = preferredViewMode || inferredMode || 'list';
+    controls.forEach(function (control, index) {
+      var mode = index === 0 ? 'list' : 'grid';
+      control.dataset.adminAction = 'view-mode';
+      control.dataset.adminView = mode;
+      control.dataset.adminActive = String(selectedMode === mode);
+      control.setAttribute('aria-label', mode === 'list' ? '\u5217\u8868\u89c6\u56fe' : '\u7f51\u683c\u89c6\u56fe');
+      control.setAttribute('aria-pressed', String(selectedMode === mode));
+
+      if (!control.__adminViewModeBound) {
+        control.__adminViewModeBound = true;
+        control.addEventListener('click', function () {
+          preferredViewMode = control.dataset.adminView;
+          scheduleDecoration();
+        });
+      }
+    });
+
+    var group = lowestCommonAncestor(controls);
+    var groupControls = group ? Array.prototype.slice.call(group.querySelectorAll('button, [role="button"]')) : [];
+    var hasDedicatedGroup = Boolean(
+      group &&
+      group !== toolbar &&
+      group.id !== 'nc-root' &&
+      groupControls.length === 2 &&
+      groupControls.every(function (control) { return controls.indexOf(control) !== -1; })
+    );
+
+    controls.forEach(function (control) {
+      control.dataset.adminViewGroup = hasDedicatedGroup ? 'wrapped' : 'inline';
+    });
+
+    if (hasDedicatedGroup) {
+      group.dataset.adminSection = 'view-switch';
+      group.setAttribute('role', 'group');
+      group.setAttribute('aria-label', '\u89c6\u56fe\u6a21\u5f0f');
+    } else {
+      var listBranch = directChildWithin(toolbar, listControl);
+      var gridBranch = directChildWithin(toolbar, gridControl);
+      if (listBranch && gridBranch && listBranch !== gridBranch && listBranch.nextElementSibling === gridBranch) {
+        listBranch.dataset.adminViewBranch = 'list';
+        gridBranch.dataset.adminViewBranch = 'grid';
+      }
+    }
+    toolbar.dataset.adminViewMode = selectedMode;
+  };
+
   var decorateCollection = function (root) {
     var entryLinks = Array.prototype.slice.call(root.querySelectorAll('[data-admin-entry="post"]'));
     var newPost = root.querySelector('[data-admin-action="new-post"]');
@@ -207,7 +294,10 @@
 
     if (heading) heading.dataset.adminCount = entryLinks.length ? String(entryLinks.length).padStart(2, '0') + ' \u7bc7' : '';
     if (collectionHeader) collectionHeader.dataset.adminSection = 'collection-header';
-    if (toolbar) toolbar.dataset.adminSection = 'list-toolbar';
+    if (toolbar) {
+      toolbar.dataset.adminSection = 'list-toolbar';
+      decorateViewControls(toolbar);
+    }
     if (entryList) {
       entryList.dataset.adminSection = 'entry-list';
       entryLinks.forEach(function (link) {
