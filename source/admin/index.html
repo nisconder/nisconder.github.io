@@ -8,7 +8,7 @@
   <title>写作后台｜不知名博客</title>
   <link rel="icon" href="/img/favicon.ico">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="/admin/admin-theme.css?v=6">
+  <link rel="stylesheet" href="/admin/admin-theme.css?v=7">
 </head>
 <body>
   <div id="admin-loading" role="status" aria-live="polite">
@@ -218,7 +218,7 @@
             { className: 'admin-pin-control' },
             window.h(
               'label',
-              { className: 'admin-pin-control__option' },
+              { className: 'admin-pin-control__option' + (active ? ' is-active' : '') },
               window.h('input', {
                 type: 'checkbox',
                 checked: active,
@@ -228,8 +228,7 @@
               window.h(
                 'span',
                 { className: 'admin-pin-control__copy' },
-                window.h('strong', null, '置顶到首页'),
-                window.h('small', null, '显示在普通文章之前')
+                window.h('strong', null, '置顶到首页')
               )
             )
           );

@@ -527,7 +527,7 @@ body::before {
   box-shadow: none !important;
 }
 
-#nc-root[data-admin-page="editor"] [data-admin-field] label,
+#nc-root[data-admin-page="editor"] [data-admin-field] label:not(.admin-pin-control__option),
 #nc-root[data-admin-page="editor"] [data-admin-field] [class*="FieldLabel"] {
   display: block !important;
   margin: 0 0 8px !important;
@@ -637,26 +637,39 @@ body::before {
   gap: 12px;
   align-items: center;
   width: 100%;
-  min-height: 56px;
+  min-height: 52px;
   margin: 0 !important;
-  padding: 8px 10px !important;
+  padding: 10px 12px !important;
   color: var(--admin-heading) !important;
-  background: var(--admin-surface-muted) !important;
-  border: 1px solid var(--admin-line) !important;
+  background: var(--admin-surface) !important;
+  border: 1px solid var(--admin-line-strong) !important;
   border-radius: var(--admin-radius-control) !important;
   cursor: pointer;
+  transition: background var(--admin-fast) ease, border-color var(--admin-fast) ease, box-shadow var(--admin-fast) ease;
 }
 
-.admin-pin-control__option:hover { border-color: var(--admin-line-strong) !important; }
-.admin-pin-control__option:focus-within { border-color: var(--admin-brand-500) !important; box-shadow: var(--admin-focus) !important; }
+.admin-pin-control__option:hover { background: var(--admin-surface-muted) !important; }
+
+.admin-pin-control__option.is-active {
+  background: var(--admin-brand-050) !important;
+  border-color: rgba(31, 111, 120, .32) !important;
+}
+
+.admin-pin-control__option:has(input:focus-visible) {
+  border-color: var(--admin-brand-500) !important;
+  box-shadow: 0 0 0 2px rgba(46, 138, 153, .18) !important;
+}
 
 .admin-pin-control__option input {
   position: absolute;
   width: 1px;
   height: 1px;
+  margin: -1px;
+  padding: 0;
   overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .admin-pin-control__box {
@@ -686,9 +699,8 @@ body::before {
   transform: rotate(45deg);
 }
 
-.admin-pin-control__copy { display: grid; gap: 2px; }
+.admin-pin-control__copy { display: block; min-width: 0; }
 .admin-pin-control__copy strong { color: var(--admin-heading); font-size: 14px; font-weight: 600; line-height: 1.4; }
-.admin-pin-control__copy small { color: var(--admin-muted) !important; font-size: 12px !important; line-height: 1.4; }
 
 /* Existing tags are visible and reusable. */
 .admin-tag-control { display: grid; gap: 12px; width: 100%; }
