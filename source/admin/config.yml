@@ -10,23 +10,36 @@ backend:
     delete: 'Delete {{collection}} "{{slug}}"'
     uploadMedia: 'Upload "{{path}}"'
     deleteMedia: 'Delete "{{path}}"'
+locale: zh_Hans
+logo:
+  src: /img/nisconder-avatar.png
+  show_in_header: true
 site_url: https://nisconder-blog.netlify.app
 display_url: https://nisconder-blog.netlify.app
+show_preview_links: true
 media_folder: source/images/uploads
 public_folder: /images/uploads
+editor:
+  preview: true
 collections:
   - name: posts
-    label: Posts
-    label_singular: Post
+    label: 文章
+    label_singular: 文章
+    description: 在这里撰写、预览并发布博客文章。
     folder: source/_posts
     create: true
     slug: '{{slug}}'
+    summary: '{{title}} · {{date}}'
+    sortable_fields: ['date', 'title']
+    view_filters:
+      - { label: 随笔, field: categories, pattern: 随笔 }
+      - { label: 公告, field: categories, pattern: 公告 }
     extension: md
     format: yaml-frontmatter
     fields:
-      - { label: Title, name: title, widget: string, pattern: ['.{3,}', 'Title must have at least 3 characters'] }
-      - { label: Date, name: date, widget: datetime, format: 'YYYY-MM-DD HH:mm:ss', date_format: 'YYYY-MM-DD', time_format: 'HH:mm:ss' }
-      - { label: Updated, name: updated, widget: datetime, format: 'YYYY-MM-DD HH:mm:ss', required: false }
-      - { label: Categories, name: categories, widget: list, required: false }
-      - { label: Tags, name: tags, widget: list, required: false }
-      - { label: Body, name: body, widget: markdown }
+      - { label: 标题, name: title, widget: string, hint: 用一句清晰的话概括文章主题。, pattern: ['.{3,}', '标题至少需要 3 个字符'] }
+      - { label: 发布时间, name: date, widget: datetime, format: 'YYYY-MM-DD HH:mm:ss', date_format: 'YYYY-MM-DD', time_format: 'HH:mm:ss' }
+      - { label: 更新时间, name: updated, widget: datetime, format: 'YYYY-MM-DD HH:mm:ss', required: false, hint: 仅在内容有实质更新时填写。 }
+      - { label: 分类, name: categories, widget: list, required: false, hint: 建议使用一个主分类，例如“随笔”或“技术”。 }
+      - { label: 标签, name: tags, widget: list, required: false, hint: 添加 2–5 个便于检索的关键词。 }
+      - { label: 正文, name: body, widget: markdown, hint: 支持 Markdown；右侧预览会模拟主站文章排版。 }

@@ -1,7 +1,54 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="robots" content="noindex"/><title>Blog Admin</title></head>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#1f6f78">
+  <title>写作后台｜不知名博客</title>
+  <link rel="icon" href="/img/favicon.ico">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="/admin/admin-theme.css">
+</head>
 <body>
-<script src="https://cdn.jsdelivr.net/npm/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+  <div id="admin-loading" role="status" aria-live="polite">
+    <div class="admin-loading__card">
+      <span class="admin-loading__eyebrow">NISCONDER · EDITORIAL DESK</span>
+      <img src="/img/nisconder-avatar.png" alt="" width="64" height="64">
+      <h1>写作后台</h1>
+      <p>正在整理你的稿纸…</p>
+      <span class="admin-loading__line" aria-hidden="true"></span>
+    </div>
+  </div>
+
+  <noscript>
+    <div class="admin-noscript">作者后台需要启用 JavaScript 才能工作。</div>
+  </noscript>
+
+  <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.15.1/dist/decap-cms.js"></script>
+  <script>
+    if (window.CMS) {
+      CMS.registerPreviewStyle('/admin/editor-preview.css');
+    }
+
+    (function () {
+      var loading = document.getElementById('admin-loading');
+      var finishLoading = function () {
+        if (!loading || !document.querySelector('#nc-root > *')) return;
+        loading.classList.add('is-finished');
+        window.setTimeout(function () { loading.remove(); }, 280);
+        observer.disconnect();
+      };
+      var observer = new MutationObserver(finishLoading);
+      observer.observe(document.body, { childList: true, subtree: true });
+      finishLoading();
+
+      window.setTimeout(function () {
+        if (!loading || loading.classList.contains('is-finished')) return;
+        var message = loading.querySelector('p');
+        if (message) message.textContent = '加载时间有点久，请检查网络后刷新页面。';
+      }, 10000);
+    }());
+  </script>
 </body>
 </html>

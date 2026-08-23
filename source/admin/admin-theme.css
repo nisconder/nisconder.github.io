@@ -1,0 +1,513 @@
+:root {
+  --admin-ink: #183438;
+  --admin-ink-soft: #587075;
+  --admin-teal: #1f6f78;
+  --admin-teal-bright: #2e8a99;
+  --admin-teal-deep: #15575e;
+  --admin-canvas: #eef4f5;
+  --admin-paper: #ffffff;
+  --admin-line: rgba(31, 111, 120, 0.16);
+  --admin-warm: #d49755;
+  --admin-shadow-sm: 0 1px 2px rgba(15, 35, 45, 0.06), 0 4px 12px rgba(15, 35, 45, 0.05);
+  --admin-shadow-md: 0 8px 24px rgba(15, 35, 45, 0.10), 0 2px 6px rgba(15, 35, 45, 0.06);
+  --admin-shadow-lg: 0 22px 64px rgba(15, 35, 45, 0.16), 0 4px 12px rgba(15, 35, 45, 0.08);
+  --admin-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
+  --admin-sans: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --admin-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  color: var(--admin-ink);
+  background:
+    radial-gradient(circle at 12% 12%, rgba(46, 138, 153, 0.14), transparent 30rem),
+    radial-gradient(circle at 88% 8%, rgba(31, 111, 120, 0.10), transparent 26rem),
+    var(--admin-canvas);
+  font-family: var(--admin-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* A manuscript rail: the one visual signature carried through the workspace. */
+body::before {
+  position: fixed;
+  z-index: 10000;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: linear-gradient(180deg, var(--admin-teal), var(--admin-teal-bright) 72%, var(--admin-warm));
+  content: "";
+  pointer-events: none;
+}
+
+::selection {
+  color: #fff;
+  background: var(--admin-teal-bright);
+}
+
+/* Branded loading state shown before Decap mounts. */
+#admin-loading {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(46, 138, 153, 0.18), transparent 28rem),
+    linear-gradient(145deg, #f9fbfb, #eaf2f3);
+  transition: opacity 220ms ease, visibility 220ms ease;
+}
+
+#admin-loading.is-finished {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.admin-loading__card {
+  position: relative;
+  width: min(100%, 420px);
+  padding: 48px 42px 42px;
+  overflow: hidden;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--admin-line);
+  border-radius: 22px;
+  box-shadow: var(--admin-shadow-lg), inset 0 1px rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(14px);
+}
+
+.admin-loading__card::before {
+  position: absolute;
+  inset: 0 auto 0 22px;
+  width: 1px;
+  background: rgba(212, 151, 85, 0.38);
+  content: "";
+}
+
+.admin-loading__card img {
+  display: block;
+  margin: 24px auto 16px;
+  border: 6px solid rgba(31, 111, 120, 0.09);
+  border-radius: 18px;
+  box-shadow: var(--admin-shadow-sm);
+}
+
+.admin-loading__eyebrow {
+  color: var(--admin-teal);
+  font: 600 0.68rem/1.4 var(--admin-mono);
+  letter-spacing: 0.16em;
+}
+
+.admin-loading__card h1 {
+  margin: 0;
+  font: 700 clamp(2rem, 7vw, 2.65rem)/1.15 var(--admin-serif);
+  letter-spacing: 0.08em;
+}
+
+.admin-loading__card p {
+  min-height: 1.5em;
+  margin: 12px 0 26px;
+  color: var(--admin-ink-soft);
+  font-size: 0.9rem;
+}
+
+.admin-loading__line {
+  display: block;
+  width: 100%;
+  height: 3px;
+  overflow: hidden;
+  background: rgba(31, 111, 120, 0.12);
+  border-radius: 99px;
+}
+
+.admin-loading__line::after {
+  display: block;
+  width: 42%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--admin-teal), var(--admin-teal-bright));
+  border-radius: inherit;
+  content: "";
+  animation: admin-loading 1.35s ease-in-out infinite;
+}
+
+@keyframes admin-loading {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(340%); }
+}
+
+.admin-noscript {
+  max-width: 520px;
+  margin: 64px auto;
+  padding: 24px;
+  background: #fff;
+  border-left: 4px solid var(--admin-warm);
+  box-shadow: var(--admin-shadow-md);
+}
+
+/* Decap foundation. Specificity is intentional: its Emotion styles mount later. */
+#nc-root {
+  min-height: 100vh;
+  color: var(--admin-ink);
+  font-family: var(--admin-sans);
+}
+
+#nc-root button,
+#nc-root input,
+#nc-root textarea,
+#nc-root select {
+  font-family: var(--admin-sans) !important;
+}
+
+#nc-root h1,
+#nc-root h2,
+#nc-root h3,
+#nc-root [class*="Heading"] {
+  color: var(--admin-ink);
+  font-family: var(--admin-serif) !important;
+  letter-spacing: 0.025em;
+}
+
+#nc-root a {
+  color: var(--admin-teal);
+}
+
+#nc-root a:focus-visible,
+#nc-root button:focus-visible,
+#nc-root input:focus-visible,
+#nc-root textarea:focus-visible,
+#nc-root select:focus-visible,
+#nc-root [tabindex]:focus-visible {
+  outline: 3px solid rgba(46, 138, 153, 0.38) !important;
+  outline-offset: 2px !important;
+}
+
+/* Header: the only glass surface in the authenticated workspace. */
+#nc-root [class*="AppHeader"],
+#nc-root [class*="HeaderContainer"],
+#nc-root header[class*="css-"] {
+  background: rgba(250, 253, 253, 0.90) !important;
+  border-bottom: 1px solid var(--admin-line) !important;
+  box-shadow: 0 8px 30px rgba(15, 35, 45, 0.08) !important;
+  backdrop-filter: blur(16px) saturate(1.15);
+}
+
+#nc-root [class*="AppHeader"] img,
+#nc-root [class*="Header"] img {
+  border-radius: 10px;
+}
+
+/* Sidebar reads as a quiet notebook index rather than a dashboard rail. */
+#nc-root [class*="SidebarContainer"],
+#nc-root [class*="SidebarNav"],
+#nc-root aside[class*="css-"] {
+  background: #f7faf9 !important;
+  border-right: 1px solid var(--admin-line) !important;
+  box-shadow: none !important;
+}
+
+#nc-root [class*="Sidebar"] a,
+#nc-root [class*="Sidebar"] button,
+#nc-root aside a,
+#nc-root aside button {
+  border-radius: 10px !important;
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+#nc-root [class*="Sidebar"] a:hover,
+#nc-root [class*="Sidebar"] button:hover,
+#nc-root aside a:hover,
+#nc-root aside button:hover {
+  color: var(--admin-teal-deep) !important;
+  background: rgba(31, 111, 120, 0.08) !important;
+  transform: translateX(2px);
+}
+
+/* Main list and editor canvas. */
+#nc-root main,
+#nc-root [class*="CollectionMain"],
+#nc-root [class*="EditorContainer"] {
+  background:
+    linear-gradient(rgba(238, 244, 245, 0.88), rgba(238, 244, 245, 0.88)),
+    repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(31, 111, 120, 0.045) 32px) !important;
+}
+
+#nc-root [class*="CollectionTopContainer"],
+#nc-root [class*="CollectionContainer"],
+#nc-root [class*="EntriesContainer"] {
+  max-width: 1180px;
+}
+
+/* Entry cards and paper panels. */
+#nc-root [class*="Card"],
+#nc-root [class*="EntryCard"],
+#nc-root [class*="ListCard"],
+#nc-root [class*="ControlPaneContainer"],
+#nc-root [class*="PreviewPaneContainer"],
+#nc-root [class*="EditorControlPane"],
+#nc-root [role="dialog"] {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid var(--admin-line) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--admin-shadow-sm) !important;
+}
+
+#nc-root [class*="EntryCard"],
+#nc-root [class*="ListCard"] {
+  overflow: hidden;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+#nc-root [class*="EntryCard"]::before,
+#nc-root [class*="ListCard"]::before {
+  display: block;
+  width: 4px;
+  min-width: 4px;
+  background: linear-gradient(180deg, var(--admin-teal), var(--admin-teal-bright));
+  content: "";
+}
+
+#nc-root [class*="EntryCard"]:hover,
+#nc-root [class*="ListCard"]:hover {
+  border-color: rgba(31, 111, 120, 0.28) !important;
+  box-shadow: var(--admin-shadow-md) !important;
+  transform: translateY(-2px);
+}
+
+/* Controls: clear boundaries and a consistent 44px interaction target. */
+#nc-root input:not([type="checkbox"]):not([type="radio"]),
+#nc-root textarea,
+#nc-root select,
+#nc-root [class*="SelectControl"] > div,
+#nc-root [class*="DateTimeControl"] input {
+  min-height: 44px;
+  color: var(--admin-ink) !important;
+  background: #fbfdfd !important;
+  border-color: rgba(31, 111, 120, 0.22) !important;
+  border-radius: 10px !important;
+  box-shadow: inset 0 1px 2px rgba(15, 35, 45, 0.04) !important;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+#nc-root input:not([type="checkbox"]):not([type="radio"]):hover,
+#nc-root textarea:hover,
+#nc-root select:hover {
+  border-color: rgba(31, 111, 120, 0.42) !important;
+}
+
+#nc-root input:not([type="checkbox"]):not([type="radio"]):focus,
+#nc-root textarea:focus,
+#nc-root select:focus {
+  background: #fff !important;
+  border-color: var(--admin-teal-bright) !important;
+  box-shadow: 0 0 0 3px rgba(46, 138, 153, 0.13) !important;
+}
+
+#nc-root textarea {
+  line-height: 1.7 !important;
+}
+
+#nc-root label,
+#nc-root [class*="FieldLabel"] {
+  color: var(--admin-ink) !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.015em;
+}
+
+#nc-root [class*="FieldDescription"],
+#nc-root [class*="Hint"],
+#nc-root small {
+  color: var(--admin-ink-soft) !important;
+  line-height: 1.55;
+}
+
+/* Buttons keep Decap semantics while adopting the site's tactile language. */
+#nc-root button,
+#nc-root [role="button"] {
+  min-height: 40px;
+  border-radius: 10px !important;
+  transition: box-shadow 160ms ease, transform 160ms ease, filter 160ms ease;
+}
+
+#nc-root button:hover,
+#nc-root [role="button"]:hover {
+  box-shadow: var(--admin-shadow-sm);
+}
+
+#nc-root button:active,
+#nc-root [role="button"]:active {
+  box-shadow: none;
+  transform: translateY(1px);
+}
+
+#nc-root button[class*="Button-primary"],
+#nc-root button[class*="ButtonPrimary"],
+#nc-root [class*="PublishButton"],
+#nc-root [class*="LoginButton"] {
+  color: #fff !important;
+  background: linear-gradient(135deg, var(--admin-teal), var(--admin-teal-bright)) !important;
+  border-color: transparent !important;
+}
+
+/* Markdown toolbar and editor become one coherent writing surface. */
+#nc-root [class*="ToolbarContainer"],
+#nc-root [class*="EditorToolbar"] {
+  background: #f5f9f9 !important;
+  border-color: var(--admin-line) !important;
+  border-radius: 10px 10px 0 0 !important;
+}
+
+#nc-root [class*="Toolbar"] button {
+  min-width: 38px;
+  min-height: 38px;
+  color: var(--admin-ink-soft) !important;
+  background: transparent !important;
+}
+
+#nc-root [class*="Toolbar"] button:hover {
+  color: var(--admin-teal-deep) !important;
+  background: rgba(31, 111, 120, 0.09) !important;
+  box-shadow: none;
+}
+
+#nc-root [class*="MarkdownControl"] textarea,
+#nc-root [class*="CodeMirror"] {
+  color: #263d41 !important;
+  background: #fff !important;
+  font: 400 0.95rem/1.85 var(--admin-mono) !important;
+  tab-size: 2;
+}
+
+#nc-root [class*="PreviewPane"] iframe {
+  background: #fff;
+  border-radius: 12px;
+}
+
+/* Menus, dropdowns, notifications and modals. */
+#nc-root [role="menu"],
+#nc-root [role="listbox"],
+#nc-root [class*="DropdownList"],
+#nc-root [class*="Popover"] {
+  padding: 6px !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid var(--admin-line) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--admin-shadow-lg) !important;
+}
+
+#nc-root [role="menuitem"],
+#nc-root [role="option"] {
+  border-radius: 8px !important;
+}
+
+#nc-root [role="option"]:hover,
+#nc-root [role="option"][aria-selected="true"] {
+  color: var(--admin-teal-deep) !important;
+  background: rgba(31, 111, 120, 0.09) !important;
+}
+
+#nc-root [class*="Toast"],
+#nc-root [class*="Notification"] {
+  border-radius: 12px !important;
+  box-shadow: var(--admin-shadow-lg) !important;
+}
+
+/* Login is treated as the cover page of the author's notebook. */
+#nc-root [class*="LoginPage"],
+#nc-root [class*="LoginContainer"] {
+  background:
+    radial-gradient(circle at 18% 20%, rgba(46, 138, 153, 0.18), transparent 30rem),
+    linear-gradient(145deg, #f9fbfb, #e8f1f2) !important;
+}
+
+#nc-root [class*="LoginCard"],
+#nc-root [class*="LoginPanel"] {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.90) !important;
+  border: 1px solid var(--admin-line) !important;
+  border-radius: 22px !important;
+  box-shadow: var(--admin-shadow-lg) !important;
+  backdrop-filter: blur(14px);
+}
+
+#nc-root [class*="LoginCard"]::before,
+#nc-root [class*="LoginPanel"]::before {
+  position: absolute;
+  inset: 0 auto 0 20px;
+  width: 1px;
+  background: rgba(212, 151, 85, 0.42);
+  content: "";
+}
+
+#nc-root [class*="Login"] img {
+  border-radius: 18px;
+  box-shadow: var(--admin-shadow-sm);
+}
+
+/* Mobile: preserve authoring space and remove decorative depth. */
+@media (max-width: 768px) {
+  body::before {
+    width: 3px;
+  }
+
+  .admin-loading__card {
+    padding: 40px 26px 34px;
+    border-radius: 18px;
+  }
+
+  #nc-root [class*="CollectionTopContainer"],
+  #nc-root [class*="CollectionContainer"],
+  #nc-root [class*="EntriesContainer"] {
+    width: 100%;
+    padding-right: 14px !important;
+    padding-left: 14px !important;
+  }
+
+  #nc-root [class*="Card"],
+  #nc-root [class*="EntryCard"],
+  #nc-root [class*="ListCard"],
+  #nc-root [class*="ControlPaneContainer"],
+  #nc-root [class*="PreviewPaneContainer"] {
+    border-radius: 12px !important;
+    box-shadow: 0 1px 4px rgba(15, 35, 45, 0.08) !important;
+  }
+
+  #nc-root button,
+  #nc-root [role="button"] {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --admin-line: rgba(21, 87, 94, 0.42);
+  }
+
+  #nc-root input,
+  #nc-root textarea,
+  #nc-root select {
+    border-width: 2px !important;
+  }
+}
