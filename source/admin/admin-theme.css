@@ -8,6 +8,8 @@
   --admin-paper: #ffffff;
   --admin-line: #dbe3e4;
   --admin-line-strong: #bfcdd0;
+  --admin-radius: 6px;
+  --admin-shadow: 0 1px 2px rgba(23, 55, 59, 0.05), 0 6px 18px rgba(23, 55, 59, 0.05);
   --admin-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
   --admin-sans: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
   --admin-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
@@ -71,8 +73,8 @@ body::before {
   text-align: center;
   background: var(--admin-paper);
   border: 1px solid var(--admin-line);
-  border-radius: 0;
-  box-shadow: none;
+  border-radius: var(--admin-radius);
+  box-shadow: var(--admin-shadow);
 }
 
 .admin-loading__card img {
@@ -178,9 +180,9 @@ body::before {
 #nc-root h1,
 #nc-root h2 {
   color: var(--admin-ink) !important;
-  font-family: var(--admin-serif) !important;
+  font-family: var(--admin-sans) !important;
   font-weight: 650 !important;
-  letter-spacing: 0.015em;
+  letter-spacing: 0;
 }
 
 #nc-root h1 { font-size: 26px !important; }
@@ -273,6 +275,7 @@ body::before {
   color: var(--admin-ink) !important;
   background: var(--admin-paper) !important;
   border: 1px solid var(--admin-line) !important;
+  border-radius: var(--admin-radius) !important;
 }
 
 #nc-root [data-admin-search="posts"]:focus {
@@ -312,7 +315,7 @@ body::before {
 #nc-root [class$="-CollectionContainer"],
 #nc-root [class$="-EntriesContainer"] {
   width: 100%;
-  max-width: 1040px !important;
+  max-width: 960px !important;
 }
 
 #nc-root [class*="CollectionTop"],
@@ -337,12 +340,14 @@ body::before {
   align-items: center;
   justify-content: center;
   min-width: 112px;
+  width: auto !important;
   min-height: 40px !important;
   padding: 0 18px !important;
   overflow: hidden;
   color: #fff !important;
   background: var(--admin-brand) !important;
   border: 1px solid var(--admin-brand) !important;
+  border-radius: var(--admin-radius) !important;
   font-size: 0 !important;
   font-weight: 600 !important;
 }
@@ -373,6 +378,8 @@ body::before {
   color: var(--admin-ink) !important;
   background: var(--admin-paper) !important;
   border: 1px solid var(--admin-line) !important;
+  border-radius: var(--admin-radius) !important;
+  box-shadow: 0 1px 2px rgba(23, 55, 59, 0.04) !important;
   text-align: left !important;
 }
 
@@ -387,6 +394,27 @@ body::before {
   color: var(--admin-brand) !important;
   background: #fcfefe !important;
   border-color: var(--admin-line-strong) !important;
+  box-shadow: var(--admin-shadow) !important;
+}
+
+/* Header actions */
+#nc-root [data-admin-action="quick-create"] {
+  color: var(--admin-brand) !important;
+  background: var(--admin-paper) !important;
+  border: 1px solid var(--admin-line-strong) !important;
+  border-radius: var(--admin-radius) !important;
+}
+
+#nc-root [data-admin-action="quick-create"]:hover {
+  background: var(--admin-brand-soft) !important;
+  border-color: var(--admin-brand) !important;
+}
+
+#nc-root [data-admin-action="publish"] {
+  color: #fff !important;
+  background: var(--admin-brand) !important;
+  border-color: var(--admin-brand) !important;
+  border-radius: var(--admin-radius) !important;
 }
 
 /* Controls */
@@ -406,6 +434,7 @@ body::before {
   color: var(--admin-ink) !important;
   background: var(--admin-paper) !important;
   border: 1px solid var(--admin-line-strong) !important;
+  border-radius: var(--admin-radius) !important;
 }
 
 #nc-root input:not([type="checkbox"]):not([type="radio"]):focus,
@@ -419,6 +448,22 @@ body::before {
   color: var(--admin-ink) !important;
   font-size: 13px !important;
   font-weight: 600 !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+#nc-root [class*="DateTimeControl"] {
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+
+#nc-root [class*="DateTimeControl"] button {
+  min-height: 42px;
+  color: var(--admin-brand) !important;
+  background: var(--admin-brand-soft) !important;
+  border: 1px solid transparent !important;
+  border-radius: var(--admin-radius) !important;
 }
 
 #nc-root [class*="FieldDescription"],
@@ -435,6 +480,8 @@ body::before {
 #nc-root [class$="-EditorControlPane"] {
   background: var(--admin-paper) !important;
   border: 1px solid var(--admin-line) !important;
+  border-radius: var(--admin-radius) !important;
+  overflow: hidden;
 }
 
 #nc-root [class*="ToolbarContainer"],
@@ -451,6 +498,7 @@ body::before {
   color: var(--admin-muted) !important;
   background: transparent !important;
   border: 0 !important;
+  border-radius: 4px !important;
 }
 
 #nc-root [class*="Toolbar"] button:hover {
@@ -492,6 +540,8 @@ body::before {
 #nc-root [class*="Popover"] {
   background: var(--admin-paper) !important;
   border: 1px solid var(--admin-line-strong) !important;
+  border-radius: var(--admin-radius) !important;
+  box-shadow: var(--admin-shadow) !important;
 }
 
 #nc-root [role="option"]:hover,
@@ -510,6 +560,78 @@ body::before {
 #nc-root [class*="LoginPanel"] {
   background: var(--admin-paper) !important;
   border: 1px solid var(--admin-line) !important;
+  border-radius: var(--admin-radius) !important;
+  box-shadow: var(--admin-shadow) !important;
+}
+
+/* Reusable tag picker */
+#nc-root .admin-tag-control {
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+#nc-root .admin-tag-control__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 0;
+  margin-bottom: 10px;
+}
+
+#nc-root .admin-tag-control__tags:empty {
+  display: none;
+}
+
+#nc-root .admin-tag-control__tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding-left: 10px;
+  color: var(--admin-brand);
+  background: var(--admin-brand-soft);
+  border: 1px solid rgba(31, 111, 120, 0.18);
+  border-radius: var(--admin-radius) !important;
+  font-size: 13px;
+}
+
+#nc-root .admin-tag-control__remove {
+  min-width: 30px;
+  min-height: 28px;
+  margin-left: 4px;
+  color: var(--admin-muted) !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-left: 1px solid rgba(31, 111, 120, 0.14) !important;
+}
+
+#nc-root .admin-tag-control__remove:hover {
+  color: var(--admin-ink) !important;
+  background: rgba(31, 111, 120, 0.08) !important;
+}
+
+#nc-root .admin-tag-control__input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+#nc-root .admin-tag-control__input-row input,
+#nc-root .admin-tag-control__input-row button {
+  min-height: 42px;
+  border-radius: var(--admin-radius) !important;
+}
+
+#nc-root .admin-tag-control__input-row button {
+  min-width: 72px;
+  color: #fff !important;
+  background: var(--admin-brand) !important;
+  border: 1px solid var(--admin-brand) !important;
+}
+
+#nc-root .admin-tag-control__input-row button:disabled {
+  color: var(--admin-muted) !important;
+  background: #edf1f1 !important;
+  border-color: #edf1f1 !important;
 }
 
 #nc-root [class*="LoginButton"] {

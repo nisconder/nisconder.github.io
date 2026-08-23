@@ -8,7 +8,7 @@
   <title>写作后台｜不知名博客</title>
   <link rel="icon" href="/img/favicon.ico">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="/admin/admin-theme.css?v=3">
+  <link rel="stylesheet" href="/admin/admin-theme.css?v=4">
 </head>
 <body>
   <div id="admin-loading" role="status" aria-live="polite">
@@ -28,7 +28,130 @@
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.15.1/dist/decap-cms.js"></script>
   <script>
     if (window.CMS) {
-      CMS.registerPreviewStyle('/admin/editor-preview.css?v=3');
+      CMS.registerPreviewStyle('/admin/editor-preview.css?v=4');
+
+      window.__BLOG_TAGS = [];
+
+      var normalizeTags = function (value) {
+        if (!value) return [];
+        if (Array.isArray(value)) return value;
+        if (typeof value.toJS === 'function') return value.toJS();
+        if (typeof value.toArray === 'function') return value.toArray();
+        return String(value).split(',').map(function (tag) { return tag.trim(); }).filter(Boolean);
+      };
+
+      var TagListControl = window.createClass({
+        getInitialState: function () {
+          return { draft: '' };
+        },
+
+        componentDidMount: function () {
+          window.addEventListener('blog-tags-updated', this.refreshSuggestions);
+        },
+
+        componentWillUnmount: function () {
+          window.removeEventListener('blog-tags-updated', this.refreshSuggestions);
+        },
+
+        refreshSuggestions: function () {
+          this.forceUpdate();
+        },
+
+        addTag: function () {
+          var tag = this.state.draft.trim().replace(/^#/, '');
+          var tags = normalizeTags(this.props.value);
+          if (tag && tags.indexOf(tag) === -1) {
+            this.props.onChange(tags.concat(tag));
+          }
+          this.setState({ draft: '' });
+        },
+
+        removeTag: function (tagToRemove) {
+          this.props.onChange(normalizeTags(this.props.value).filter(function (tag) {
+            return tag !== tagToRemove;
+          }));
+        },
+
+        handleKeyDown: function (event) {
+          if (event.key === 'Enter' || event.key === ',') {
+            event.preventDefault();
+            this.addTag();
+          }
+        },
+
+        render: function () {
+          var self = this;
+          var tags = normalizeTags(this.props.value);
+          var inputId = this.props.forID + '-input';
+          var optionsId = this.props.forID + '-options';
+          var suggestions = window.__BLOG_TAGS.filter(function (tag) {
+            return tags.indexOf(tag) === -1;
+          });
+
+          return window.h(
+            'div',
+            { className: (this.props.classNameWrapper || '') + ' admin-tag-control' },
+            window.h(
+              'div',
+              { className: 'admin-tag-control__tags', 'aria-live': 'polite' },
+              tags.map(function (tag) {
+                return window.h(
+                  'span',
+                  { className: 'admin-tag-control__tag', key: tag },
+                  window.h('span', null, tag),
+                  window.h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'admin-tag-control__remove',
+                      onClick: function () { self.removeTag(tag); },
+                      'aria-label': '移除标签 ' + tag
+                    },
+                    '×'
+                  )
+                );
+              })
+            ),
+            window.h(
+              'div',
+              { className: 'admin-tag-control__input-row' },
+              window.h('input', {
+                id: inputId,
+                type: 'text',
+                list: optionsId,
+                value: this.state.draft,
+                placeholder: '输入或选择标签',
+                onChange: function (event) { self.setState({ draft: event.target.value }); },
+                onKeyDown: this.handleKeyDown
+              }),
+              window.h(
+                'button',
+                { type: 'button', onClick: this.addTag, disabled: !this.state.draft.trim() },
+                '添加'
+              )
+            ),
+            window.h(
+              'datalist',
+              { id: optionsId },
+              suggestions.map(function (tag) {
+                return window.h('option', { value: tag, key: tag });
+              })
+            )
+          );
+        }
+      });
+
+      CMS.registerWidget('taglist', TagListControl);
+
+      window.fetch('/admin/tag-options.json', { cache: 'no-store' })
+        .then(function (response) { return response.ok ? response.json() : []; })
+        .then(function (tags) {
+          window.__BLOG_TAGS = Array.isArray(tags) ? tags : [];
+          window.dispatchEvent(new Event('blog-tags-updated'));
+        })
+        .catch(function () {
+          window.__BLOG_TAGS = [];
+        });
     }
 
     (function () {
@@ -77,6 +200,16 @@
           if (input.placeholder.indexOf('查找') !== -1) {
             input.dataset.adminSearch = 'posts';
             input.placeholder = '搜索文章';
+          }
+        });
+
+        root.querySelectorAll('button').forEach(function (button) {
+          var label = button.textContent.trim();
+          if (label.indexOf('快速新建') !== -1) {
+            button.dataset.adminAction = 'quick-create';
+          }
+          if (label === '发布') {
+            button.dataset.adminAction = 'publish';
           }
         });
       };
