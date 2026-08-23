@@ -20,9 +20,7 @@ body {
   margin: 0 auto;
   padding: clamp(28px, 6vw, 64px);
   color: var(--preview-ink);
-  background:
-    linear-gradient(90deg, transparent 0 22px, rgba(212, 151, 85, 0.20) 22px 23px, transparent 23px),
-    #fff;
+  background: #fff;
   font: 400 1rem/1.9 var(--preview-serif);
   overflow-wrap: anywhere;
 }
@@ -137,7 +135,7 @@ th {
 
 @media (max-width: 560px) {
   body {
-    padding: 26px 22px 42px 34px;
+    padding: 26px 22px 42px;
     font-size: 0.96rem;
   }
 }

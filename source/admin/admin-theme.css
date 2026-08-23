@@ -1,0 +1,522 @@
+:root {
+  --admin-brand: #1f6f78;
+  --admin-brand-hover: #185b63;
+  --admin-brand-soft: #e8f2f2;
+  --admin-ink: #233437;
+  --admin-muted: #708084;
+  --admin-canvas: #f4f7f7;
+  --admin-paper: #ffffff;
+  --admin-line: #dce6e6;
+  --admin-line-strong: #c8d7d8;
+  --admin-radius: 10px;
+  --admin-shadow: 0 1px 2px rgba(20, 50, 54, 0.04), 0 5px 16px rgba(20, 50, 54, 0.05);
+  --admin-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
+  --admin-sans: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --admin-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  color: var(--admin-ink);
+  background: var(--admin-canvas);
+  font-family: var(--admin-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* One quiet brand gesture; everything below it stays functional. */
+body::before {
+  position: fixed;
+  z-index: 10000;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--admin-brand);
+  content: "";
+  pointer-events: none;
+}
+
+::selection {
+  color: #fff;
+  background: var(--admin-brand);
+}
+
+/* Loading screen */
+#admin-loading {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--admin-canvas);
+  transition: opacity 180ms ease, visibility 180ms ease;
+}
+
+#admin-loading.is-finished {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.admin-loading__card {
+  width: min(100%, 360px);
+  padding: 38px 34px 32px;
+  text-align: center;
+  background: var(--admin-paper);
+  border: 1px solid var(--admin-line);
+  border-radius: 14px;
+  box-shadow: var(--admin-shadow);
+}
+
+.admin-loading__card img {
+  display: block;
+  width: 56px;
+  height: 56px;
+  margin: 20px auto 14px;
+  border-radius: 12px;
+}
+
+.admin-loading__eyebrow {
+  color: var(--admin-brand);
+  font: 600 0.66rem/1.4 var(--admin-mono);
+  letter-spacing: 0.13em;
+}
+
+.admin-loading__card h1 {
+  margin: 0;
+  color: var(--admin-ink);
+  font: 700 2rem/1.25 var(--admin-serif);
+  letter-spacing: 0.06em;
+}
+
+.admin-loading__card p {
+  min-height: 1.5em;
+  margin: 9px 0 24px;
+  color: var(--admin-muted);
+  font-size: 0.875rem;
+}
+
+.admin-loading__line {
+  display: block;
+  width: 100%;
+  height: 2px;
+  overflow: hidden;
+  background: var(--admin-line);
+}
+
+.admin-loading__line::after {
+  display: block;
+  width: 34%;
+  height: 100%;
+  background: var(--admin-brand);
+  content: "";
+  animation: admin-loading 1.2s ease-in-out infinite;
+}
+
+@keyframes admin-loading {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(395%); }
+}
+
+.admin-noscript {
+  max-width: 520px;
+  margin: 64px auto;
+  padding: 22px;
+  background: var(--admin-paper);
+  border: 1px solid var(--admin-line);
+}
+
+/* Decap foundation */
+#nc-root {
+  min-height: 100vh;
+  color: var(--admin-ink);
+  background: var(--admin-canvas);
+  font-family: var(--admin-sans);
+}
+
+#nc-root button,
+#nc-root input,
+#nc-root textarea,
+#nc-root select {
+  font-family: var(--admin-sans) !important;
+}
+
+#nc-root h1,
+#nc-root h2,
+#nc-root h3 {
+  color: var(--admin-ink) !important;
+}
+
+#nc-root h1,
+#nc-root h2 {
+  font-family: var(--admin-serif) !important;
+  letter-spacing: 0.02em;
+}
+
+#nc-root a {
+  color: var(--admin-brand);
+}
+
+#nc-root a:focus-visible,
+#nc-root button:focus-visible,
+#nc-root input:focus-visible,
+#nc-root textarea:focus-visible,
+#nc-root select:focus-visible,
+#nc-root [tabindex]:focus-visible {
+  outline: 3px solid rgba(31, 111, 120, 0.28) !important;
+  outline-offset: 2px !important;
+}
+
+/* Top bar: flat, stable, no glass or floating shadow. */
+#nc-root [class$="-AppHeader"],
+#nc-root [class*="AppHeaderContent"],
+#nc-root header[class*="css-"] {
+  background: var(--admin-paper) !important;
+  border-bottom: 1px solid var(--admin-line) !important;
+  box-shadow: none !important;
+}
+
+#nc-root [class*="AppHeader"] img,
+#nc-root [class*="Header"] img {
+  border-radius: 8px;
+  box-shadow: none !important;
+}
+
+#nc-root [class*="AppHeader"] a,
+#nc-root [class*="AppHeader"] button,
+#nc-root header a,
+#nc-root header button {
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+/* Sidebar: a compact index, separated by one line only. */
+#nc-root [class$="-SidebarContainer"],
+#nc-root [class$="-SidebarNav"],
+#nc-root aside[class*="css-"] {
+  background: #f9fbfb !important;
+  border-right: 1px solid var(--admin-line) !important;
+  box-shadow: none !important;
+}
+
+#nc-root [class*="Sidebar"] a,
+#nc-root [class*="Sidebar"] button,
+#nc-root aside a,
+#nc-root aside button {
+  color: var(--admin-muted) !important;
+  border-radius: 7px !important;
+  box-shadow: none !important;
+  transition: color 140ms ease, background 140ms ease;
+}
+
+#nc-root [class*="Sidebar"] a:hover,
+#nc-root [class*="Sidebar"] button:hover,
+#nc-root aside a:hover,
+#nc-root aside button:hover {
+  color: var(--admin-ink) !important;
+  background: var(--admin-brand-soft) !important;
+  transform: none !important;
+}
+
+#nc-root [class*="Sidebar"] a[aria-current="page"],
+#nc-root aside a[aria-current="page"] {
+  color: var(--admin-brand) !important;
+  background: var(--admin-brand-soft) !important;
+  box-shadow: inset 3px 0 var(--admin-brand) !important;
+}
+
+/* Main workspace: one canvas and no decorative texture. */
+#nc-root main,
+#nc-root [class$="-CollectionMain"],
+#nc-root [class$="-EditorContainer"] {
+  background: var(--admin-canvas) !important;
+}
+
+#nc-root [class*="CollectionTop"],
+#nc-root [class$="-CollectionContainer"],
+#nc-root [class$="-EntriesContainer"] {
+  max-width: 1120px;
+}
+
+/* Remove the oversized card around the collection heading. */
+#nc-root [class*="CollectionTop"] {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Remove the extra white tray around all entries. */
+#nc-root [class$="-EntriesContainer"] {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* New article is the single dominant action on this screen. */
+#nc-root a[href$="/new"],
+#nc-root a[href*="/new?"] {
+  min-height: 42px;
+  padding-right: 20px !important;
+  padding-left: 20px !important;
+  color: #fff !important;
+  background: var(--admin-brand) !important;
+  border: 1px solid var(--admin-brand) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+}
+
+#nc-root a[href$="/new"]:hover,
+#nc-root a[href*="/new?"]:hover {
+  background: var(--admin-brand-hover) !important;
+  border-color: var(--admin-brand-hover) !important;
+}
+
+/* Entry rows: white paper, left aligned, one border, no nested pill. */
+#nc-root [class$="-EntryCard"] {
+  min-height: 68px;
+  overflow: hidden;
+  text-align: left !important;
+  background: var(--admin-paper) !important;
+  border: 1px solid var(--admin-line) !important;
+  border-radius: var(--admin-radius) !important;
+  box-shadow: none !important;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+#nc-root [class$="-EntryCard"]::before,
+#nc-root [class$="-ListCard"]::before {
+  display: none !important;
+  content: none !important;
+}
+
+#nc-root [class$="-EntryCard"] *,
+#nc-root [class$="-EntryCard"] a {
+  text-align: left !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+#nc-root [class$="-EntryCard"]:hover {
+  border-color: var(--admin-line-strong) !important;
+  box-shadow: var(--admin-shadow) !important;
+  transform: none !important;
+}
+
+/* Some Decap builds label rows as ListCard instead. */
+#nc-root [class$="-ListCard"] {
+  text-align: left !important;
+  background: var(--admin-paper) !important;
+  border: 1px solid var(--admin-line) !important;
+  border-radius: var(--admin-radius) !important;
+  box-shadow: none !important;
+}
+
+#nc-root [class$="-ListCard"] * {
+  text-align: left !important;
+  box-shadow: none !important;
+}
+
+/* Buttons: quiet by default, solid brand for primary actions. */
+#nc-root button,
+#nc-root [role="button"] {
+  min-height: 40px;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+
+#nc-root button:hover,
+#nc-root [role="button"]:hover {
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+#nc-root [class*="PublishButton"],
+#nc-root [class*="LoginButton"],
+#nc-root button[class*="primary" i] {
+  color: #fff !important;
+  background: var(--admin-brand) !important;
+  border-color: var(--admin-brand) !important;
+}
+
+/* Inputs: one boundary and a restrained focus state. */
+#nc-root input:not([type="checkbox"]):not([type="radio"]),
+#nc-root textarea,
+#nc-root select,
+#nc-root [class*="SelectControl"] > div,
+#nc-root [class*="DateTimeControl"] input {
+  min-height: 44px;
+  color: var(--admin-ink) !important;
+  background: var(--admin-paper) !important;
+  border-color: var(--admin-line-strong) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+#nc-root input:not([type="checkbox"]):not([type="radio"]):focus,
+#nc-root textarea:focus,
+#nc-root select:focus {
+  border-color: var(--admin-brand) !important;
+  box-shadow: 0 0 0 3px rgba(31, 111, 120, 0.10) !important;
+}
+
+#nc-root label,
+#nc-root [class*="FieldLabel"] {
+  color: var(--admin-ink) !important;
+  font-weight: 600 !important;
+}
+
+#nc-root [class*="FieldDescription"],
+#nc-root [class*="Hint"],
+#nc-root small {
+  color: var(--admin-muted) !important;
+  line-height: 1.55;
+}
+
+/* Editor: panels are the only large cards in the application. */
+#nc-root [class$="-ControlPaneContainer"],
+#nc-root [class$="-PreviewPaneContainer"],
+#nc-root [class$="-EditorControlPane"] {
+  background: var(--admin-paper) !important;
+  border: 1px solid var(--admin-line) !important;
+  border-radius: var(--admin-radius) !important;
+  box-shadow: none !important;
+}
+
+#nc-root [class*="ToolbarContainer"],
+#nc-root [class*="EditorToolbar"] {
+  background: #f8fafa !important;
+  border-color: var(--admin-line) !important;
+  border-radius: 8px 8px 0 0 !important;
+  box-shadow: none !important;
+}
+
+#nc-root [class*="Toolbar"] button {
+  min-width: 38px;
+  min-height: 38px;
+  color: var(--admin-muted) !important;
+  background: transparent !important;
+}
+
+#nc-root [class*="Toolbar"] button:hover {
+  color: var(--admin-brand) !important;
+  background: var(--admin-brand-soft) !important;
+}
+
+#nc-root [class*="MarkdownControl"] textarea,
+#nc-root [class*="CodeMirror"] {
+  color: var(--admin-ink) !important;
+  background: var(--admin-paper) !important;
+  font: 400 0.95rem/1.8 var(--admin-mono) !important;
+  tab-size: 2;
+}
+
+#nc-root [class*="PreviewPane"] iframe {
+  background: var(--admin-paper);
+  border-radius: 8px;
+}
+
+/* Dialogs and dropdowns */
+#nc-root [role="dialog"],
+#nc-root [role="menu"],
+#nc-root [role="listbox"],
+#nc-root [class*="DropdownList"],
+#nc-root [class*="Popover"] {
+  background: var(--admin-paper) !important;
+  border: 1px solid var(--admin-line) !important;
+  border-radius: var(--admin-radius) !important;
+  box-shadow: var(--admin-shadow) !important;
+}
+
+#nc-root [role="menuitem"],
+#nc-root [role="option"] {
+  border-radius: 6px !important;
+}
+
+#nc-root [role="option"]:hover,
+#nc-root [role="option"][aria-selected="true"] {
+  color: var(--admin-brand) !important;
+  background: var(--admin-brand-soft) !important;
+}
+
+/* Login */
+#nc-root [class*="LoginPage"],
+#nc-root [class*="LoginContainer"] {
+  background: var(--admin-canvas) !important;
+}
+
+#nc-root [class*="LoginCard"],
+#nc-root [class*="LoginPanel"] {
+  overflow: hidden;
+  background: var(--admin-paper) !important;
+  border: 1px solid var(--admin-line) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--admin-shadow) !important;
+}
+
+#nc-root [class*="LoginCard"]::before,
+#nc-root [class*="LoginPanel"]::before {
+  display: none !important;
+  content: none !important;
+}
+
+#nc-root [class*="Login"] img {
+  border-radius: 12px;
+  box-shadow: none !important;
+}
+
+@media (max-width: 768px) {
+  .admin-loading__card {
+    padding: 34px 24px 28px;
+  }
+
+  #nc-root [class*="CollectionTop"],
+  #nc-root [class$="-CollectionContainer"],
+  #nc-root [class$="-EntriesContainer"] {
+    width: 100%;
+    padding-right: 14px !important;
+    padding-left: 14px !important;
+  }
+
+  #nc-root button,
+  #nc-root [role="button"] {
+    min-height: 44px;
+  }
+
+  #nc-root [class$="-EntryCard"],
+  #nc-root [class$="-ListCard"] {
+    min-height: 62px;
+    border-radius: 8px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --admin-line: #aebfc1;
+    --admin-line-strong: #839b9e;
+  }
+}
