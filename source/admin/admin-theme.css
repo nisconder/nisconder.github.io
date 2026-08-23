@@ -4,12 +4,12 @@
   --admin-brand-soft: #eef6f6;
   --admin-ink: #26373a;
   --admin-muted: #6d7d80;
-  --admin-canvas: #f5f7f7;
+  --admin-canvas: #f4f7f7;
   --admin-paper: #ffffff;
   --admin-line: #dbe3e4;
   --admin-line-strong: #bfcdd0;
-  --admin-radius: 6px;
-  --admin-shadow: 0 1px 2px rgba(23, 55, 59, 0.05), 0 6px 18px rgba(23, 55, 59, 0.05);
+  --admin-radius: 4px;
+  --admin-shadow: 0 8px 24px rgba(23, 55, 59, 0.06);
   --admin-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
   --admin-sans: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
   --admin-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
@@ -153,9 +153,7 @@ body::before {
 }
 
 #nc-root [class*="Avatar"],
-#nc-root [class*="Avatar"] *,
-#nc-root [role="switch"],
-#nc-root [role="switch"] * {
+#nc-root [class*="Avatar"] * {
   border-radius: 999px !important;
 }
 
@@ -207,7 +205,7 @@ body::before {
 #nc-root header,
 #nc-root [class$="-AppHeader"],
 #nc-root [class*="AppHeaderContent"] {
-  min-height: 62px !important;
+  min-height: 68px !important;
   background: var(--admin-paper) !important;
   border: 0 !important;
   border-bottom: 1px solid var(--admin-line) !important;
@@ -225,8 +223,8 @@ body::before {
 #nc-root [data-admin-nav="top"] {
   display: inline-flex !important;
   align-items: center;
-  min-height: 62px !important;
-  padding: 0 18px !important;
+  min-height: 68px !important;
+  padding: 0 20px !important;
   color: var(--admin-muted) !important;
   background: transparent !important;
   border: 0 !important;
@@ -315,7 +313,7 @@ body::before {
 #nc-root [class$="-CollectionContainer"],
 #nc-root [class$="-EntriesContainer"] {
   width: 100%;
-  max-width: 960px !important;
+  max-width: 1080px !important;
 }
 
 #nc-root [class*="CollectionTop"],
@@ -326,8 +324,33 @@ body::before {
 }
 
 #nc-root [class*="CollectionTop"] {
-  padding-top: 34px !important;
-  padding-bottom: 24px !important;
+  min-height: 0 !important;
+  margin: 0 auto !important;
+  padding: 52px 28px 36px !important;
+}
+
+#nc-root [data-admin-section="collection-heading"] {
+  position: relative !important;
+  height: auto !important;
+  min-height: 132px !important;
+}
+
+#nc-root [data-admin-section="collection-heading"] h1,
+#nc-root [data-admin-section="collection-heading"] h2 {
+  display: flex !important;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 !important;
+  font-size: 30px !important;
+  line-height: 40px !important;
+}
+
+#nc-root [data-admin-section="collection-heading"] h1::after,
+#nc-root [data-admin-section="collection-heading"] h2::after {
+  color: var(--admin-muted);
+  content: attr(data-admin-count);
+  font: 500 12px/1 var(--admin-mono);
+  letter-spacing: 0.04em;
 }
 
 #nc-root [class*="Card"] {
@@ -352,6 +375,12 @@ body::before {
   font-weight: 600 !important;
 }
 
+#nc-root [data-admin-section="collection-heading"] [data-admin-action="new-post"] {
+  position: absolute !important;
+  top: 52px;
+  right: 28px;
+}
+
 #nc-root [data-admin-action="new-post"] > * {
   display: none !important;
 }
@@ -372,14 +401,13 @@ body::before {
   display: flex !important;
   align-items: center;
   width: 100% !important;
-  min-height: 58px !important;
-  margin: 0 0 8px !important;
-  padding: 16px 18px !important;
+  min-height: 68px !important;
+  margin: 0 !important;
+  padding: 20px 22px !important;
   color: var(--admin-ink) !important;
   background: var(--admin-paper) !important;
   border: 1px solid var(--admin-line) !important;
-  border-radius: var(--admin-radius) !important;
-  box-shadow: 0 1px 2px rgba(23, 55, 59, 0.04) !important;
+  border-radius: 0 !important;
   text-align: left !important;
 }
 
@@ -394,7 +422,39 @@ body::before {
   color: var(--admin-brand) !important;
   background: #fcfefe !important;
   border-color: var(--admin-line-strong) !important;
-  box-shadow: var(--admin-shadow) !important;
+  border-left: 3px solid var(--admin-brand) !important;
+  padding-left: 20px !important;
+}
+
+#nc-root [data-admin-entry="post"] + [data-admin-entry="post"] {
+  border-top-color: transparent !important;
+}
+
+#nc-root [class$="-EntriesContainer"] {
+  margin: 0 auto !important;
+  padding: 0 28px 72px !important;
+}
+
+#nc-root [data-admin-section="list-controls"] {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 40px !important;
+  margin: 0 0 18px !important;
+  padding: 0 !important;
+}
+
+#nc-root [data-admin-action="list-control"] {
+  min-height: 36px !important;
+  padding: 0 10px !important;
+  color: var(--admin-muted) !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+
+#nc-root [data-admin-action="list-control"]:hover {
+  color: var(--admin-brand) !important;
+  background: var(--admin-brand-soft) !important;
 }
 
 /* Header actions */
@@ -430,11 +490,18 @@ body::before {
 #nc-root select,
 #nc-root [class*="SelectControl"] > div,
 #nc-root [class*="DateTimeControl"] input {
-  min-height: 42px;
+  min-height: 48px;
   color: var(--admin-ink) !important;
   background: var(--admin-paper) !important;
   border: 1px solid var(--admin-line-strong) !important;
   border-radius: var(--admin-radius) !important;
+}
+
+#nc-root input:not([type="checkbox"]):not([type="radio"]),
+#nc-root textarea,
+#nc-root select {
+  padding-right: 14px !important;
+  padding-left: 14px !important;
 }
 
 #nc-root input:not([type="checkbox"]):not([type="radio"]):focus,
@@ -446,10 +513,35 @@ body::before {
 #nc-root label,
 #nc-root [class*="FieldLabel"] {
   color: var(--admin-ink) !important;
-  font-size: 13px !important;
+  font-size: 14px !important;
   font-weight: 600 !important;
   background: transparent !important;
   padding: 0 !important;
+}
+
+#nc-root [class*="ControlContainer"] {
+  margin-bottom: 30px !important;
+  padding: 0 !important;
+}
+
+#nc-root [class*="SelectControl"] {
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+
+#nc-root [class*="SelectControl"] > div {
+  height: 48px !important;
+  min-height: 48px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+#nc-root [class*="SelectControl"] input {
+  height: auto !important;
+  min-height: 0 !important;
 }
 
 #nc-root [class*="DateTimeControl"] {
@@ -459,7 +551,7 @@ body::before {
 }
 
 #nc-root [class*="DateTimeControl"] button {
-  min-height: 42px;
+  min-height: 48px;
   color: var(--admin-brand) !important;
   background: var(--admin-brand-soft) !important;
   border: 1px solid transparent !important;
@@ -474,19 +566,28 @@ body::before {
   line-height: 1.5;
 }
 
+#nc-root [class*="FieldDescription"],
+#nc-root [class*="Hint"] {
+  margin-top: 7px !important;
+}
+
 /* Editor proportions */
 #nc-root [class$="-ControlPaneContainer"],
 #nc-root [class$="-PreviewPaneContainer"],
 #nc-root [class$="-EditorControlPane"] {
   background: var(--admin-paper) !important;
-  border: 1px solid var(--admin-line) !important;
-  border-radius: var(--admin-radius) !important;
-  overflow: hidden;
+  border: 0 !important;
+  border-radius: 0 !important;
+  overflow: visible;
+}
+
+#nc-root [class$="-EditorControlPane"] {
+  padding: 42px 48px 72px !important;
 }
 
 #nc-root [class*="ToolbarContainer"],
 #nc-root [class*="EditorToolbar"] {
-  min-height: 48px !important;
+  min-height: 54px !important;
   background: #f7f9f9 !important;
   border: 0 !important;
   border-bottom: 1px solid var(--admin-line) !important;
@@ -508,8 +609,8 @@ body::before {
 
 #nc-root [contenteditable="true"],
 #nc-root [data-slate-editor="true"] {
-  min-height: 360px !important;
-  height: 360px !important;
+  min-height: 420px !important;
+  height: 420px !important;
   max-height: 58vh !important;
   padding: 20px !important;
   overflow: auto !important;
@@ -520,8 +621,8 @@ body::before {
 #nc-root [class*="MarkdownControl"] textarea,
 #nc-root .CodeMirror,
 #nc-root .CodeMirror-scroll {
-  min-height: 360px !important;
-  height: 360px !important;
+  min-height: 420px !important;
+  height: 420px !important;
   max-height: 58vh !important;
   color: var(--admin-ink) !important;
   background: var(--admin-paper) !important;
@@ -530,6 +631,90 @@ body::before {
 
 #nc-root [class*="PreviewPane"] iframe {
   background: var(--admin-paper);
+}
+
+/* Homepage order is a choice, not an ambiguous on/off switch. */
+#nc-root .admin-pin-control {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 240px));
+  gap: 12px;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+
+#nc-root .admin-pin-control__option {
+  display: grid !important;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-height: 72px !important;
+  padding: 13px 15px !important;
+  color: var(--admin-ink) !important;
+  background: var(--admin-paper) !important;
+  border: 1px solid var(--admin-line-strong) !important;
+  border-radius: var(--admin-radius) !important;
+  text-align: left;
+}
+
+#nc-root .admin-pin-control__option:hover {
+  border-color: var(--admin-brand) !important;
+}
+
+#nc-root .admin-pin-control__option.is-active {
+  color: var(--admin-brand) !important;
+  background: var(--admin-brand-soft) !important;
+  border-color: var(--admin-brand) !important;
+}
+
+#nc-root .admin-pin-control__mark {
+  display: block;
+  width: 16px;
+  height: 16px;
+  background: var(--admin-paper);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: 50% !important;
+}
+
+#nc-root .admin-pin-control__option.is-active .admin-pin-control__mark {
+  border: 5px solid var(--admin-brand);
+}
+
+#nc-root .admin-pin-control__copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+#nc-root .admin-pin-control__copy strong {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+#nc-root .admin-pin-control__copy small {
+  color: var(--admin-muted) !important;
+  font-size: 11px !important;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* The rich-text/Markdown switch is kept compact and visually subordinate. */
+#nc-root [role="switch"] {
+  width: 38px !important;
+  min-width: 38px !important;
+  height: 20px !important;
+  min-height: 20px !important;
+  padding: 2px !important;
+  border: 1px solid var(--admin-line-strong) !important;
+  border-radius: 999px !important;
+}
+
+#nc-root [role="switch"] * {
+  border-radius: 50% !important;
 }
 
 /* Menus and dialogs use a line, not artificial elevation. */
@@ -617,7 +802,7 @@ body::before {
 
 #nc-root .admin-tag-control__input-row input,
 #nc-root .admin-tag-control__input-row button {
-  min-height: 42px;
+  min-height: 48px;
   border-radius: var(--admin-radius) !important;
 }
 
@@ -660,6 +845,29 @@ body::before {
 
   #nc-root [data-admin-action="new-post"] {
     min-width: 100px;
+  }
+
+  #nc-root [data-admin-section="collection-heading"] {
+    min-height: 172px !important;
+    padding: 36px 16px 28px !important;
+  }
+
+  #nc-root [data-admin-section="collection-heading"] [data-admin-action="new-post"] {
+    position: static !important;
+    margin-top: 24px !important;
+  }
+
+  #nc-root [class$="-EntriesContainer"] {
+    padding-right: 16px !important;
+    padding-left: 16px !important;
+  }
+
+  #nc-root [class$="-EditorControlPane"] {
+    padding: 28px 18px 56px !important;
+  }
+
+  #nc-root .admin-pin-control {
+    grid-template-columns: 1fr;
   }
 
   #nc-root [contenteditable="true"],
