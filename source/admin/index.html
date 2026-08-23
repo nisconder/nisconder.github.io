@@ -8,7 +8,7 @@
   <title>写作后台｜不知名博客</title>
   <link rel="icon" href="/img/favicon.ico">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="/admin/admin-theme.css?v=2">
+  <link rel="stylesheet" href="/admin/admin-theme.css?v=3">
 </head>
 <body>
   <div id="admin-loading" role="status" aria-live="polite">
@@ -28,20 +28,73 @@
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.15.1/dist/decap-cms.js"></script>
   <script>
     if (window.CMS) {
-      CMS.registerPreviewStyle('/admin/editor-preview.css?v=2');
+      CMS.registerPreviewStyle('/admin/editor-preview.css?v=3');
     }
 
     (function () {
       var loading = document.getElementById('admin-loading');
+      var decorationFrame = 0;
+
       var finishLoading = function () {
         if (!loading || !document.querySelector('#nc-root > *')) return;
         loading.classList.add('is-finished');
         window.setTimeout(function () { loading.remove(); }, 280);
-        observer.disconnect();
       };
-      var observer = new MutationObserver(finishLoading);
+
+      var decorateCMS = function () {
+        decorationFrame = 0;
+        var root = document.getElementById('nc-root');
+        if (!root) return;
+
+        var currentRoute = window.location.hash || '#/';
+        root.querySelectorAll('a[href]').forEach(function (link) {
+          var href = link.getAttribute('href') || '';
+          var isTopNavigation = link.getBoundingClientRect().top < 120;
+
+          if (isTopNavigation && (href === '#/collections/posts' || href === '#/media')) {
+            link.dataset.adminNav = 'top';
+            link.dataset.adminActive = String(
+              href === '#/collections/posts'
+                ? currentRoute.indexOf('#/collections/posts') === 0
+                : href === currentRoute
+            );
+          } else if (href === '#/collections/posts') {
+            link.dataset.adminNav = 'collection';
+            link.dataset.adminActive = String(currentRoute.indexOf('#/collections/posts') === 0);
+          }
+
+          if (/\/collections\/posts\/new$/.test(href)) {
+            link.dataset.adminAction = 'new-post';
+            link.setAttribute('aria-label', '新建文章');
+          }
+
+          if (/\/collections\/posts\/entries\//.test(href)) {
+            link.dataset.adminEntry = 'post';
+          }
+        });
+
+        root.querySelectorAll('input[placeholder]').forEach(function (input) {
+          if (input.placeholder.indexOf('查找') !== -1) {
+            input.dataset.adminSearch = 'posts';
+            input.placeholder = '搜索文章';
+          }
+        });
+      };
+
+      var scheduleDecoration = function () {
+        if (decorationFrame) return;
+        decorationFrame = window.requestAnimationFrame(decorateCMS);
+      };
+
+      var observer = new MutationObserver(function () {
+        finishLoading();
+        scheduleDecoration();
+      });
       observer.observe(document.body, { childList: true, subtree: true });
       finishLoading();
+      scheduleDecoration();
+      window.addEventListener('hashchange', scheduleDecoration);
+      window.addEventListener('resize', scheduleDecoration);
 
       window.setTimeout(function () {
         if (!loading || loading.classList.contains('is-finished')) return;

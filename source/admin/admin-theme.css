@@ -1,15 +1,13 @@
 :root {
   --admin-brand: #1f6f78;
   --admin-brand-hover: #185b63;
-  --admin-brand-soft: #e8f2f2;
-  --admin-ink: #233437;
-  --admin-muted: #708084;
-  --admin-canvas: #f4f7f7;
+  --admin-brand-soft: #eef6f6;
+  --admin-ink: #26373a;
+  --admin-muted: #6d7d80;
+  --admin-canvas: #f5f7f7;
   --admin-paper: #ffffff;
-  --admin-line: #dce6e6;
-  --admin-line-strong: #c8d7d8;
-  --admin-radius: 10px;
-  --admin-shadow: 0 1px 2px rgba(20, 50, 54, 0.04), 0 5px 16px rgba(20, 50, 54, 0.05);
+  --admin-line: #dbe3e4;
+  --admin-line-strong: #bfcdd0;
   --admin-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
   --admin-sans: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
   --admin-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
@@ -31,16 +29,15 @@ body {
 body {
   color: var(--admin-ink);
   background: var(--admin-canvas);
-  font-family: var(--admin-sans);
+  font: 400 14px/1.55 var(--admin-sans);
   -webkit-font-smoothing: antialiased;
 }
 
-/* One quiet brand gesture; everything below it stays functional. */
 body::before {
   position: fixed;
   z-index: 10000;
   inset: 0 0 auto;
-  height: 3px;
+  height: 2px;
   background: var(--admin-brand);
   content: "";
   pointer-events: none;
@@ -51,7 +48,7 @@ body::before {
   background: var(--admin-brand);
 }
 
-/* Loading screen */
+/* Loading screen: same geometry as the application, with no decorative card. */
 #admin-loading {
   position: fixed;
   z-index: 9999;
@@ -60,7 +57,7 @@ body::before {
   place-items: center;
   padding: 24px;
   background: var(--admin-canvas);
-  transition: opacity 180ms ease, visibility 180ms ease;
+  transition: opacity 160ms ease, visibility 160ms ease;
 }
 
 #admin-loading.is-finished {
@@ -69,41 +66,40 @@ body::before {
 }
 
 .admin-loading__card {
-  width: min(100%, 360px);
-  padding: 38px 34px 32px;
+  width: min(100%, 340px);
+  padding: 34px 32px 28px;
   text-align: center;
   background: var(--admin-paper);
   border: 1px solid var(--admin-line);
-  border-radius: 14px;
-  box-shadow: var(--admin-shadow);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .admin-loading__card img {
   display: block;
-  width: 56px;
-  height: 56px;
-  margin: 20px auto 14px;
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  margin: 18px auto 12px;
 }
 
 .admin-loading__eyebrow {
   color: var(--admin-brand);
-  font: 600 0.66rem/1.4 var(--admin-mono);
-  letter-spacing: 0.13em;
+  font: 600 10px/1.4 var(--admin-mono);
+  letter-spacing: 0.12em;
 }
 
 .admin-loading__card h1 {
   margin: 0;
   color: var(--admin-ink);
-  font: 700 2rem/1.25 var(--admin-serif);
-  letter-spacing: 0.06em;
+  font: 700 28px/1.3 var(--admin-serif);
+  letter-spacing: 0.04em;
 }
 
 .admin-loading__card p {
   min-height: 1.5em;
-  margin: 9px 0 24px;
+  margin: 7px 0 22px;
   color: var(--admin-muted);
-  font-size: 0.875rem;
+  font-size: 13px;
 }
 
 .admin-loading__line {
@@ -116,7 +112,7 @@ body::before {
 
 .admin-loading__line::after {
   display: block;
-  width: 34%;
+  width: 32%;
   height: 100%;
   background: var(--admin-brand);
   content: "";
@@ -125,23 +121,44 @@ body::before {
 
 @keyframes admin-loading {
   from { transform: translateX(-110%); }
-  to { transform: translateX(395%); }
+  to { transform: translateX(410%); }
 }
 
 .admin-noscript {
   max-width: 520px;
   margin: 64px auto;
-  padding: 22px;
+  padding: 20px;
   background: var(--admin-paper);
   border: 1px solid var(--admin-line);
 }
 
-/* Decap foundation */
+/*
+ * Hard reset for Decap's generated components.
+ * Shape and elevation are removed globally, then restored only where semantic.
+ */
+#nc-root,
+#nc-root * {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
 #nc-root {
   min-height: 100vh;
   color: var(--admin-ink);
-  background: var(--admin-canvas);
+  background: var(--admin-canvas) !important;
   font-family: var(--admin-sans);
+}
+
+#nc-root [class*="Avatar"],
+#nc-root [class*="Avatar"] *,
+#nc-root [role="switch"],
+#nc-root [role="switch"] * {
+  border-radius: 999px !important;
+}
+
+#nc-root input[type="radio"] {
+  border-radius: 50% !important;
 }
 
 #nc-root button,
@@ -153,15 +170,22 @@ body::before {
 
 #nc-root h1,
 #nc-root h2,
-#nc-root h3 {
-  color: var(--admin-ink) !important;
+#nc-root h3,
+#nc-root p {
+  margin-top: 0;
 }
 
 #nc-root h1,
 #nc-root h2 {
+  color: var(--admin-ink) !important;
   font-family: var(--admin-serif) !important;
-  letter-spacing: 0.02em;
+  font-weight: 650 !important;
+  letter-spacing: 0.015em;
 }
+
+#nc-root h1 { font-size: 26px !important; }
+#nc-root h2 { font-size: 21px !important; }
+#nc-root h3 { font-size: 16px !important; }
 
 #nc-root a {
   color: var(--admin-brand);
@@ -173,69 +197,111 @@ body::before {
 #nc-root textarea:focus-visible,
 #nc-root select:focus-visible,
 #nc-root [tabindex]:focus-visible {
-  outline: 3px solid rgba(31, 111, 120, 0.28) !important;
+  outline: 2px solid var(--admin-brand) !important;
   outline-offset: 2px !important;
 }
 
-/* Top bar: flat, stable, no glass or floating shadow. */
+/* Top navigation */
+#nc-root header,
 #nc-root [class$="-AppHeader"],
-#nc-root [class*="AppHeaderContent"],
-#nc-root header[class*="css-"] {
+#nc-root [class*="AppHeaderContent"] {
+  min-height: 62px !important;
   background: var(--admin-paper) !important;
+  border: 0 !important;
   border-bottom: 1px solid var(--admin-line) !important;
-  box-shadow: none !important;
+}
+
+#nc-root header a,
+#nc-root header button,
+#nc-root [class*="AppHeader"] a,
+#nc-root [class*="AppHeader"] button {
+  color: var(--admin-muted) !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+
+#nc-root [data-admin-nav="top"] {
+  display: inline-flex !important;
+  align-items: center;
+  min-height: 62px !important;
+  padding: 0 18px !important;
+  color: var(--admin-muted) !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 2px solid transparent !important;
+}
+
+#nc-root [data-admin-nav="top"]:hover {
+  color: var(--admin-ink) !important;
+  background: #fafcfc !important;
+}
+
+#nc-root [data-admin-nav="top"][data-admin-active="true"] {
+  color: var(--admin-brand) !important;
+  background: transparent !important;
+  border-bottom-color: var(--admin-brand) !important;
 }
 
 #nc-root [class*="AppHeader"] img,
-#nc-root [class*="Header"] img {
-  border-radius: 8px;
+#nc-root header img {
   box-shadow: none !important;
 }
 
-#nc-root [class*="AppHeader"] a,
-#nc-root [class*="AppHeader"] button,
-#nc-root header a,
-#nc-root header button {
-  border-radius: 8px !important;
-  box-shadow: none !important;
-}
-
-/* Sidebar: a compact index, separated by one line only. */
+/* Sidebar */
+#nc-root aside,
 #nc-root [class$="-SidebarContainer"],
-#nc-root [class$="-SidebarNav"],
-#nc-root aside[class*="css-"] {
-  background: #f9fbfb !important;
+#nc-root [class$="-SidebarNav"] {
+  width: 224px !important;
+  background: #fbfcfc !important;
+  border: 0 !important;
   border-right: 1px solid var(--admin-line) !important;
-  box-shadow: none !important;
 }
 
-#nc-root [class*="Sidebar"] a,
-#nc-root [class*="Sidebar"] button,
-#nc-root aside a,
-#nc-root aside button {
+#nc-root aside h1,
+#nc-root aside h2,
+#nc-root [class*="Sidebar"] h1,
+#nc-root [class*="Sidebar"] h2 {
+  margin-bottom: 18px !important;
+  font-size: 20px !important;
+}
+
+#nc-root [data-admin-search="posts"] {
+  width: 100% !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 12px 0 38px !important;
+  color: var(--admin-ink) !important;
+  background: var(--admin-paper) !important;
+  border: 1px solid var(--admin-line) !important;
+}
+
+#nc-root [data-admin-search="posts"]:focus {
+  border-color: var(--admin-brand) !important;
+}
+
+#nc-root [data-admin-nav="collection"] {
+  display: flex !important;
+  align-items: center;
+  min-height: 44px !important;
+  padding: 0 14px !important;
   color: var(--admin-muted) !important;
-  border-radius: 7px !important;
-  box-shadow: none !important;
-  transition: color 140ms ease, background 140ms ease;
+  background: transparent !important;
+  border: 0 !important;
+  border-left: 2px solid transparent !important;
 }
 
-#nc-root [class*="Sidebar"] a:hover,
-#nc-root [class*="Sidebar"] button:hover,
-#nc-root aside a:hover,
-#nc-root aside button:hover {
+#nc-root [data-admin-nav="collection"]:hover {
   color: var(--admin-ink) !important;
   background: var(--admin-brand-soft) !important;
-  transform: none !important;
 }
 
-#nc-root [class*="Sidebar"] a[aria-current="page"],
-#nc-root aside a[aria-current="page"] {
+#nc-root [data-admin-nav="collection"][data-admin-active="true"] {
   color: var(--admin-brand) !important;
   background: var(--admin-brand-soft) !important;
-  box-shadow: inset 3px 0 var(--admin-brand) !important;
+  border-left-color: var(--admin-brand) !important;
 }
 
-/* Main workspace: one canvas and no decorative texture. */
+/* Main workspace */
 #nc-root main,
 #nc-root [class$="-CollectionMain"],
 #nc-root [class$="-EditorContainer"] {
@@ -245,137 +311,113 @@ body::before {
 #nc-root [class*="CollectionTop"],
 #nc-root [class$="-CollectionContainer"],
 #nc-root [class$="-EntriesContainer"] {
-  max-width: 1120px;
+  width: 100%;
+  max-width: 1040px !important;
 }
 
-/* Remove the oversized card around the collection heading. */
-#nc-root [class*="CollectionTop"] {
-  background: transparent !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-}
-
-/* Remove the extra white tray around all entries. */
+#nc-root [class*="CollectionTop"],
+#nc-root [class*="CollectionTop"] > *,
 #nc-root [class$="-EntriesContainer"] {
   background: transparent !important;
   border: 0 !important;
-  border-radius: 0 !important;
+}
+
+#nc-root [class*="CollectionTop"] {
+  padding-top: 34px !important;
+  padding-bottom: 24px !important;
+}
+
+#nc-root [class*="Card"] {
   box-shadow: none !important;
 }
 
-/* New article is the single dominant action on this screen. */
-#nc-root a[href$="/new"],
-#nc-root a[href*="/new?"] {
-  min-height: 42px;
-  padding-right: 20px !important;
-  padding-left: 20px !important;
+/* Primary action: one label, one color, no icon ambiguity. */
+#nc-root [data-admin-action="new-post"] {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 112px;
+  min-height: 40px !important;
+  padding: 0 18px !important;
+  overflow: hidden;
   color: #fff !important;
   background: var(--admin-brand) !important;
   border: 1px solid var(--admin-brand) !important;
-  border-radius: 8px !important;
-  box-shadow: none !important;
+  font-size: 0 !important;
   font-weight: 600 !important;
 }
 
-#nc-root a[href$="/new"]:hover,
-#nc-root a[href*="/new?"]:hover {
+#nc-root [data-admin-action="new-post"] > * {
+  display: none !important;
+}
+
+#nc-root [data-admin-action="new-post"]::after {
+  color: #fff !important;
+  content: "新建文章";
+  font-size: 14px !important;
+}
+
+#nc-root [data-admin-action="new-post"]:hover {
   background: var(--admin-brand-hover) !important;
   border-color: var(--admin-brand-hover) !important;
 }
 
-/* Entry rows: white paper, left aligned, one border, no nested pill. */
-#nc-root [class$="-EntryCard"] {
-  min-height: 68px;
-  overflow: hidden;
-  text-align: left !important;
+/* Article list: one flat row per post. */
+#nc-root [data-admin-entry="post"] {
+  display: flex !important;
+  align-items: center;
+  width: 100% !important;
+  min-height: 58px !important;
+  margin: 0 0 8px !important;
+  padding: 16px 18px !important;
+  color: var(--admin-ink) !important;
   background: var(--admin-paper) !important;
   border: 1px solid var(--admin-line) !important;
-  border-radius: var(--admin-radius) !important;
-  box-shadow: none !important;
-  transition: border-color 140ms ease, box-shadow 140ms ease;
-}
-
-#nc-root [class$="-EntryCard"]::before,
-#nc-root [class$="-ListCard"]::before {
-  display: none !important;
-  content: none !important;
-}
-
-#nc-root [class$="-EntryCard"] *,
-#nc-root [class$="-EntryCard"] a {
   text-align: left !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
 }
 
-#nc-root [class$="-EntryCard"]:hover {
+#nc-root [data-admin-entry="post"] *,
+#nc-root [data-admin-entry="post"]::before,
+#nc-root [data-admin-entry="post"]::after {
+  color: inherit !important;
+  text-align: left !important;
+}
+
+#nc-root [data-admin-entry="post"]:hover {
+  color: var(--admin-brand) !important;
+  background: #fcfefe !important;
   border-color: var(--admin-line-strong) !important;
-  box-shadow: var(--admin-shadow) !important;
-  transform: none !important;
 }
 
-/* Some Decap builds label rows as ListCard instead. */
-#nc-root [class$="-ListCard"] {
-  text-align: left !important;
-  background: var(--admin-paper) !important;
-  border: 1px solid var(--admin-line) !important;
-  border-radius: var(--admin-radius) !important;
-  box-shadow: none !important;
-}
-
-#nc-root [class$="-ListCard"] * {
-  text-align: left !important;
-  box-shadow: none !important;
-}
-
-/* Buttons: quiet by default, solid brand for primary actions. */
+/* Controls */
 #nc-root button,
 #nc-root [role="button"] {
-  min-height: 40px;
-  border-radius: 8px !important;
-  box-shadow: none !important;
-  transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
-}
-
-#nc-root button:hover,
-#nc-root [role="button"]:hover {
-  box-shadow: none !important;
+  min-height: 38px;
   transform: none !important;
+  transition: color 120ms ease, background 120ms ease, border-color 120ms ease;
 }
 
-#nc-root [class*="PublishButton"],
-#nc-root [class*="LoginButton"],
-#nc-root button[class*="primary" i] {
-  color: #fff !important;
-  background: var(--admin-brand) !important;
-  border-color: var(--admin-brand) !important;
-}
-
-/* Inputs: one boundary and a restrained focus state. */
 #nc-root input:not([type="checkbox"]):not([type="radio"]),
 #nc-root textarea,
 #nc-root select,
 #nc-root [class*="SelectControl"] > div,
 #nc-root [class*="DateTimeControl"] input {
-  min-height: 44px;
+  min-height: 42px;
   color: var(--admin-ink) !important;
   background: var(--admin-paper) !important;
-  border-color: var(--admin-line-strong) !important;
-  border-radius: 8px !important;
-  box-shadow: none !important;
+  border: 1px solid var(--admin-line-strong) !important;
 }
 
 #nc-root input:not([type="checkbox"]):not([type="radio"]):focus,
 #nc-root textarea:focus,
 #nc-root select:focus {
   border-color: var(--admin-brand) !important;
-  box-shadow: 0 0 0 3px rgba(31, 111, 120, 0.10) !important;
 }
 
 #nc-root label,
 #nc-root [class*="FieldLabel"] {
   color: var(--admin-ink) !important;
+  font-size: 13px !important;
   font-weight: 600 !important;
 }
 
@@ -383,32 +425,32 @@ body::before {
 #nc-root [class*="Hint"],
 #nc-root small {
   color: var(--admin-muted) !important;
-  line-height: 1.55;
+  font-size: 12px !important;
+  line-height: 1.5;
 }
 
-/* Editor: panels are the only large cards in the application. */
+/* Editor proportions */
 #nc-root [class$="-ControlPaneContainer"],
 #nc-root [class$="-PreviewPaneContainer"],
 #nc-root [class$="-EditorControlPane"] {
   background: var(--admin-paper) !important;
   border: 1px solid var(--admin-line) !important;
-  border-radius: var(--admin-radius) !important;
-  box-shadow: none !important;
 }
 
 #nc-root [class*="ToolbarContainer"],
 #nc-root [class*="EditorToolbar"] {
-  background: #f8fafa !important;
-  border-color: var(--admin-line) !important;
-  border-radius: 8px 8px 0 0 !important;
-  box-shadow: none !important;
+  min-height: 48px !important;
+  background: #f7f9f9 !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--admin-line) !important;
 }
 
 #nc-root [class*="Toolbar"] button {
-  min-width: 38px;
-  min-height: 38px;
+  min-width: 36px;
+  min-height: 36px;
   color: var(--admin-muted) !important;
   background: transparent !important;
+  border: 0 !important;
 }
 
 #nc-root [class*="Toolbar"] button:hover {
@@ -416,34 +458,40 @@ body::before {
   background: var(--admin-brand-soft) !important;
 }
 
-#nc-root [class*="MarkdownControl"] textarea,
-#nc-root [class*="CodeMirror"] {
+#nc-root [contenteditable="true"],
+#nc-root [data-slate-editor="true"] {
+  min-height: 360px !important;
+  height: 360px !important;
+  max-height: 58vh !important;
+  padding: 20px !important;
+  overflow: auto !important;
   color: var(--admin-ink) !important;
   background: var(--admin-paper) !important;
-  font: 400 0.95rem/1.8 var(--admin-mono) !important;
-  tab-size: 2;
+}
+
+#nc-root [class*="MarkdownControl"] textarea,
+#nc-root .CodeMirror,
+#nc-root .CodeMirror-scroll {
+  min-height: 360px !important;
+  height: 360px !important;
+  max-height: 58vh !important;
+  color: var(--admin-ink) !important;
+  background: var(--admin-paper) !important;
+  font: 400 14px/1.75 var(--admin-mono) !important;
 }
 
 #nc-root [class*="PreviewPane"] iframe {
   background: var(--admin-paper);
-  border-radius: 8px;
 }
 
-/* Dialogs and dropdowns */
+/* Menus and dialogs use a line, not artificial elevation. */
 #nc-root [role="dialog"],
 #nc-root [role="menu"],
 #nc-root [role="listbox"],
 #nc-root [class*="DropdownList"],
 #nc-root [class*="Popover"] {
   background: var(--admin-paper) !important;
-  border: 1px solid var(--admin-line) !important;
-  border-radius: var(--admin-radius) !important;
-  box-shadow: var(--admin-shadow) !important;
-}
-
-#nc-root [role="menuitem"],
-#nc-root [role="option"] {
-  border-radius: 6px !important;
+  border: 1px solid var(--admin-line-strong) !important;
 }
 
 #nc-root [role="option"]:hover,
@@ -460,46 +508,45 @@ body::before {
 
 #nc-root [class*="LoginCard"],
 #nc-root [class*="LoginPanel"] {
-  overflow: hidden;
   background: var(--admin-paper) !important;
   border: 1px solid var(--admin-line) !important;
-  border-radius: 14px !important;
-  box-shadow: var(--admin-shadow) !important;
 }
 
-#nc-root [class*="LoginCard"]::before,
-#nc-root [class*="LoginPanel"]::before {
-  display: none !important;
-  content: none !important;
-}
-
-#nc-root [class*="Login"] img {
-  border-radius: 12px;
-  box-shadow: none !important;
+#nc-root [class*="LoginButton"] {
+  color: #fff !important;
+  background: var(--admin-brand) !important;
+  border: 1px solid var(--admin-brand) !important;
 }
 
 @media (max-width: 768px) {
-  .admin-loading__card {
-    padding: 34px 24px 28px;
+  #nc-root aside,
+  #nc-root [class$="-SidebarContainer"],
+  #nc-root [class$="-SidebarNav"] {
+    width: 100% !important;
   }
 
   #nc-root [class*="CollectionTop"],
   #nc-root [class$="-CollectionContainer"],
   #nc-root [class$="-EntriesContainer"] {
-    width: 100%;
-    padding-right: 14px !important;
-    padding-left: 14px !important;
+    padding-right: 16px !important;
+    padding-left: 16px !important;
   }
 
-  #nc-root button,
-  #nc-root [role="button"] {
-    min-height: 44px;
+  #nc-root [data-admin-nav="top"] {
+    padding: 0 13px !important;
   }
 
-  #nc-root [class$="-EntryCard"],
-  #nc-root [class$="-ListCard"] {
-    min-height: 62px;
-    border-radius: 8px !important;
+  #nc-root [data-admin-action="new-post"] {
+    min-width: 100px;
+  }
+
+  #nc-root [contenteditable="true"],
+  #nc-root [data-slate-editor="true"],
+  #nc-root [class*="MarkdownControl"] textarea,
+  #nc-root .CodeMirror,
+  #nc-root .CodeMirror-scroll {
+    min-height: 300px !important;
+    height: 300px !important;
   }
 }
 
@@ -516,7 +563,7 @@ body::before {
 
 @media (prefers-contrast: more) {
   :root {
-    --admin-line: #aebfc1;
-    --admin-line-strong: #839b9e;
+    --admin-line: #aababc;
+    --admin-line-strong: #71878a;
   }
 }
