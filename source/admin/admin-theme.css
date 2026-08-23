@@ -418,6 +418,15 @@ body::before {
   text-align: left !important;
 }
 
+#nc-root [data-admin-entry="post"] h1,
+#nc-root [data-admin-entry="post"] h2,
+#nc-root [data-admin-entry="post"] h3,
+#nc-root [data-admin-entry="post"] p,
+#nc-root [data-admin-entry="post"] span {
+  margin: 0 !important;
+  font: 600 15px/1.5 var(--admin-sans) !important;
+}
+
 #nc-root [data-admin-entry="post"]:hover {
   color: var(--admin-brand) !important;
   background: #fcfefe !important;
@@ -502,6 +511,10 @@ body::before {
 #nc-root select {
   padding-right: 14px !important;
   padding-left: 14px !important;
+}
+
+#nc-root input:not([type="checkbox"]):not([type="radio"]):not([data-admin-search="posts"]) {
+  height: 48px !important;
 }
 
 #nc-root input:not([type="checkbox"]):not([type="radio"]):focus,
@@ -636,9 +649,10 @@ body::before {
 /* Homepage order is a choice, not an ambiguous on/off switch. */
 #nc-root .admin-pin-control {
   display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 240px));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   width: 100% !important;
+  max-width: 520px;
   height: auto !important;
   min-height: 0 !important;
   padding: 0 !important;
