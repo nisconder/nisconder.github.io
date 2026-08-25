@@ -1,0 +1,202 @@
+---
+import { render } from 'astro:content'
+import type { GetStaticPaths } from 'astro'
+import BaseLayout from '../../../../layouts/BaseLayout.astro'
+import {
+  formatPostDate,
+  getPostCalendarParts,
+  getPostCategory,
+  getPostDateTime,
+  getPostDescription,
+  getPostSlug,
+  getPostTags,
+  getPostUrl,
+  getPublishedPosts,
+  type PostEntry,
+} from '../../../../lib/posts'
+
+interface Props {
+  post: PostEntry
+  newerPost?: PostEntry
+  olderPost?: PostEntry
+}
+
+export const getStaticPaths = (async () => {
+  const posts = await getPublishedPosts()
+
+  return posts.map((post, index) => {
+    const { year, month, day } = getPostCalendarParts(post.data.date)
+    return {
+      params: { year, month, day, slug: getPostSlug(post) },
+      props: {
+        post,
+        newerPost: posts[index - 1],
+        olderPost: posts[index + 1],
+      },
+    }
+  })
+}) satisfies GetStaticPaths
+
+const { post, newerPost, olderPost } = Astro.props
+const { Content, headings } = await render(post)
+const category = getPostCategory(post)
+const tags = getPostTags(post)
+const description = getPostDescription(post)
+const tableOfContents = headings.filter(({ depth }) => depth >= 2 && depth <= 3)
+const canonical = getPostUrl(post)
+---
+
+<BaseLayout
+  title={post.data.title}
+  description={description}
+  canonical={canonical}
+  image={post.data.image ?? post.data.cover}
+  ogType="article"
+>
+  <article>
+    <header class="article-header">
+      <p class="article-kicker">{category ?? 'Article'}</p>
+      <h1>{post.data.title}</h1>
+      <div class="article-meta">
+        <time datetime={getPostDateTime(post.data.date)}>
+          {formatPostDate(post.data.date)}
+        </time>
+        {post.data.updated && (
+          <span>
+            更新于 <time datetime={getPostDateTime(post.data.updated)}>
+              {formatPostDate(post.data.updated)}
+            </time>
+          </span>
+        )}
+      </div>
+      {tags.length > 0 && <p class="article-tags">{tags.join(' · ')}</p>}
+    </header>
+
+    {
+      tableOfContents.length >= 3 && (
+        <details class="article-toc">
+          <summary>本文目录</summary>
+          <ol>
+            {tableOfContents.map((heading) => (
+              <li data-depth={heading.depth}>
+                <a href={`#${heading.slug}`}>{heading.text}</a>
+              </li>
+            ))}
+          </ol>
+        </details>
+      )
+    }
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    <footer class="article-footer">
+      <a class="button secondary" href="/articles/">返回全部文章</a>
+      {
+        (newerPost || olderPost) && (
+          <nav class="article-neighbors" aria-label="相邻文章">
+            {newerPost && (
+              <a href={getPostUrl(newerPost)}>
+                <span>较新一篇</span>
+                <strong>{newerPost.data.title}</strong>
+              </a>
+            )}
+            {olderPost && (
+              <a href={getPostUrl(olderPost)}>
+                <span>较早一篇</span>
+                <strong>{olderPost.data.title}</strong>
+              </a>
+            )}
+          </nav>
+        )
+      }
+    </footer>
+  </article>
+
+  <section class="axis-section comments-section" data-note="讨论" id="comments">
+    <div class="section-heading">
+      <div>
+        <p class="article-kicker">Comments</p>
+        <h2>评论</h2>
+      </div>
+    </div>
+    <p data-waline-status aria-live="polite">滚动到这里后加载评论。</p>
+    <div data-waline-root data-path={canonical}></div>
+    <noscript>评论区需要启用 JavaScript；正文阅读不受影响。</noscript>
+  </section>
+</BaseLayout>
+
+<script is:inline>
+  (() => {
+    const root = document.querySelector('[data-waline-root]')
+    const status = document.querySelector('[data-waline-status]')
+    if (!(root instanceof HTMLElement) || !(status instanceof HTMLElement)) return
+
+    let loading = false
+
+    const loadStyles = () => new Promise((resolve, reject) => {
+      const href = 'https://cdn.jsdelivr.net/npm/@waline/client@3.7.1/dist/waline.min.css'
+      const existing = document.querySelector(`link[href="${href}"]`)
+      if (existing) return resolve()
+
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = href
+      link.onload = resolve
+      link.onerror = reject
+      document.head.append(link)
+    })
+
+    const showRetry = () => {
+      status.textContent = '评论加载失败。'
+      const retry = document.createElement('button')
+      retry.type = 'button'
+      retry.className = 'button secondary'
+      retry.textContent = '重新加载评论'
+      retry.addEventListener('click', () => {
+        retry.remove()
+        loadComments()
+      }, { once: true })
+      status.append(' ', retry)
+    }
+
+    const loadComments = async () => {
+      if (loading || root.dataset.loaded === 'true') return
+      loading = true
+      status.textContent = '正在加载评论…'
+
+      try {
+        const [, module] = await Promise.all([
+          loadStyles(),
+          import('https://cdn.jsdelivr.net/npm/@waline/client@3.7.1/dist/waline.min.js'),
+        ])
+
+        module.init({
+          el: root,
+          serverURL: 'https://my-waline-9uvuuvnty-nisconders-projects.vercel.app',
+          path: root.dataset.path,
+          login: 'force',
+          dark: "html[data-theme='dark']",
+        })
+        root.dataset.loaded = 'true'
+        status.remove()
+      } catch {
+        showRetry()
+      } finally {
+        loading = false
+      }
+    }
+
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return
+        observer.disconnect()
+        loadComments()
+      }, { rootMargin: '400px 0px' })
+      observer.observe(root)
+    } else {
+      loadComments()
+    }
+  })()
+</script>

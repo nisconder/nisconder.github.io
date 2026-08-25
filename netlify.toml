@@ -1,0 +1,67 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22.12.0"
+  NPM_FLAGS = "--ignore-scripts"
+
+[[redirects]]
+  from = "/archives/*"
+  to = "/articles/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/categories/*"
+  to = "/articles/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/tags/*"
+  to = "/articles/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/archives"
+  to = "/articles/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/categories"
+  to = "/articles/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/tags"
+  to = "/articles/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/link"
+  to = "/about/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/movies"
+  to = "/music/"
+  status = 301
+  force = true
+
+[[headers]]
+  for = "/_astro/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"

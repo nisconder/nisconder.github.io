@@ -1,0 +1,147 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro"
+---
+
+<BaseLayout
+  title="关于"
+  description="关于 Nisconder、这个博客，以及我在这里持续记录的内容。"
+>
+  <header class="page-intro">
+    <p class="eyebrow">ABOUT / NISCONDER</p>
+    <h1>把值得记住的东西，<br />写得清楚一点。</h1>
+    <p class="lede">
+      Nisconder，在这里记录代码、阅读、音乐与生活观察。写给未来的自己，也写给偶然路过的你。
+    </p>
+  </header>
+
+  <section class="axis-section about-copy" data-note="我在写什么">
+    <h2>四类没有严格边界的记录</h2>
+    <dl class="about-list">
+      <div>
+        <dt>技术笔记</dt>
+        <dd>写代码时踩过的坑、搭过的服务和折腾过的工具。这个博客本身也是一路实践留下的结果。</dd>
+      </div>
+      <div>
+        <dt>随笔与思考</dt>
+        <dd>关于哲学、社会和文化现象的零碎想法。它们不一定给出答案，但会尽量把问题讲明白。</dd>
+      </div>
+      <div>
+        <dt>音乐收藏</dt>
+        <dd>用歌单保存某个阶段反复听过的音乐，偶尔也写几句与音乐有关的记忆。</dd>
+      </div>
+      <div>
+        <dt>生活观察</dt>
+        <dd>日常里突然冒出来的感受。没有宏大的主题，只因为当时觉得值得记下一笔。</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="axis-section about-copy" data-note="关于本站">
+    <h2>一处尽量安静的个人空间</h2>
+    <p>
+      站点由 Astro 生成静态页面并部署在 Netlify。文章保存在仓库中，页面尽量少依赖客户端脚本，让阅读本身保持直接、稳定。
+    </p>
+    <p>
+      这里不会追求高频更新。比起填满时间线，我更在意一篇文字过一段时间再看，仍然说得通。
+    </p>
+  </section>
+
+  <section class="axis-section about-copy" data-note="联系">
+    <h2>找到我</h2>
+    <ul class="contact-list">
+      <li>
+        <span>GitHub</span>
+        <a href="https://github.com/nisconder" rel="me noreferrer">github.com/nisconder</a>
+      </li>
+      <li>
+        <span>邮箱</span>
+        <a href="mailto:72447244.wnm@gmail.com">72447244.wnm@gmail.com</a>
+      </li>
+    </ul>
+  </section>
+</BaseLayout>
+
+<style>
+  .page-intro h1 {
+    max-width: 17ch;
+  }
+
+  .about-list {
+    margin: 1.5rem 0 0;
+  }
+
+  .about-copy {
+    max-width: var(--content-width);
+  }
+
+  .about-copy h2 {
+    margin-bottom: 1rem;
+    font-size: clamp(1.65rem, 4vw, 2.15rem);
+    letter-spacing: -0.018em;
+  }
+
+  .about-copy > p {
+    line-height: 1.8;
+  }
+
+  .about-copy > p + p {
+    margin-top: 1.2rem;
+  }
+
+  .about-list > div {
+    display: grid;
+    grid-template-columns: minmax(7rem, 0.28fr) minmax(0, 1fr);
+    gap: 1.5rem;
+    padding-block: 1.25rem;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .about-list dt {
+    font-weight: 650;
+  }
+
+  .about-list dd {
+    margin: 0;
+    color: var(--color-muted);
+    line-height: 1.8;
+  }
+
+  .contact-list {
+    margin: 1.5rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .contact-list li {
+    display: grid;
+    grid-template-columns: minmax(7rem, 0.28fr) minmax(0, 1fr);
+    gap: 1.5rem;
+    padding-block: 0.85rem;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .contact-list span {
+    color: var(--color-muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .contact-list a {
+    overflow-wrap: anywhere;
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+
+  @media (max-width: 38rem) {
+    .page-intro h1 br {
+      display: none;
+    }
+
+    .about-list > div,
+    .contact-list li {
+      grid-template-columns: 1fr;
+      gap: 0.35rem;
+    }
+  }
+</style>

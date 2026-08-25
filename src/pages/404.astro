@@ -1,0 +1,75 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro"
+---
+
+<BaseLayout
+  title="页面未找到"
+  description="你访问的页面不存在，或已经移动到新的地址。"
+  noindex
+>
+  <section class="not-found" aria-labelledby="not-found-title">
+    <p class="status-code" aria-hidden="true">404</p>
+    <p class="eyebrow">PAGE NOT FOUND</p>
+    <h1 id="not-found-title">这条路径没有留下内容。</h1>
+    <p class="lede">
+      页面可能改了名字，也可能从未存在。可以回到首页，或者从文章与搜索重新开始。
+    </p>
+    <nav class="not-found__actions" aria-label="继续浏览">
+      <a class="button" href="/">返回首页</a>
+      <a class="button secondary" href="/articles/">浏览文章</a>
+      <a class="text-link" href="/search/">搜索本站 →</a>
+    </nav>
+  </section>
+</BaseLayout>
+
+<style>
+  .not-found {
+    padding-block: clamp(4rem, 14vw, 9rem);
+  }
+
+  .status-code {
+    margin: 0 0 1rem;
+    color: var(--color-line);
+    font-size: clamp(4.5rem, 20vw, 11rem);
+    font-weight: 720;
+    line-height: 0.78;
+    letter-spacing: -0.075em;
+  }
+
+  .not-found h1 {
+    max-width: 18ch;
+    margin-bottom: 1rem;
+  }
+
+  .not-found .lede {
+    max-width: 39rem;
+  }
+
+  .not-found__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+
+  .text-link {
+    margin-left: 0.35rem;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 34rem) {
+    .not-found__actions {
+      align-items: stretch;
+    }
+
+    .not-found__actions .button {
+      flex: 1 1 auto;
+    }
+
+    .text-link {
+      flex-basis: 100%;
+      margin: 0.35rem 0 0;
+    }
+  }
+</style>

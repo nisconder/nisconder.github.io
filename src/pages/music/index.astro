@@ -1,0 +1,143 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro"
+---
+
+<BaseLayout
+  title="音乐"
+  description="Nisconder 的网易云音乐收藏与正在反复播放的歌单。"
+>
+  <header class="page-intro music-intro">
+    <p class="eyebrow">MUSIC / PLAYLIST</p>
+    <h1>有些阶段，<br />适合用一张歌单保存。</h1>
+    <p class="lede">
+      这里收着最近反复播放的音乐。播放器默认不会连接第三方，只有你主动载入后才会请求网易云音乐。
+    </p>
+  </header>
+
+  <section class="axis-section" data-note="网易云">
+    <div class="music-heading">
+      <p class="eyebrow">PLAYLIST</p>
+      <h2>正在听的歌</h2>
+      <p>歌单会继续更新；页面不会自动播放，也不会在你未操作时加载播放器。</p>
+    </div>
+
+    <div class="music-loader" data-music-loader>
+      <p class="music-loader__label">NETEASE PLAYLIST · 17846303428</p>
+      <button class="button" type="button" data-load-player>载入歌单</button>
+      <p class="music-loader__status" aria-live="polite" data-player-status>
+        点击后将连接 music.163.com。
+      </p>
+    </div>
+
+    <p class="music-fallback">
+      播放器无法显示？<a
+        href="https://music.163.com/#/playlist?id=17846303428"
+        target="_blank"
+        rel="noreferrer"
+      >在网易云音乐中打开歌单 ↗</a>
+    </p>
+  </section>
+</BaseLayout>
+
+<script>
+  const loader = document.querySelector<HTMLElement>("[data-music-loader]")
+  const button = document.querySelector<HTMLButtonElement>("[data-load-player]")
+  const status = document.querySelector<HTMLElement>("[data-player-status]")
+
+  button?.addEventListener(
+    "click",
+    () => {
+      if (!loader || !status) return
+
+      const iframe = document.createElement("iframe")
+      iframe.className = "music-embed"
+      iframe.title = "Nisconder 的网易云音乐歌单"
+      iframe.src = "https://music.163.com/outchain/player?type=0&id=17846303428&auto=0&height=430"
+      iframe.width = "100%"
+      iframe.height = "450"
+      iframe.loading = "lazy"
+      iframe.allow = "autoplay; encrypted-media"
+      iframe.referrerPolicy = "strict-origin-when-cross-origin"
+
+      status.textContent = "正在载入网易云播放器…"
+      iframe.addEventListener("load", () => {
+        status.textContent = "歌单已载入。"
+      })
+
+      loader.replaceChildren(iframe, status)
+    },
+    { once: true }
+  )
+</script>
+
+<style>
+  .music-intro h1 {
+    max-width: 18ch;
+  }
+
+  .music-heading {
+    max-width: 42rem;
+  }
+
+  .music-heading h2 {
+    margin: 0.25rem 0 0.7rem;
+  }
+
+  .music-heading > p:last-child {
+    margin: 0;
+    color: var(--color-muted);
+    line-height: 1.75;
+  }
+
+  .music-loader {
+    display: grid;
+    justify-items: start;
+    gap: 1rem;
+    min-height: 13rem;
+    margin-top: 2rem;
+    padding-block: 2rem;
+    border-block: 1px solid var(--color-line);
+  }
+
+  .music-loader__label,
+  .music-loader__status,
+  .music-fallback {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+  }
+
+  .music-loader__status {
+    line-height: 1.6;
+  }
+
+  :global(.music-embed) {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    border: 0;
+    color-scheme: light;
+  }
+
+  .music-fallback {
+    margin-top: 1rem;
+    line-height: 1.7;
+  }
+
+  .music-fallback a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+
+  @media (max-width: 38rem) {
+    .music-intro h1 br {
+      display: none;
+    }
+
+    :global(.music-embed) {
+      height: 420px;
+    }
+  }
+</style>

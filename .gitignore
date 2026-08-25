@@ -4,6 +4,11 @@ db.json
 *.log
 node_modules/
 public/
+dist/
+.astro/
+static/admin/
+static/img/
+static/images/
 .deploy*/
 _multiconfig.yml
 .omo/

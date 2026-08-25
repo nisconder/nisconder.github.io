@@ -1,0 +1,61 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import PostRow from '../../components/PostRow.astro'
+import {
+  formatPostDate,
+  getPostCategory,
+  getPostDateTime,
+  getPostDescription,
+  getPostTags,
+  getPostUrl,
+  getPublishedPosts,
+} from '../../lib/posts'
+
+const posts = await getPublishedPosts()
+---
+
+<BaseLayout
+  title="文章"
+  description="按时间阅读 Nisconder 的技术、生活与思考。"
+  canonical="/articles/"
+>
+  <header class="article-header">
+    <p class="article-kicker">Articles</p>
+    <h1>文章</h1>
+    <p>这里没有信息流，只有按时间排好的写作。</p>
+    <a class="button" href="/search/">搜索文章</a>
+  </header>
+
+  <section class="axis-section" data-note="按时间">
+    <div class="section-heading">
+      <div>
+        <p class="article-kicker">Archive</p>
+        <h2>全部文章</h2>
+      </div>
+      <p>{posts.length} 篇</p>
+    </div>
+
+    {
+      posts.length > 0 ? (
+        <div class="post-list">
+          {posts.map((post) => (
+            <PostRow
+              href={getPostUrl(post)}
+              title={post.data.title}
+              description={getPostDescription(post)}
+              date={formatPostDate(post.data.date)}
+              datetime={getPostDateTime(post.data.date)}
+              category={getPostCategory(post)}
+              tags={getPostTags(post)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div class="empty-state">
+          <h2>还没有公开文章</h2>
+          <p>新文章发布后会按时间出现在这里。</p>
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>

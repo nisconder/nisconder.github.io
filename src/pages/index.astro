@@ -1,0 +1,160 @@
+---
+import PostRow from "../components/PostRow.astro"
+import BaseLayout from "../layouts/BaseLayout.astro"
+import {
+  formatPostDate,
+  getFeaturedPost,
+  getPostCategory,
+  getPostDateTime,
+  getPostDescription,
+  getPostTags,
+  getPostUrl,
+  getPublishedPosts,
+} from "../lib/posts"
+
+const posts = await getPublishedPosts()
+const featuredPost = await getFeaturedPost(posts)
+const recentPosts = posts
+  .filter((post) => post.id !== featuredPost?.id)
+  .slice(0, 8)
+---
+
+<BaseLayout
+  title="不知名博客"
+  description="Nisconder 的个人博客，记录代码、阅读、音乐与生活观察。"
+>
+  <header class="page-intro home-intro">
+    <p class="eyebrow">NISCONDER / NOTES</p>
+    <h1>写代码，也拆解那些<br />被说得太理所当然的事情。</h1>
+    <p class="lede">
+      这里记录技术实践、阅读、音乐与生活观察。写给未来的自己，也写给偶然路过的你。
+    </p>
+    <div class="button-row intro-actions" aria-label="快速入口">
+      <a class="button" href="/articles/">开始阅读</a>
+      <a class="button secondary" href="/about/">关于这个站</a>
+    </div>
+  </header>
+
+  {featuredPost && (
+    <section class="axis-section" data-note="置顶">
+      <div class="section-head">
+        <p class="eyebrow">FEATURED</p>
+        <h2>先读这一篇</h2>
+      </div>
+      <div class="post-list">
+        <PostRow
+          href={getPostUrl(featuredPost)}
+          title={featuredPost.data.title}
+          description={getPostDescription(featuredPost)}
+          date={formatPostDate(featuredPost.data.date)}
+          datetime={getPostDateTime(featuredPost.data.date)}
+          category={getPostCategory(featuredPost)}
+          tags={getPostTags(featuredPost)}
+        />
+      </div>
+    </section>
+  )}
+
+  <section class="axis-section" data-note="近期写作">
+    <div class="section-head section-head--split">
+      <div>
+        <p class="eyebrow">LATEST WRITING</p>
+        <h2>最近写下的内容</h2>
+      </div>
+      <a class="text-link" href="/articles/">查看全部文章 →</a>
+    </div>
+
+    {recentPosts.length > 0 ? (
+      <div class="post-list">
+        {recentPosts.map((post) => (
+          <PostRow
+            href={getPostUrl(post)}
+            title={post.data.title}
+            description={getPostDescription(post)}
+            date={formatPostDate(post.data.date)}
+            datetime={getPostDateTime(post.data.date)}
+            category={getPostCategory(post)}
+            tags={getPostTags(post)}
+          />
+        ))}
+      </div>
+    ) : (
+      <p class="empty-note">新的文章正在整理，先从置顶文章开始吧。</p>
+    )}
+  </section>
+
+  <section class="axis-section home-closing" data-note="继续逛逛">
+    <p>
+      想找某个主题，可以使用<a href="/search/">全文搜索</a>；想暂时停下来，也可以去<a
+        href="/music/">音乐页</a
+      >听一会儿。
+    </p>
+  </section>
+</BaseLayout>
+
+<style>
+  .home-intro h1 {
+    max-width: 18ch;
+  }
+
+  .intro-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+
+  .section-head {
+    margin-bottom: 1rem;
+  }
+
+  .section-head h2 {
+    margin: 0.25rem 0 0;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    letter-spacing: -0.02em;
+  }
+
+  .section-head--split {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+
+  .text-link {
+    flex: none;
+    padding-bottom: 0.2rem;
+    font-size: 0.875rem;
+  }
+
+  .empty-note,
+  .home-closing {
+    line-height: 1.8;
+  }
+
+  .home-closing p {
+    max-width: 42rem;
+    margin: 0;
+  }
+
+  .home-closing a {
+    margin-inline: 0.2em;
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+
+  @media (max-width: 42rem) {
+    .home-intro h1 br {
+      display: none;
+    }
+
+    .section-head--split {
+      display: block;
+    }
+
+    .text-link {
+      display: inline-block;
+      margin-top: 0.75rem;
+    }
+  }
+</style>

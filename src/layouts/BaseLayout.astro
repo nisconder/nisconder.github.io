@@ -1,0 +1,93 @@
+---
+import SiteFooter from '../components/SiteFooter.astro'
+import SiteHeader from '../components/SiteHeader.astro'
+import '../styles/global.css'
+
+interface Props {
+  title?: string
+  description?: string
+  canonical?: string | URL
+  image?: string
+  noindex?: boolean
+  ogType?: 'website' | 'article'
+}
+
+const {
+  title,
+  description = 'Nisconder 的个人博客，记录技术、阅读与对生活的思考。',
+  canonical,
+  image,
+  noindex = false,
+  ogType = 'website',
+} = Astro.props
+
+const siteName = 'Nisconder'
+const pageTitle = title && title !== siteName ? `${title} — ${siteName}` : siteName
+const baseUrl = Astro.site ?? Astro.url.origin
+const canonicalUrl = canonical
+  ? new URL(canonical.toString(), baseUrl)
+  : new URL(Astro.url.pathname, baseUrl)
+const imageUrl = image ? new URL(image, baseUrl) : undefined
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <meta id="theme-color" name="theme-color" content="#f7f8f7" />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <link rel="canonical" href={canonicalUrl} />
+    <link rel="icon" type="image/png" href="/img/nisconder-avatar.png" />
+    <link rel="alternate" type="application/rss+xml" title="Nisconder RSS" href="/rss.xml" />
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    {imageUrl && <meta property="og:image" content={imageUrl} />}
+    <meta name="twitter:card" content={imageUrl ? 'summary_large_image' : 'summary'} />
+
+    <title>{pageTitle}</title>
+    <slot name="head" />
+
+    <script is:inline>
+      (() => {
+        const root = document.documentElement
+        let theme = 'light'
+
+        try {
+          const saved = localStorage.getItem('nisconder-theme')
+          if (saved === 'light' || saved === 'dark') {
+            theme = saved
+          } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            theme = 'dark'
+          }
+        } catch {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        }
+
+        root.dataset.theme = theme
+        root.style.colorScheme = theme
+        document.querySelector('#theme-color')?.setAttribute('content', theme === 'dark' ? '#12151a' : '#f7f8f7')
+      })()
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到正文</a>
+    <div class="site-shell">
+      <SiteHeader />
+      <main id="main-content" class="site-main" tabindex="-1">
+        <div class="reading-frame">
+          <slot />
+        </div>
+      </main>
+      <SiteFooter />
+    </div>
+  </body>
+</html>

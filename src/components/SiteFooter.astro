@@ -1,0 +1,72 @@
+---
+const year = new Date().getFullYear()
+---
+
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <p class="site-footer__statement">认真写字，长期主义。</p>
+
+    <nav class="site-footer__links" aria-label="页脚导航">
+      <a href="/music/">音乐</a>
+      <a href="https://github.com/nisconder" rel="me noopener" target="_blank">GitHub</a>
+      <a href="mailto:72447244.wnm@gmail.com">邮箱</a>
+    </nav>
+
+    <p class="site-footer__copyright">© {year} Nisconder</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-block-start: 1px solid var(--color-line);
+  }
+
+  .site-footer__inner {
+    display: grid;
+    width: min(100%, var(--header-width));
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 1rem 2rem;
+    margin-inline: auto;
+    padding: 1.5rem var(--site-gutter);
+    color: var(--color-muted);
+    font-size: 0.8125rem;
+  }
+
+  .site-footer p {
+    margin: 0;
+  }
+
+  .site-footer__statement {
+    color: var(--color-text);
+    font-family: var(--font-display);
+  }
+
+  .site-footer__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+  }
+
+  .site-footer a {
+    color: var(--color-muted);
+    text-decoration: none;
+  }
+
+  .site-footer a:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+  }
+
+  .site-footer__copyright {
+    font-family: var(--font-utility);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 43.75rem) {
+    .site-footer__inner {
+      grid-template-columns: 1fr;
+      gap: 0.65rem;
+    }
+  }
+</style>

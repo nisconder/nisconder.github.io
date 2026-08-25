@@ -341,7 +341,9 @@
   var decorateEditor = function (root) {
     var definitions = [
       { labels: ['\u6807\u9898'], name: 'title' },
+      { labels: ['\u6458\u8981'], name: 'description' },
       { labels: ['\u6587\u7ae0\u65e5\u671f', '\u53d1\u5e03\u65f6\u95f4'], name: 'date' },
+      { labels: ['\u4f5c\u4e3a\u8349\u7a3f'], name: 'draft' },
       { labels: ['\u9996\u9875\u4f4d\u7f6e', '\u9996\u9875\u6392\u5e8f'], name: 'position' },
       { labels: ['\u5206\u7c7b'], name: 'category' },
       { labels: ['\u6807\u7b7e'], name: 'tags' },

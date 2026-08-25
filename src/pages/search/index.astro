@@ -1,0 +1,306 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro"
+---
+
+<BaseLayout
+  title="搜索"
+  description="按标题、摘要、分类和标签搜索本站文章。"
+>
+  <header class="page-intro search-intro">
+    <p class="eyebrow">SEARCH / ARCHIVE</p>
+    <h1>从写过的内容里，<br />找到一个词。</h1>
+    <p class="lede">
+      输入标题、主题或标签。搜索索引会在你第一次输入时才载入，不增加其他页面的负担。
+    </p>
+  </header>
+
+  <section class="axis-section" data-note="搜索">
+    <form class="search-form" role="search" onsubmit="return false">
+      <label for="site-search">搜索文章</label>
+      <input
+        id="site-search"
+        type="search"
+        name="q"
+        placeholder="例如：博客搭建、社会学、随笔"
+        autocomplete="off"
+        spellcheck="false"
+        aria-describedby="search-hint search-status"
+        data-search-input
+      />
+      <p id="search-hint" class="search-hint">
+        支持同时输入多个关键词，结果会优先匹配标题与标签。
+      </p>
+    </form>
+  </section>
+
+  <section class="axis-section" data-note="结果">
+    <p id="search-status" class="search-status" aria-live="polite" data-search-status>
+      输入关键词后开始搜索。
+    </p>
+    <div class="search-results" aria-live="polite" data-search-results></div>
+  </section>
+</BaseLayout>
+
+<script>
+  interface SearchRecord {
+    title?: string
+    description?: string
+    excerpt?: string
+    content?: string
+    text?: string
+    date?: string
+    category?: string
+    tags: string[]
+    href: string
+    url?: string
+  }
+
+  const input = document.querySelector<HTMLInputElement>("[data-search-input]")
+  const status = document.querySelector<HTMLElement>("[data-search-status]")
+  const results = document.querySelector<HTMLElement>("[data-search-results]")
+
+  let indexPromise: Promise<SearchRecord[]> | null = null
+  let searchIndex: SearchRecord[] = []
+
+  const normalise = (value: unknown) =>
+    String(value ?? "")
+      .normalize("NFKC")
+      .toLocaleLowerCase("zh-CN")
+
+  const asArray = (value: unknown): string[] =>
+    (Array.isArray(value) ? value : value ? [value] : []).map(String)
+
+  const loadIndex = () => {
+    if (indexPromise) return indexPromise
+
+    if (!status) return Promise.reject(new Error("Search status is unavailable"))
+
+    status.textContent = "正在载入搜索索引…"
+    indexPromise = fetch("/search-index.json", {
+      headers: { Accept: "application/json" },
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        return response.json()
+      })
+      .then((payload) => {
+        const items: Record<string, unknown>[] = Array.isArray(payload)
+          ? payload
+          : payload.items || payload.posts || []
+        searchIndex = items.map((item): SearchRecord => ({
+          title: typeof item.title === "string" ? item.title : undefined,
+          description: typeof item.description === "string" ? item.description : undefined,
+          excerpt: typeof item.excerpt === "string" ? item.excerpt : undefined,
+          content: typeof item.content === "string" ? item.content : undefined,
+          text: typeof item.text === "string" ? item.text : undefined,
+          date: typeof item.date === "string" ? item.date : undefined,
+          category: typeof item.category === "string" ? item.category : undefined,
+          href: String(item.href || item.url || "#"),
+          url: typeof item.url === "string" ? item.url : undefined,
+          tags: asArray(item.tags),
+        }))
+        return searchIndex
+      })
+      .catch((error) => {
+        console.error("Failed to load search index", error)
+        indexPromise = null
+        status.textContent = "搜索索引暂时无法载入。请稍后重新输入，或前往文章归档浏览。"
+        throw error
+      })
+
+    return indexPromise
+  }
+
+  const scoreItem = (item: SearchRecord, tokens: string[]) => {
+    const fields = {
+      title: normalise(item.title),
+      tags: normalise(item.tags.join(" ")),
+      category: normalise(item.category),
+      description: normalise(item.description || item.excerpt),
+      content: normalise(item.content || item.text),
+    }
+
+    let score = 0
+    for (const token of tokens) {
+      let tokenScore = 0
+      if (fields.title.includes(token)) tokenScore += 8
+      if (fields.tags.includes(token)) tokenScore += 5
+      if (fields.category.includes(token)) tokenScore += 4
+      if (fields.description.includes(token)) tokenScore += 2
+      if (fields.content.includes(token)) tokenScore += 1
+      if (tokenScore === 0) return 0
+      score += tokenScore
+    }
+    return score
+  }
+
+  const appendText = (element: HTMLElement, value: string) => {
+    element.textContent = value
+    return element
+  }
+
+  const render = (rawQuery: string) => {
+    if (!status || !results) return
+    const tokens = normalise(rawQuery).split(/\s+/).filter(Boolean)
+    results.replaceChildren()
+
+    if (tokens.length === 0) {
+      status.textContent = "输入关键词后开始搜索。"
+      return
+    }
+
+    const matches = searchIndex
+      .map((item) => ({ item, score: scoreItem(item, tokens) }))
+      .filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score || String(b.item.date || "").localeCompare(String(a.item.date || "")))
+      .slice(0, 20)
+
+    status.textContent = matches.length
+      ? `找到 ${matches.length} 篇相关文章。`
+      : `没有找到与“${rawQuery}”相关的文章。可以减少关键词后再试。`
+
+    const fragment = document.createDocumentFragment()
+    for (const { item } of matches) {
+      const article = document.createElement("article")
+      article.className = "search-result"
+
+      const meta = document.createElement("p")
+      meta.className = "search-result__meta"
+      const metaParts = [item.category, item.date].filter(Boolean)
+      appendText(meta, metaParts.join(" · "))
+
+      const heading = document.createElement("h2")
+      const link = document.createElement("a")
+      link.href = item.href
+      appendText(link, item.title || "未命名文章")
+      heading.append(link)
+
+      article.append(meta, heading)
+
+      const description = item.description || item.excerpt
+      if (description) {
+        const summary = document.createElement("p")
+        summary.className = "search-result__description"
+        appendText(summary, description)
+        article.append(summary)
+      }
+
+      if (item.tags.length > 0) {
+        const tags = document.createElement("p")
+        tags.className = "search-result__tags"
+        appendText(tags, item.tags.map((tag) => `#${tag}`).join("  "))
+        article.append(tags)
+      }
+
+      fragment.append(article)
+    }
+    results.append(fragment)
+  }
+
+  input?.addEventListener("input", () => {
+    const query = input.value.trim()
+    if (!query) {
+      render("")
+      return
+    }
+
+    void loadIndex()
+      .then(() => render(input.value.trim()))
+      .catch(() => {})
+  })
+</script>
+
+<style>
+  .search-intro h1 {
+    max-width: 17ch;
+  }
+
+  .search-form label {
+    display: block;
+    margin-bottom: 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .search-form input {
+    width: 100%;
+    padding: 0.85rem 0;
+    border: 0;
+    border-bottom: 1px solid var(--color-line);
+    border-radius: 0;
+    outline: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: clamp(1.15rem, 3vw, 1.55rem);
+  }
+
+  .search-form input::placeholder {
+    color: var(--color-muted);
+    opacity: 1;
+  }
+
+  .search-form input:focus-visible {
+    border-bottom-color: var(--color-primary);
+    border-bottom-width: 2px;
+  }
+
+  .search-hint,
+  .search-status {
+    margin: 0.8rem 0 0;
+    color: var(--color-muted);
+    font-size: 0.84rem;
+    line-height: 1.6;
+  }
+
+  .search-status {
+    margin: 0 0 0.25rem;
+  }
+
+  :global(.search-result) {
+    padding-block: 1.5rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  :global(.search-result__meta),
+  :global(.search-result__tags) {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+  }
+
+  :global(.search-result h2) {
+    margin: 0.4rem 0 0;
+    font-size: clamp(1.15rem, 3vw, 1.45rem);
+  }
+
+  :global(.search-result h2 a) {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  :global(.search-result h2 a:hover) {
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+
+  :global(.search-result__description) {
+    max-width: 46rem;
+    margin: 0.65rem 0 0;
+    color: var(--color-muted);
+    line-height: 1.7;
+  }
+
+  :global(.search-result__tags) {
+    margin-top: 0.7rem;
+  }
+
+  @media (max-width: 38rem) {
+    .search-intro h1 br {
+      display: none;
+    }
+  }
+</style>

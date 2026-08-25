@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#1f6f78">
+  <meta name="theme-color" content="#245f64">
   <title>写作后台｜不知名博客</title>
-  <link rel="icon" href="/img/favicon.ico">
+  <link rel="icon" type="image/png" href="/img/nisconder-avatar.png">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="/admin/admin-theme.css?v=8">
+  <link rel="stylesheet" href="/admin/admin-theme.css?v=9">
 </head>
 <body>
   <div id="admin-loading" role="status" aria-live="polite">
@@ -26,10 +26,10 @@
   </noscript>
 
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.15.1/dist/decap-cms.js"></script>
-  <script src="/admin/admin-ui.js?v=8"></script>
+  <script src="/admin/admin-ui.js?v=9"></script>
   <script>
     if (window.CMS) {
-      CMS.registerPreviewStyle('/admin/editor-preview.css?v=6');
+      CMS.registerPreviewStyle('/admin/editor-preview.css?v=7');
 
       window.__BLOG_TAGS = [];
 
@@ -236,6 +236,35 @@
       });
 
       CMS.registerWidget('pincontrol', PinControl);
+
+      var DraftControl = window.createClass({
+        render: function () {
+          var active = normalizePinned(this.props.value);
+          var onChange = this.props.onChange;
+          return window.h(
+            'div',
+            { className: 'admin-pin-control admin-draft-control' },
+            window.h(
+              'label',
+              { className: 'admin-pin-control__option' + (active ? ' is-active' : '') },
+              window.h('input', {
+                type: 'checkbox',
+                checked: active,
+                onChange: function (event) { onChange(event.target.checked); }
+              }),
+              window.h('span', { className: 'admin-pin-control__box', 'aria-hidden': 'true' }),
+              window.h(
+                'span',
+                { className: 'admin-pin-control__copy' },
+                window.h('strong', null, active ? '草稿' : '公开发布'),
+                window.h('small', null, active ? '不会出现在公开网站' : '发布后对访客可见')
+              )
+            )
+          );
+        }
+      });
+
+      CMS.registerWidget('draftcontrol', DraftControl);
 
       window.fetch('/admin/tag-options.json', { cache: 'no-store' })
         .then(function (response) { return response.ok ? response.json() : []; })
