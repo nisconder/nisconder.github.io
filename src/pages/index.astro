@@ -1,6 +1,7 @@
 ---
 import PostRow from '../components/PostRow.astro'
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { getPlaylistTracks } from '../lib/playlist'
 import {
   formatPostDate,
   getFeaturedPost,
@@ -13,6 +14,8 @@ import {
 } from '../lib/posts'
 
 const posts = await getPublishedPosts()
+const playlist = await getPlaylistTracks()
+const playlistPreview = playlist.slice(0, 3)
 const featuredPost = await getFeaturedPost(posts)
 const recentPosts = posts
   .filter((post) => post.id !== featuredPost?.id)
@@ -26,10 +29,10 @@ for (const post of posts) {
 }
 
 const topics = [...topicCounts]
+  .filter(([, count]) => count >= 2)
   .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0], 'zh-CN'))
   .slice(0, 8)
 
-const latestUrl = featuredPost ? getPostUrl(featuredPost) : '/articles/'
 const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 ---
 
@@ -38,46 +41,51 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
   description="Nisconder 的个人博客，记录技术、社会观察、音乐与生活。"
 >
   <header class="home-intro" aria-labelledby="home-title">
-    <p class="eyebrow">NISCONDER / OPEN NOTES</p>
-    <h1 id="home-title">写代码，也拆解那些<br />被说得太理所当然的事情。</h1>
-    <div class="home-intro__tail">
+    <div class="home-intro__identity">
+      <p class="eyebrow">NISCONDER</p>
+      <p>{posts.length.toString().padStart(2, '0')} 篇公开文章</p>
+    </div>
+    <div class="home-intro__copy">
+      <p class="eyebrow">OPEN NOTES</p>
+      <h1 id="home-title">写代码，也拆解那些<br />被说得太理所当然的事情。</h1>
       <p class="lede">
         这里写技术，也写社会、音乐和生活里那些不太容易被一句话说完的部分。
       </p>
-      <div class="button-row intro-actions">
-        <a class="button" href={latestUrl}>读最新文章</a>
-        <a class="button secondary" href="/search/">站内搜索</a>
-      </div>
     </div>
   </header>
 
-  <section class="axis-section editorial-splice-section" data-note="近作" id="latest">
+  <section class="home-feature" id="latest" aria-label="最新内容">
     <div class="editorial-splice">
       {
         featuredPost ? (
           <article class="lead-story">
-            <div class="lead-story__meta">
-              <time datetime={getPostDateTime(featuredPost.data.date)}>
-                {formatPostDate(featuredPost.data.date)}
-              </time>
-              {getPostCategory(featuredPost) && (
-                <a href={searchHref(getPostCategory(featuredPost)!)}>
-                  {getPostCategory(featuredPost)}
-                </a>
+            <header class="lead-story__band">
+              <span>LATEST ARTICLE</span>
+              <div class="lead-story__meta">
+                <time datetime={getPostDateTime(featuredPost.data.date)}>
+                  {formatPostDate(featuredPost.data.date)}
+                </time>
+                {getPostCategory(featuredPost) && (
+                  <a href={searchHref(getPostCategory(featuredPost)!)}>
+                    {getPostCategory(featuredPost)}
+                  </a>
+                )}
+              </div>
+            </header>
+            <div class="lead-story__body">
+              <h2><a href={getPostUrl(featuredPost)}>{featuredPost.data.title}</a></h2>
+              <p class="lead-story__summary">{getPostDescription(featuredPost)}</p>
+              {getPostTags(featuredPost).length > 0 && (
+                <nav class="lead-story__tags" aria-label="文章标签">
+                  {getPostTags(featuredPost).map((tag) => (
+                    <a href={searchHref(tag)}>#{tag}</a>
+                  ))}
+                </nav>
               )}
+              <a class="lead-story__read" href={getPostUrl(featuredPost)}>
+                阅读全文 <span aria-hidden="true">→</span>
+              </a>
             </div>
-            <h2><a href={getPostUrl(featuredPost)}>{featuredPost.data.title}</a></h2>
-            <p class="lead-story__summary">{getPostDescription(featuredPost)}</p>
-            {getPostTags(featuredPost).length > 0 && (
-              <nav class="lead-story__tags" aria-label="文章标签">
-                {getPostTags(featuredPost).map((tag) => (
-                  <a href={searchHref(tag)}>#{tag}</a>
-                ))}
-              </nav>
-            )}
-            <a class="lead-story__read" href={getPostUrl(featuredPost)}>
-              阅读全文 <span aria-hidden="true">→</span>
-            </a>
           </article>
         ) : (
           <div class="lead-story lead-story--empty">
@@ -88,16 +96,32 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
         )
       }
 
-      <aside class="side-notes" aria-labelledby="side-notes-title">
-        <p class="side-notes__label">NETEASE / 17846303428</p>
-        <h2 id="side-notes-title">最近反复播放</h2>
-        <p>一张持续更新的私人歌单，收着近期循环，也保留一些阶段性的心情。</p>
-        <a class="side-notes__main" href="/music/">打开歌单 <span aria-hidden="true">→</span></a>
-      </aside>
+      <div class="home-branches">
+        <aside class="side-notes" aria-labelledby="side-notes-title">
+          <p class="side-notes__label">NETEASE / PLAYLIST</p>
+          <h2 id="side-notes-title">最近反复播放</h2>
+          <ol class="side-notes__tracks" aria-label="歌单中的前三首曲目">
+            {playlistPreview.map((track, index) => (
+              <li>
+                <span>{(index + 1).toString().padStart(2, '0')}</span>
+                <strong>{track.title}</strong>
+              </li>
+            ))}
+          </ol>
+          <a class="side-notes__main" href="/music/">打开 {playlist.length} 首歌 <span aria-hidden="true">→</span></a>
+        </aside>
+
+        <aside class="about-note" aria-labelledby="about-note-title">
+          <p class="about-note__label">ABOUT</p>
+          <h2 id="about-note-title">本站与我</h2>
+          <p>这里为什么存在，以及我还在关注什么。</p>
+          <a href="/about/">关于 Nisconder <span aria-hidden="true">→</span></a>
+        </aside>
+      </div>
     </div>
   </section>
 
-  {topics.length > 0 && (
+  {topics.length >= 3 && (
     <section class="axis-section topic-section" data-note="词语">
       <div class="section-head section-head--split">
         <div>
@@ -149,28 +173,57 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 
 <style>
   .home-intro {
-    padding-block-end: clamp(4.5rem, 10vw, 8rem);
+    display: grid;
+    grid-template-columns: minmax(9rem, 0.32fr) minmax(0, 1.68fr);
+    margin-block-end: clamp(2.75rem, 6vw, 4.5rem);
+    border: 1px solid var(--color-line-strong);
+  }
+
+  .home-intro__identity,
+  .home-intro__copy {
+    min-width: 0;
+    padding: clamp(1.5rem, 3.5vw, 2.75rem);
+  }
+
+  .home-intro__identity {
+    display: flex;
+    min-height: 100%;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 3rem;
+    border-inline-end: 1px solid var(--color-line-strong);
+    background: var(--color-primary-soft);
+  }
+
+  .home-intro__identity p:last-child {
+    margin: 0;
+    color: var(--color-primary);
+    font-family: var(--font-utility);
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  .home-intro__copy {
+    background: var(--color-surface);
   }
 
   .home-intro h1 {
-    max-width: 17ch;
+    max-width: 18ch;
+    margin-block-start: clamp(1rem, 2vw, 1.75rem);
     margin-block-end: 0;
     font-family: var(--font-editorial);
-    font-size: clamp(2.55rem, 6.2vw, 4.7rem);
-  }
-
-  .home-intro__tail {
-    max-width: 37rem;
-    margin-block-start: clamp(1.75rem, 4vw, 3rem);
-    margin-inline-start: clamp(0rem, 9vw, 7rem);
+    font-size: clamp(2.25rem, 4.2vw, 3rem);
+    line-height: 1.18;
   }
 
   .home-intro .lede {
+    max-width: 35rem;
+    margin-block-start: clamp(1.5rem, 3vw, 2.25rem);
     margin-block-end: 0;
   }
 
-  .intro-actions {
-    margin-block-start: 1.75rem;
+  .home-feature {
+    margin-block-end: clamp(3rem, 6vw, 5rem);
   }
 
   .section-head {
@@ -201,20 +254,45 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 
   .editorial-splice {
     display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(15rem, 0.7fr);
-    align-items: stretch;
+    grid-template-columns: minmax(0, 1.62fr) minmax(17rem, 0.72fr);
+    align-items: start;
+    gap: clamp(1rem, 2.5vw, 1.5rem);
   }
 
   .lead-story,
-  .side-notes {
+  .home-branches,
+  .side-notes,
+  .about-note {
     min-width: 0;
   }
 
+  .home-branches {
+    display: grid;
+    gap: clamp(1rem, 2.5vw, 1.5rem);
+  }
+
   .lead-story {
-    padding: clamp(1.75rem, 5vw, 3.75rem);
-    padding-inline-end: clamp(3rem, 8vw, 6rem);
+    border: 1px solid var(--color-line-strong);
+    background: var(--color-surface);
+  }
+
+  .lead-story__band {
+    display: flex;
+    min-height: 4.25rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+    padding: 0.75rem clamp(1.25rem, 3vw, 2rem);
     background: var(--color-primary);
     color: var(--color-on-primary);
+    font-family: var(--font-utility);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  .lead-story__body {
+    padding: clamp(1.75rem, 4vw, 3rem);
   }
 
   .lead-story__meta {
@@ -222,10 +300,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     flex-wrap: wrap;
     align-items: center;
     gap: 0.35rem 1rem;
-    margin: 0 0 clamp(2.5rem, 7vw, 5rem);
-    font-family: var(--font-utility);
-    font-size: 0.72rem;
-    letter-spacing: 0.06em;
+    margin: 0;
   }
 
   .lead-story__meta a {
@@ -237,10 +312,10 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 
   .lead-story h2 {
     max-width: 18ch;
-    margin-block-end: 1rem;
-    color: inherit;
+    margin-block-end: 1.25rem;
     font-family: var(--font-editorial);
-    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-size: clamp(1.85rem, 3.4vw, 2.55rem);
+    line-height: 1.22;
     letter-spacing: -0.035em;
     overflow-wrap: anywhere;
   }
@@ -258,7 +333,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
   }
 
   .lead-story__summary {
-    max-width: 38rem;
+    max-width: 34rem;
     margin-block-end: 1rem;
     font-size: 0.95rem;
     line-height: 1.75;
@@ -275,7 +350,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     display: inline-flex;
     min-height: 2.75rem;
     align-items: center;
-    color: inherit;
+    color: var(--color-secondary);
     font-family: var(--font-utility);
     font-size: 0.72rem;
     font-weight: 700;
@@ -288,9 +363,9 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    margin-block-start: clamp(2rem, 5vw, 4rem);
-    border-block-start: 1px solid currentColor;
-    color: inherit;
+    margin-block-start: clamp(1.75rem, 4vw, 3rem);
+    border-block-start: 1px solid var(--color-line-strong);
+    color: var(--color-primary);
     font-weight: 750;
     text-decoration: none;
   }
@@ -305,36 +380,82 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
   }
 
   .lead-story--empty h2 {
-    margin-block-end: 3rem;
+    margin-block-end: 2rem;
+  }
+
+  .lead-story--empty {
+    padding: clamp(1.75rem, 4vw, 3rem);
   }
 
   .side-notes {
     display: grid;
     grid-template-rows: auto auto 1fr auto;
     align-content: stretch;
-    padding: clamp(1.5rem, 4vw, 2.5rem);
+    padding: clamp(1.5rem, 3vw, 2rem);
+    border: 1px solid var(--color-secondary);
     background: var(--color-secondary);
     color: var(--color-on-secondary);
   }
 
-  .side-notes__label {
-    margin: 0 0 2.5rem;
+  .about-note {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    padding: clamp(1.35rem, 3vw, 1.75rem);
+    border: 1px solid var(--color-line-strong);
+    border-inline-start: 0.45rem solid var(--color-primary);
+    background: var(--color-primary-soft);
+    color: var(--color-text);
+  }
+
+  .side-notes__label,
+  .about-note__label {
+    margin: 0 0 1.5rem;
     font-family: var(--font-utility);
     font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.07em;
   }
 
-  .side-notes h2 {
+  .side-notes h2,
+  .about-note h2 {
     max-width: 12ch;
     margin-block-end: 0.75rem;
     color: inherit;
-    font-size: clamp(1.65rem, 4vw, 2.35rem);
+    font-size: clamp(1.45rem, 2.5vw, 1.8rem);
     letter-spacing: -0.025em;
   }
 
-  .side-notes > p:not(.side-notes__label) {
-    margin-block-end: 1.5rem;
+  .side-notes__tracks {
+    padding: 0;
+    margin: 0.5rem 0 1.25rem;
+    list-style: none;
+  }
+
+  .side-notes__tracks li {
+    display: grid;
+    min-height: 2.75rem;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.5rem;
+    border-block-start: 1px solid color-mix(in srgb, currentColor, transparent 50%);
+  }
+
+  .side-notes__tracks span {
+    font-family: var(--font-utility);
+    font-size: 0.65rem;
+  }
+
+  .side-notes__tracks strong {
+    overflow: hidden;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .about-note > p:not(.about-note__label) {
+    margin-block-end: 1.25rem;
+    color: var(--color-muted);
     font-size: 0.88rem;
     line-height: 1.7;
   }
@@ -352,6 +473,25 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     align-self: end;
     border-block: 1px solid currentColor;
     text-decoration: none;
+  }
+
+  .about-note a {
+    display: flex;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: space-between;
+    align-self: end;
+    border-block: 1px solid var(--color-line-strong);
+    color: var(--color-primary);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .about-note a:hover,
+  .about-note a:focus-visible {
+    color: var(--color-secondary);
+    text-decoration: underline;
+    text-underline-offset: 0.22em;
   }
 
   .editorial-splice a:focus-visible {
@@ -424,20 +564,22 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     text-underline-offset: 0.2em;
   }
 
-  @media (min-width: 52rem) {
-    .editorial-splice {
-      width: calc(100% + 4rem);
-      margin-inline-start: -4rem;
-    }
-  }
-
   @media (max-width: 42rem) {
+    .home-intro {
+      grid-template-columns: 1fr;
+    }
+
+    .home-intro__identity {
+      min-height: auto;
+      align-items: center;
+      flex-direction: row;
+      gap: 1rem;
+      border-block-end: 1px solid var(--color-line-strong);
+      border-inline-end: 0;
+    }
+
     .home-intro h1 br {
       display: none;
-    }
-
-    .home-intro__tail {
-      margin-inline-start: 0;
     }
 
     .section-head--split {
@@ -455,12 +597,11 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     }
 
     .lead-story {
-      padding-inline-end: clamp(1.75rem, 5vw, 3.75rem);
+      border-inline-end: 1px solid var(--color-line-strong);
     }
 
-    .side-notes {
-      margin-block-start: 0;
-      margin-inline: 0;
+    .home-branches {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .topic-field {
@@ -474,6 +615,15 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
   }
 
   @media (max-width: 28rem) {
+    .lead-story__band {
+      align-items: start;
+      flex-direction: column;
+    }
+
+    .home-branches {
+      grid-template-columns: 1fr;
+    }
+
     .topic-field a {
       align-items: start;
       flex-direction: column;

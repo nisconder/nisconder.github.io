@@ -25,7 +25,6 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
           href={searchHref(category)}
           aria-label={`查看“${category}”分类下的文章`}
         >
-          <span aria-hidden="true">分类</span>
           <strong>{category}</strong>
         </a>
       )
@@ -36,28 +35,26 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     <h3 class="post-row__title"><a href={href}>{title}</a></h3>
     {summary && <p class="post-row__summary">{summary}</p>}
 
-    {
-      tags.length > 0 && (
-        <nav class="post-row__branches" aria-label={`《${title}》的相关标签`}>
-          <ul>
-            {tags.map((tag) => (
-              <li>
-                <a href={searchHref(tag)} aria-label={`搜索标签“${tag}”`}>
-                  {tag}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      )
-    }
-  </div>
-
-  <div class="post-row__action">
-    <a class="post-row__read" href={href} aria-label={`阅读《${title}》`}>
-      <span>阅读文章</span>
-      <span aria-hidden="true">→</span>
-    </a>
+    <div class="post-row__footer">
+      {
+        tags.length > 0 && (
+          <nav class="post-row__branches" aria-label={`《${title}》的相关标签`}>
+            <ul>
+              {tags.map((tag) => (
+                <li>
+                  <a href={searchHref(tag)} aria-label={`搜索标签“${tag}”`}>
+                    {tag}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )
+      }
+      <a class="post-row__read" href={href} aria-label={`阅读《${title}》`}>
+        阅读全文 <span aria-hidden="true">→</span>
+      </a>
+    </div>
   </div>
 </article>
 
@@ -71,34 +68,12 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     border-block-start: 1px solid var(--color-line);
   }
 
-  /* The crossed rails mark where a reader may stay on the article axis or branch out. */
-  .post-row::before,
-  .post-row::after {
-    position: absolute;
-    inset-block-start: -1px;
-    inset-inline-start: 0;
-    content: '';
-  }
-
-  .post-row::before {
-    width: 3.25rem;
-    height: 2px;
-    background: var(--color-primary);
-  }
-
-  .post-row::after {
-    width: 2px;
-    height: 1rem;
-    background: var(--color-secondary);
-  }
-
   .post-row:last-child {
     border-block-end: 1px solid var(--color-line);
   }
 
   .post-row__meta,
-  .post-row__body,
-  .post-row__action {
+  .post-row__body {
     min-width: 0;
   }
 
@@ -126,11 +101,6 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     gap: 0.45rem;
     color: var(--color-secondary);
     text-decoration: none;
-  }
-
-  .post-row__category > span {
-    color: var(--color-muted);
-    font-weight: 500;
   }
 
   .post-row__category strong {
@@ -193,6 +163,15 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     font-size: 0.75rem;
   }
 
+  .post-row__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem 1rem;
+    margin-block-start: 0.4rem;
+  }
+
   .post-row__branches ul {
     display: flex;
     min-width: 0;
@@ -233,42 +212,28 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     text-decoration-color: var(--color-primary);
   }
 
-  .post-row__action {
-    display: flex;
-    align-items: flex-start;
-  }
-
   .post-row__read {
     display: inline-flex;
     max-width: 100%;
-    width: 100%;
-    min-height: 3rem;
+    min-height: 2.75rem;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.7rem 0.85rem;
-    border: 1px solid var(--color-primary);
-    border-inline-end: 0.3rem solid var(--color-secondary);
+    gap: 0.45rem;
+    padding-inline: 0.25rem;
     color: var(--color-primary);
     font-size: 0.875rem;
     font-weight: 750;
     line-height: 1.2;
-    text-decoration: none;
-  }
-
-  .post-row__read span:last-child {
-    color: var(--color-secondary);
-    font-size: 1.15em;
+    text-decoration-color: var(--color-secondary);
+    text-underline-offset: 0.25em;
   }
 
   .post-row__read:hover {
-    background: var(--color-primary-soft);
-    color: var(--color-text);
+    color: var(--color-secondary);
   }
 
   @media (min-width: 56rem) {
     .post-row {
-      grid-template-columns: minmax(6.75rem, 7.75rem) minmax(0, 1fr) minmax(7.5rem, 8.5rem);
+      grid-template-columns: minmax(6.75rem, 7.75rem) minmax(0, 1fr);
       align-items: start;
       column-gap: clamp(1rem, 2.5vw, 1.75rem);
     }
@@ -288,9 +253,6 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
       gap: 0.1rem;
     }
 
-    .post-row__action {
-      padding-block-start: 0.15rem;
-    }
   }
 
   @media (max-width: 31.25rem) {
@@ -321,15 +283,9 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
       padding-inline: 0.2rem 0.5rem;
     }
 
-    .post-row__action {
-      margin-block-start: 0.35rem;
-    }
-  }
-
-  @media (prefers-contrast: more) {
-    .post-row__read {
-      border-width: 2px;
-      border-inline-end-width: 0.35rem;
+    .post-row__footer {
+      align-items: flex-start;
+      flex-direction: column;
     }
   }
 </style>

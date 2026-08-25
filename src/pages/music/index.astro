@@ -1,158 +1,545 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro"
+import { getPlaylistTracks } from "../../lib/playlist"
+
+const playlist = await getPlaylistTracks()
+const isRestricted = (fee: number) => fee !== 0 && fee !== 8
+const playableCount = playlist.filter((track) => !isRestricted(track.fee)).length
 ---
 
 <BaseLayout
   title="音乐"
   description="Nisconder 的网易云音乐收藏与正在反复播放的歌单。"
 >
-  <header class="page-intro music-intro">
-    <p class="eyebrow">MUSIC / PLAYLIST</p>
-    <h1>有些阶段，<br />适合用一张歌单保存。</h1>
-    <p class="lede">
-      最近反复播放的音乐，和几张不舍得删掉的歌单。
-    </p>
+  <header class="music-intro" aria-labelledby="music-title">
+    <div class="music-intro__identity">
+      <p class="eyebrow">MUSIC / NETEASE</p>
+      <p>{playlist.length.toString().padStart(2, "0")} TRACKS</p>
+    </div>
+    <div class="music-intro__copy">
+      <h1 id="music-title">有些阶段，适合用一张歌单保存。</h1>
+      <p class="lede">曲目已经完整列出；选中一首后才会请求音频，不会在打开页面时偷跑流量。</p>
+    </div>
   </header>
 
-  <section class="axis-section" data-note="网易云">
-    <div class="music-heading">
-      <p class="eyebrow">PLAYLIST</p>
-      <h2>正在听的歌</h2>
-      <p>这张歌单会随着最近的播放慢慢变化。</p>
-    </div>
+  <section class="music-library" aria-labelledby="playlist-title">
+    <aside class="now-playing" aria-label="当前播放">
+      <div class="now-playing__inner">
+        <div class="now-playing__meta">
+          <span>NETEASE / 17846303428</span>
+          <span>{playableCount} 可直接播放</span>
+        </div>
+        <p class="eyebrow">NOW PLAYING</p>
+        <h2 data-now-title>选择一首歌</h2>
+        <p class="now-playing__artist" data-now-artist>
+          歌单已经载入。受版权限制的曲目会明确跳转到网易云，不再出现“点了没反应”。
+        </p>
 
-    <div class="music-loader" data-music-loader>
-      <p class="music-loader__label">NETEASE PLAYLIST · 17846303428</p>
-      <button class="button" type="button" data-load-player>载入歌单</button>
-      <p class="music-loader__status" aria-live="polite" data-player-status>
-        点击后将连接 music.163.com。
-      </p>
-    </div>
+        <audio data-audio controls preload="none" playsinline hidden></audio>
 
-    <p class="music-fallback">
-      播放器无法显示？<a
-        href="https://music.163.com/#/playlist?id=17846303428"
-        target="_blank"
-        rel="noreferrer"
-      >在网易云音乐中打开歌单 ↗</a>
-    </p>
+        <div class="player-actions" aria-label="曲目切换">
+          <button type="button" data-player-prev disabled>上一首</button>
+          <button type="button" data-player-next disabled>下一首</button>
+        </div>
+        <p class="player-status" data-player-status aria-live="polite">尚未选择曲目。</p>
+        <a
+          class="playlist-external"
+          href="https://music.163.com/#/playlist?id=17846303428"
+          target="_blank"
+          rel="noreferrer"
+        >在网易云查看完整歌单 <span aria-hidden="true">↗</span></a>
+      </div>
+    </aside>
+
+    <div class="track-panel">
+      <header class="track-panel__head">
+        <div>
+          <p class="eyebrow">PLAYLIST</p>
+          <h2 id="playlist-title">最近反复播放</h2>
+        </div>
+        <p>{playlist.length} 首 · 页面自然滚动</p>
+      </header>
+
+      <ol class="track-list" data-track-list>
+        {
+          playlist.map((track, index) => {
+            const restricted = isRestricted(track.fee)
+            const number = (index + 1).toString().padStart(2, "0")
+            const neteaseUrl = `https://music.163.com/#/song?id=${track.id}`
+
+            return (
+              <li class:list={{ "track-row": true, "track-row--restricted": restricted }}>
+                {
+                  restricted ? (
+                    <a
+                      class="track-row__control"
+                      href={neteaseUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`${track.title}，${track.author}，需在网易云播放`}
+                    >
+                      <span class="track-row__number">{number}</span>
+                      <span class="track-row__copy">
+                        <strong>{track.title}</strong>
+                        <small>{track.author}</small>
+                      </span>
+                      <span class="track-row__state">网易云 ↗</span>
+                    </a>
+                  ) : (
+                    <button
+                      class="track-row__control"
+                      type="button"
+                      data-track-index={index}
+                      data-track-title={track.title}
+                      data-track-author={track.author}
+                      data-track-audio={track.audio}
+                      data-track-external={neteaseUrl}
+                      aria-label={`播放 ${track.title}，${track.author}`}
+                    >
+                      <span class="track-row__number">{number}</span>
+                      <span class="track-row__copy">
+                        <strong>{track.title}</strong>
+                        <small>{track.author}</small>
+                      </span>
+                      <span class="track-row__state" data-track-state>播放</span>
+                    </button>
+                  )
+                }
+              </li>
+            )
+          })
+        }
+      </ol>
+    </div>
   </section>
-
 </BaseLayout>
 
 <script>
-  const loader = document.querySelector<HTMLElement>("[data-music-loader]")
-  const button = document.querySelector<HTMLButtonElement>("[data-load-player]")
+  const audio = document.querySelector<HTMLAudioElement>("[data-audio]")
+  const list = document.querySelector<HTMLElement>("[data-track-list]")
+  const title = document.querySelector<HTMLElement>("[data-now-title]")
+  const artist = document.querySelector<HTMLElement>("[data-now-artist]")
   const status = document.querySelector<HTMLElement>("[data-player-status]")
+  const previous = document.querySelector<HTMLButtonElement>("[data-player-prev]")
+  const next = document.querySelector<HTMLButtonElement>("[data-player-next]")
+  const trackButtons = [...document.querySelectorAll<HTMLButtonElement>("[data-track-index]")]
+  const playableIndexes = trackButtons.map((button) => Number(button.dataset.trackIndex))
 
-  button?.addEventListener(
-    "click",
-    () => {
-      if (!loader || !status) return
+  let currentIndex = -1
+  let currentRequest = 0
 
-      const iframe = document.createElement("iframe")
-      iframe.className = "music-embed"
-      iframe.title = "Nisconder 的网易云音乐歌单"
-      iframe.src = "https://music.163.com/outchain/player?type=0&id=17846303428&auto=0&height=430"
-      iframe.width = "100%"
-      iframe.height = "450"
-      iframe.loading = "lazy"
-      iframe.allow = "autoplay; encrypted-media"
-      iframe.referrerPolicy = "strict-origin-when-cross-origin"
+  const currentButton = () =>
+    trackButtons.find((button) => Number(button.dataset.trackIndex) === currentIndex)
 
-      status.textContent = "正在载入网易云播放器…"
-      iframe.addEventListener("load", () => {
-        status.textContent = "歌单已载入。"
-      })
+  const setStatus = (message: string, externalHref?: string) => {
+    if (!status) return
+    status.replaceChildren(message)
+    if (externalHref) {
+      const link = document.createElement("a")
+      link.href = externalHref
+      link.target = "_blank"
+      link.rel = "noreferrer"
+      link.className = "player-status__link"
+      link.textContent = "在网易云打开 ↗"
+      status.append(" ", link)
+    }
+  }
 
-      status.tabIndex = -1
-      loader.replaceChildren(iframe, status)
-      status.focus()
-    },
-    { once: true }
-  )
+  const updateRows = (playing = false) => {
+    trackButtons.forEach((button) => {
+      const active = Number(button.dataset.trackIndex) === currentIndex
+      if (active) button.setAttribute("aria-current", "true")
+      else button.removeAttribute("aria-current")
+      const state = button.querySelector<HTMLElement>("[data-track-state]")
+      if (state) state.textContent = active ? (playing ? "播放中" : "已选择") : "播放"
+    })
+  }
+
+  const selectTrack = async (index: number, startPlayback = true) => {
+    if (!audio || !title || !artist) return
+    const button = trackButtons.find((item) => Number(item.dataset.trackIndex) === index)
+    const source = button?.dataset.trackAudio
+    if (!button || !source) return
+
+    currentRequest += 1
+    const request = currentRequest
+    currentIndex = index
+    audio.pause()
+    audio.hidden = false
+    audio.src = source
+    audio.load()
+    title.textContent = button.dataset.trackTitle || "未命名曲目"
+    artist.textContent = button.dataset.trackAuthor || "未知音乐人"
+    previous?.removeAttribute("disabled")
+    next?.removeAttribute("disabled")
+    updateRows(false)
+    button.scrollIntoView({ block: "nearest" })
+    setStatus("正在准备音频…")
+
+    if (!startPlayback) return
+
+    try {
+      await audio.play()
+      if (request === currentRequest) setStatus("正在播放。")
+    } catch {
+      if (request === currentRequest) {
+        setStatus("浏览器没有自动开始播放，请使用上方原生播放键。")
+      }
+    }
+  }
+
+  const move = (direction: number) => {
+    if (playableIndexes.length === 0) return
+    const position = Math.max(0, playableIndexes.indexOf(currentIndex))
+    const nextPosition = (position + direction + playableIndexes.length) % playableIndexes.length
+    selectTrack(playableIndexes[nextPosition])
+  }
+
+  list?.addEventListener("click", (event) => {
+    const target = event.target instanceof Element
+      ? event.target.closest<HTMLButtonElement>("[data-track-index]")
+      : null
+    if (!target) return
+    selectTrack(Number(target.dataset.trackIndex))
+  })
+
+  previous?.addEventListener("click", () => move(-1))
+  next?.addEventListener("click", () => move(1))
+  audio?.addEventListener("play", () => updateRows(true))
+  audio?.addEventListener("pause", () => updateRows(false))
+  audio?.addEventListener("ended", () => move(1))
+  audio?.addEventListener("error", () => {
+    const button = currentButton()
+    setStatus("这首歌当前无法直接播放。", button?.dataset.trackExternal)
+    updateRows(false)
+  })
 </script>
 
 <style>
-  .music-intro h1 {
-    max-width: 18ch;
-  }
-
-  .music-heading {
-    max-width: 42rem;
-  }
-
-  .music-heading h2 {
-    margin: 0.25rem 0 0.7rem;
-  }
-
-  .music-heading > p:last-child {
-    margin: 0;
-    color: var(--color-muted);
-    line-height: 1.75;
-  }
-
-  .music-loader {
+  .music-intro {
     display: grid;
-    justify-items: start;
-    gap: 1rem;
-    min-height: 13rem;
-    margin-top: 2rem;
-    padding-block: 2rem;
-    border-block: 1px solid var(--color-line);
+    grid-template-columns: minmax(11rem, 0.42fr) minmax(0, 1.58fr);
+    margin-block-end: clamp(3rem, 7vw, 5rem);
+    border: 1px solid var(--color-line-strong);
   }
 
-  .music-loader__label,
-  .music-loader__status,
-  .music-fallback {
+  .music-intro__identity,
+  .music-intro__copy {
+    min-width: 0;
+    padding: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .music-intro__identity {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 3rem;
+    border-inline-end: 1px solid var(--color-line-strong);
+    background: var(--color-secondary-soft);
+  }
+
+  .music-intro__identity p:last-child {
     margin: 0;
-    color: var(--color-muted);
-    font-size: 0.78rem;
+    color: var(--color-secondary);
+    font-family: var(--font-utility);
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  .music-intro__copy {
+    background: var(--color-surface);
+  }
+
+  .music-intro h1 {
+    max-width: 16ch;
+    margin-block-end: 1.25rem;
+    font-size: clamp(2.25rem, 4.8vw, 3.4rem);
+    line-height: 1.16;
+  }
+
+  .music-intro .lede {
+    margin-block-end: 0;
+  }
+
+  .music-library {
+    display: grid;
+    grid-template-columns: minmax(17rem, 21rem) minmax(0, 1fr);
+    min-width: 0;
+    border: 1px solid var(--color-line-strong);
+    background: var(--color-surface);
+  }
+
+  .now-playing {
+    min-width: 0;
+    border-inline-end: 1px solid var(--color-line-strong);
+    background: var(--color-secondary);
+    color: var(--color-on-secondary);
+  }
+
+  .now-playing__inner {
+    position: sticky;
+    inset-block-start: 1.25rem;
+    display: grid;
+    gap: 1rem;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+  }
+
+  .now-playing__meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.35rem 1rem;
+    margin-block-end: clamp(1.5rem, 4vw, 3rem);
+    font-family: var(--font-utility);
+    font-size: 0.65rem;
+    font-weight: 700;
     letter-spacing: 0.04em;
   }
 
-  .music-loader__status {
-    line-height: 1.6;
-  }
-
-  :global(.music-embed) {
-    display: block;
-    width: 100%;
-    max-width: 100%;
-    border: 0;
-    color-scheme: light;
-  }
-
-  .music-fallback {
-    margin-top: 1rem;
-    line-height: 1.7;
-  }
-
-  .music-fallback a {
-    display: inline-flex;
-    min-height: 2.75rem;
-    align-items: center;
+  .now-playing .eyebrow {
+    margin: 0;
     color: inherit;
+  }
+
+  .now-playing h2 {
+    margin: 0;
+    color: inherit;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    overflow-wrap: anywhere;
+  }
+
+  .now-playing__artist,
+  .player-status {
+    margin: 0;
+    color: inherit;
+    font-size: 0.86rem;
+    line-height: 1.65;
+  }
+
+  .now-playing audio {
+    width: 100%;
+    min-height: 3.25rem;
+    margin-block: 0.5rem;
+  }
+
+  .player-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .player-actions button {
+    min-height: 2.75rem;
+    border: 1px solid currentColor;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .player-actions button:hover:not(:disabled) {
+    background: var(--color-on-secondary);
+    color: var(--color-secondary);
+  }
+
+  .player-actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  :global(.player-status__link),
+  .playlist-external {
+    color: inherit;
+  }
+
+  .playlist-external {
+    display: flex;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-block-start: 0.75rem;
+    border-block: 1px solid currentColor;
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .playlist-external:hover {
     text-decoration: underline;
     text-underline-offset: 0.25em;
   }
 
-  @media (min-width: 52rem) {
-    .music-loader {
-      width: calc(100% - 2.5rem);
-      margin-inline-start: 2.5rem;
-    }
-
+  .track-panel {
+    min-width: 0;
+    background: var(--color-surface);
   }
 
-  @media (max-width: 38rem) {
-    .music-intro h1 br {
-      display: none;
+  .track-panel__head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    border-block-end: 1px solid var(--color-line-strong);
+    background: var(--color-primary-soft);
+  }
+
+  .track-panel__head h2 {
+    margin: 0;
+    font-size: clamp(1.65rem, 3vw, 2.2rem);
+  }
+
+  .track-panel__head p:last-child {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+
+  .track-list {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .track-row + .track-row {
+    border-block-start: 1px solid var(--color-line);
+  }
+
+  .track-row__control {
+    display: grid;
+    width: 100%;
+    min-height: 4.25rem;
+    grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.8rem 1rem;
+    border: 0;
+    border-radius: 0;
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+    font: inherit;
+    text-align: start;
+    text-decoration: none;
+  }
+
+  .track-row__control:hover,
+  .track-row__control:focus-visible {
+    background: var(--color-primary-soft);
+  }
+
+  .track-row__control[aria-current='true'] {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+
+  .track-row__number,
+  .track-row__state {
+    font-family: var(--font-utility);
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+
+  .track-row__number {
+    color: var(--color-secondary);
+  }
+
+  .track-row__control[aria-current='true'] .track-row__number,
+  .track-row__control[aria-current='true'] .track-row__state {
+    color: inherit;
+  }
+
+  .track-row__copy {
+    display: grid;
+    min-width: 0;
+    gap: 0.2rem;
+  }
+
+  .track-row__copy strong,
+  .track-row__copy small {
+    overflow-wrap: anywhere;
+  }
+
+  .track-row__copy strong {
+    font-size: 0.94rem;
+    line-height: 1.45;
+  }
+
+  .track-row__copy small {
+    color: var(--color-muted);
+    font-size: 0.75rem;
+  }
+
+  .track-row__control[aria-current='true'] .track-row__copy small {
+    color: inherit;
+  }
+
+  .track-row--restricted .track-row__state {
+    color: var(--color-secondary);
+  }
+
+  @media (max-width: 48rem) {
+    .music-intro {
+      grid-template-columns: 1fr;
     }
 
-    :global(.music-embed) {
-      height: 420px;
+    .music-intro__identity {
+      align-items: center;
+      flex-direction: row;
+      gap: 1rem;
+      border-block-end: 1px solid var(--color-line-strong);
+      border-inline-end: 0;
     }
 
+    .music-library {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .now-playing {
+      border-block-end: 1px solid var(--color-line-strong);
+      border-inline-end: 0;
+    }
+
+    .now-playing__inner {
+      position: static;
+    }
+
+    .now-playing audio:not([hidden]) {
+      position: fixed;
+      z-index: 70;
+      inset-block-end: env(safe-area-inset-bottom, 0px);
+      inset-inline: 0;
+      width: 100%;
+      margin: 0;
+      background: var(--color-surface);
+    }
+
+    .track-panel {
+      padding-block-end: calc(4rem + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
+  @media (max-width: 32rem) {
+    .track-panel__head {
+      align-items: start;
+      flex-direction: column;
+    }
+
+    .track-panel__head p:last-child {
+      white-space: normal;
+    }
+
+    .track-row__control {
+      grid-template-columns: 2.25rem minmax(0, 1fr);
+      min-height: 4.75rem;
+      padding-inline: 0.75rem;
+    }
+
+    .track-row__state {
+      grid-column: 2;
+    }
   }
 </style>

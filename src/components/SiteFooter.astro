@@ -4,33 +4,16 @@ const year = new Date().getFullYear()
 
 <footer class="site-footer">
   <div class="site-footer__inner">
-    <div class="site-footer__lead">
-      <p class="site-footer__kicker">NISCONDER</p>
-      <p class="site-footer__statement">文字、声音和个人注脚。</p>
-    </div>
-
-    <nav class="site-footer__routes" aria-label="站内内容">
-      <a href="/articles/">
-        <span>全部写作</span>
-        <small>按时间查看公开文章</small>
-      </a>
-      <a href="/music/">
-        <span>最近在听</span>
-        <small>音乐与歌单</small>
-      </a>
-      <a href="/about/">
-        <span>本站与我</span>
-        <small>关于 Nisconder 与这个博客</small>
-      </a>
+    <p class="site-footer__statement">文字、声音和个人注脚。</p>
+    <nav class="site-footer__links" aria-label="站点索引">
+      <a href="/articles/">文章</a>
+      <a href="/music/">音乐</a>
+      <a href="/about/">关于</a>
+      <a href="/rss.xml">RSS</a>
+      <a href="https://github.com/nisconder" rel="me noopener" target="_blank">GitHub</a>
+      <a href="mailto:72447244.wnm@gmail.com">邮箱</a>
     </nav>
-
-    <div class="site-footer__meta">
-      <nav class="site-footer__links" aria-label="站外联系">
-        <a href="https://github.com/nisconder" rel="me noopener" target="_blank">GitHub</a>
-        <a href="mailto:72447244.wnm@gmail.com">邮箱</a>
-      </nav>
-      <p class="site-footer__copyright">© {year} Nisconder</p>
-    </div>
+    <p class="site-footer__copyright">© {year} Nisconder</p>
   </div>
 </footer>
 
@@ -41,11 +24,14 @@ const year = new Date().getFullYear()
   }
 
   .site-footer__inner {
-    display: grid;
+    display: flex;
     width: min(100%, var(--header-width));
-    gap: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 2rem;
     margin-inline: auto;
-    padding: clamp(2rem, 5vw, 3.5rem) var(--site-gutter) 1.5rem;
+    padding: 1.25rem var(--site-gutter);
     color: var(--color-muted);
     font-size: 0.8125rem;
   }
@@ -54,77 +40,22 @@ const year = new Date().getFullYear()
     margin: 0;
   }
 
-  .site-footer__lead {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 1rem 2rem;
-  }
-
-  .site-footer__kicker {
-    color: var(--color-secondary);
-    font-family: var(--font-utility);
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-  }
-
   .site-footer__statement {
     color: var(--color-text);
     font-family: var(--font-display);
-    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
-  }
-
-  .site-footer__routes {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    border-block: 1px solid var(--color-line);
-  }
-
-  .site-footer__routes a {
-    display: grid;
-    gap: 0.15rem 0.75rem;
-    padding: 1rem 1.1rem;
-    color: var(--color-text);
-    text-decoration: none;
-  }
-
-  .site-footer__routes a + a {
-    border-inline-start: 1px solid var(--color-line);
-  }
-
-  .site-footer__routes a:hover {
-    text-decoration: underline;
-    text-underline-offset: 0.25em;
-  }
-
-  .site-footer__routes span {
-    color: var(--color-primary);
-    font-weight: 700;
-  }
-
-  .site-footer__routes a:nth-child(even) span {
-    color: var(--color-secondary);
-  }
-
-  .site-footer__routes small {
-    color: var(--color-muted);
-  }
-
-  .site-footer__meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem 1.5rem;
+    font-size: 1rem;
   }
 
   .site-footer__links {
     display: flex;
-    gap: 0.5rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
   }
 
   .site-footer a {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
     color: var(--color-muted);
     text-decoration: none;
   }
@@ -135,23 +66,18 @@ const year = new Date().getFullYear()
   }
 
   .site-footer__copyright {
+    margin-inline-start: auto;
     font-family: var(--font-utility);
   }
 
   @media (max-width: 43.75rem) {
-    .site-footer__lead {
-      display: grid;
-      justify-content: start;
-      gap: 0.35rem;
+    .site-footer__inner {
+      align-items: flex-start;
+      flex-direction: column;
     }
 
-    .site-footer__routes {
-      grid-template-columns: 1fr;
-    }
-
-    .site-footer__routes a + a {
-      border-block-start: 1px solid var(--color-line);
-      border-inline-start: 0;
+    .site-footer__copyright {
+      margin-inline-start: 0;
     }
   }
 </style>

@@ -19,10 +19,10 @@ const posts = await getPublishedPosts()
   description="按时间阅读 Nisconder 的技术、生活与思考。"
   canonical="/articles/"
 >
-  <header class="article-header">
+  <header class="article-header articles-intro">
     <p class="article-kicker">Articles</p>
     <h1>文章</h1>
-    <p>这里没有信息流，只有按时间排好的写作。</p>
+    <p>公开写作按时间排列，标题、摘要与标签都可以直接展开。</p>
     <a class="button" href="/search/">搜索文章</a>
   </header>
 
@@ -59,3 +59,22 @@ const posts = await getPublishedPosts()
     }
   </section>
 </BaseLayout>
+
+<style>
+  .articles-intro {
+    max-width: none;
+    padding: clamp(1.75rem, 5vw, 3.5rem);
+    border: 1px solid var(--color-line-strong);
+    border-inline-start: 0.5rem solid var(--color-primary);
+    background: var(--color-primary-soft);
+  }
+
+  .articles-intro > p:not(.article-kicker) {
+    max-width: 34rem;
+    color: var(--color-muted);
+  }
+
+  .articles-intro .button {
+    margin-block-start: 0.75rem;
+  }
+</style>

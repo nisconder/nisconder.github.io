@@ -54,85 +54,485 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
   image={post.data.image ?? post.data.cover}
   ogType="article"
 >
-  <article>
-    <header class="article-header">
-      <p class="article-kicker">
-        {category ? <a href={searchHref(category)}>{category}</a> : 'Article'}
-      </p>
-      <h1>{post.data.title}</h1>
-      <div class="article-meta">
-        <time datetime={getPostDateTime(post.data.date)}>
-          {formatPostDate(post.data.date)}
-        </time>
-        {post.data.updated && (
-          <span>
-            更新于 <time datetime={getPostDateTime(post.data.updated)}>
-              {formatPostDate(post.data.updated)}
-            </time>
-          </span>
-        )}
-      </div>
-      {tags.length > 0 && (
-        <nav class="article-tags" aria-label="文章标签">
-          {tags.map((tag) => <a href={searchHref(tag)}>#{tag}</a>)}
-        </nav>
-      )}
-    </header>
+  <div class="reading-progress-line" aria-hidden="true">
+    <span data-reading-progress-bar></span>
+  </div>
 
-    {
-      tableOfContents.length >= 3 && (
-        <details class="article-toc">
-          <summary>本文目录</summary>
-          <ol>
-            {tableOfContents.map((heading) => (
-              <li data-depth={heading.depth}>
-                <a href={`#${heading.slug}`}>{heading.text}</a>
-              </li>
-            ))}
-          </ol>
-        </details>
-      )
+  <div class="article-page" data-reading-root>
+    <aside class="reading-guide reading-guide--desktop" aria-label="文章阅读导航">
+      <div class="reading-guide__sticky">
+        <div
+          class="reading-meter"
+          role="progressbar"
+          aria-label="正文阅读进度"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+          data-reading-meter
+        >
+          <div class="reading-meter__label">
+            <span>已读</span>
+            <output data-reading-output>0%</output>
+          </div>
+          <span class="reading-meter__track" aria-hidden="true">
+            <span data-reading-progress-bar></span>
+          </span>
+        </div>
+
+        {
+          tableOfContents.length > 0 && (
+            <nav class="reading-toc" aria-label="本文目录">
+              <p>本文目录</p>
+              <ol>
+                {tableOfContents.map((heading) => (
+                  <li data-depth={heading.depth}>
+                    <a data-toc-link href={`#${heading.slug}`}>{heading.text}</a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          )
+        }
+
+        <a class="reading-guide__back" href="/articles/">全部文章</a>
+      </div>
+    </aside>
+
+    <div class="article-page__content">
+      <article>
+        <header class="article-header" id="article-start">
+          <p class="article-kicker">
+            {category ? <a href={searchHref(category)}>{category}</a> : 'Article'}
+          </p>
+          <h1>{post.data.title}</h1>
+          <div class="article-meta">
+            <time datetime={getPostDateTime(post.data.date)}>
+              {formatPostDate(post.data.date)}
+            </time>
+            {post.data.updated && (
+              <span>
+                更新于 <time datetime={getPostDateTime(post.data.updated)}>
+                  {formatPostDate(post.data.updated)}
+                </time>
+              </span>
+            )}
+          </div>
+          {tags.length > 0 && (
+            <nav class="article-tags" aria-label="文章标签">
+              {tags.map((tag) => <a href={searchHref(tag)}>#{tag}</a>)}
+            </nav>
+          )}
+        </header>
+
+        {
+          tableOfContents.length > 0 ? (
+            <details class="reading-guide reading-guide--mobile" data-mobile-toc>
+              <summary>
+                <span class="reading-guide__mobile-label">目录</span>
+                <span class="reading-guide__current" data-current-heading>正文开始</span>
+                <output data-reading-output>0%</output>
+              </summary>
+              <nav aria-label="本文目录">
+                <ol>
+                  {tableOfContents.map((heading) => (
+                    <li data-depth={heading.depth}>
+                      <a data-toc-link href={`#${heading.slug}`}>{heading.text}</a>
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            </details>
+          ) : (
+            <div class="reading-guide reading-guide--mobile reading-guide--status">
+              <span>阅读进度</span>
+              <output data-reading-output>0%</output>
+            </div>
+          )
+        }
+
+        <div class="prose" data-reading-body>
+          <Content />
+        </div>
+
+        <footer class="article-footer">
+          <a class="button secondary" href="/articles/">返回全部文章</a>
+          {
+            (newerPost || olderPost) && (
+              <nav class="article-neighbors" aria-label="相邻文章">
+                {newerPost && (
+                  <a href={getPostUrl(newerPost)}>
+                    <span>较新一篇</span>
+                    <strong>{newerPost.data.title}</strong>
+                  </a>
+                )}
+                {olderPost && (
+                  <a href={getPostUrl(olderPost)}>
+                    <span>较早一篇</span>
+                    <strong>{olderPost.data.title}</strong>
+                  </a>
+                )}
+              </nav>
+            )
+          }
+        </footer>
+      </article>
+
+      <section class="comments-section" id="comments">
+        <div class="section-heading">
+          <p class="article-kicker">Comments</p>
+          <h2>评论</h2>
+        </div>
+        <p data-waline-status aria-live="polite">接近文末时自动载入评论。</p>
+        <div data-waline-root data-path={canonical}></div>
+        <noscript>评论区需要启用 JavaScript；正文阅读不受影响。</noscript>
+      </section>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .reading-progress-line {
+    position: fixed;
+    z-index: 80;
+    inset-block-start: 0;
+    inset-inline: 0;
+    height: 4px;
+    overflow: hidden;
+    background: var(--color-secondary-soft);
+    pointer-events: none;
+  }
+
+  .reading-progress-line span,
+  .reading-meter__track span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-inline-end: 4px solid var(--color-secondary);
+    background: var(--color-primary);
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+
+  .article-page {
+    display: grid;
+    grid-template-columns: minmax(11.75rem, 13.5rem) minmax(0, 1fr);
+    min-width: 0;
+    border: 1px solid var(--color-line-strong);
+    background: var(--color-surface);
+  }
+
+  .article-page__content {
+    min-width: 0;
+    padding: clamp(2rem, 5vw, 4rem);
+    background: var(--color-surface);
+  }
+
+  .reading-guide--desktop {
+    min-width: 0;
+    border-inline-end: 0.35rem solid var(--color-secondary);
+    background: var(--color-primary-soft);
+  }
+
+  .reading-guide__sticky {
+    position: sticky;
+    inset-block-start: 1.25rem;
+    display: grid;
+    gap: 2rem;
+    max-height: calc(100vh - 2.5rem);
+    padding: 1.5rem 1.15rem 1.5rem 1.25rem;
+    overflow: hidden;
+  }
+
+  .reading-meter__label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    color: var(--color-primary);
+    font-family: var(--font-utility);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .reading-meter__label output {
+    color: var(--color-secondary);
+    font-size: 1.1rem;
+  }
+
+  .reading-meter__track {
+    display: block;
+    height: 0.45rem;
+    margin-block-start: 0.65rem;
+    overflow: hidden;
+    border: 1px solid var(--color-line-strong);
+    background: var(--color-surface);
+  }
+
+  .reading-toc {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .reading-toc > p {
+    margin-block-end: 0.55rem;
+    color: var(--color-secondary);
+    font-family: var(--font-utility);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  .reading-toc ol,
+  .reading-guide--mobile ol {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .reading-toc ol {
+    max-height: calc(100vh - 15rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  .reading-toc li[data-depth='3'],
+  .reading-guide--mobile li[data-depth='3'] {
+    padding-inline-start: 0.8rem;
+  }
+
+  .reading-toc a,
+  .reading-guide--mobile nav a {
+    display: flex;
+    min-height: 2.75rem;
+    align-items: center;
+    padding: 0.5rem 0.55rem;
+    border-inline-start: 0.25rem solid transparent;
+    color: var(--color-text);
+    font-size: 0.78rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    text-decoration: none;
+  }
+
+  .reading-toc a:hover,
+  .reading-toc a[aria-current='location'],
+  .reading-guide--mobile nav a:hover,
+  .reading-guide--mobile nav a[aria-current='location'] {
+    border-inline-start-color: var(--color-primary);
+    background: var(--color-secondary);
+    color: var(--color-on-secondary);
+  }
+
+  .reading-guide__back {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    align-self: end;
+    border-block-start: 1px solid var(--color-line-strong);
+    color: var(--color-primary);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .reading-guide__back::after {
+    margin-inline-start: auto;
+    color: var(--color-secondary);
+    content: '→';
+  }
+
+  .reading-guide--mobile {
+    display: none;
+  }
+
+  .comments-section {
+    max-width: var(--content-width);
+    margin-block-start: clamp(4rem, 9vw, 7rem);
+    padding-block-start: clamp(2rem, 5vw, 3rem);
+    border-block-start: 0.35rem solid var(--color-secondary);
+    background: var(--color-surface);
+  }
+
+  .comments-section .section-heading h2 {
+    font-size: clamp(1.875rem, 4vw, 2.4rem);
+  }
+
+  @media (max-width: 60rem) {
+    .article-page {
+      grid-template-columns: minmax(0, 1fr);
     }
 
-    <div class="prose">
-      <Content />
-    </div>
+    .reading-guide--desktop {
+      display: none;
+    }
 
-    <footer class="article-footer">
-      <a class="button secondary" href="/articles/">返回全部文章</a>
-      {
-        (newerPost || olderPost) && (
-          <nav class="article-neighbors" aria-label="相邻文章">
-            {newerPost && (
-              <a href={getPostUrl(newerPost)}>
-                <span>较新一篇</span>
-                <strong>{newerPost.data.title}</strong>
-              </a>
-            )}
-            {olderPost && (
-              <a href={getPostUrl(olderPost)}>
-                <span>较早一篇</span>
-                <strong>{olderPost.data.title}</strong>
-              </a>
-            )}
-          </nav>
-        )
+    .reading-guide--mobile {
+      position: sticky;
+      z-index: 20;
+      inset-block-start: 0;
+      display: block;
+      margin-block: 1.5rem 2.5rem;
+      border-block: 1px solid var(--color-line-strong);
+      background: var(--color-primary-soft);
+    }
+
+    .reading-guide--mobile summary,
+    .reading-guide--status {
+      min-height: 2.75rem;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0.8rem;
+      color: var(--color-text);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .reading-guide--mobile summary {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+
+    .reading-guide--mobile[open] summary {
+      border-block-end: 1px solid var(--color-line-strong);
+    }
+
+    .reading-guide__mobile-label,
+    .reading-guide--mobile output {
+      color: var(--color-secondary);
+      font-family: var(--font-utility);
+    }
+
+    .reading-guide__current {
+      overflow: hidden;
+      color: var(--color-primary);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .reading-guide--mobile nav {
+      max-height: 60svh;
+      padding: 0.45rem;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .reading-guide--status {
+      display: flex;
+      justify-content: space-between;
+      cursor: default;
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .article-page__content {
+      padding: 1.25rem;
+    }
+
+    .comments-section {
+      margin-block-start: 4.5rem;
+    }
+  }
+</style>
+
+<script is:inline>
+  (() => {
+    const root = document.querySelector('[data-reading-root]')
+    const body = root?.querySelector('[data-reading-body]')
+    if (!(root instanceof HTMLElement) || !(body instanceof HTMLElement)) return
+
+    const progressBars = [...document.querySelectorAll('[data-reading-progress-bar]')]
+    const outputs = [...root.querySelectorAll('[data-reading-output]')]
+    const meters = [...root.querySelectorAll('[data-reading-meter]')]
+    const tocLinks = [...root.querySelectorAll('[data-toc-link]')]
+    const headings = [...body.querySelectorAll('h2[id], h3[id]')]
+    const currentLabels = [...root.querySelectorAll('[data-current-heading]')]
+    const mobileToc = root.querySelector('[data-mobile-toc]')
+
+    let bodyStart = 0
+    let bodyEnd = 1
+    let headingPositions = []
+    let queued = false
+    let lastPercent = -1
+    let lastHeadingId = ''
+
+    const setProgress = (percent) => {
+      if (percent === lastPercent) return
+      lastPercent = percent
+      const scale = String(percent / 100)
+      progressBars.forEach((bar) => {
+        if (bar instanceof HTMLElement) bar.style.transform = `scaleX(${scale})`
+      })
+      outputs.forEach((output) => { output.textContent = `${percent}%` })
+      meters.forEach((meter) => meter.setAttribute('aria-valuenow', String(percent)))
+    }
+
+    const setCurrentHeading = (heading) => {
+      const nextId = heading?.id ?? ''
+      if (nextId === lastHeadingId) return
+      lastHeadingId = nextId
+      const label = heading?.textContent?.trim() || '正文开始'
+      currentLabels.forEach((node) => { node.textContent = label })
+      tocLinks.forEach((link) => {
+        const current = nextId && link.getAttribute('href') === `#${nextId}`
+        if (current) link.setAttribute('aria-current', 'location')
+        else link.removeAttribute('aria-current')
+      })
+    }
+
+    const update = () => {
+      queued = false
+      const readingLine = window.scrollY + window.innerHeight * 0.32
+      const ratio = (readingLine - bodyStart) / Math.max(bodyEnd - bodyStart, 1)
+      setProgress(Math.round(Math.min(1, Math.max(0, ratio)) * 100))
+
+      let currentHeading
+      for (const item of headingPositions) {
+        if (item.top > readingLine) break
+        currentHeading = item.element
       }
-    </footer>
-  </article>
+      setCurrentHeading(currentHeading)
+    }
 
-  <section class="axis-section comments-section" data-note="讨论" id="comments">
-    <div class="section-heading">
-      <div>
-        <p class="article-kicker">Comments</p>
-        <h2>评论</h2>
-      </div>
-    </div>
-    <p data-waline-status aria-live="polite">滚动到这里后加载评论。</p>
-    <div data-waline-root data-path={canonical}></div>
-    <noscript>评论区需要启用 JavaScript；正文阅读不受影响。</noscript>
-  </section>
-</BaseLayout>
+    const queueUpdate = () => {
+      if (queued) return
+      queued = true
+      window.requestAnimationFrame(update)
+    }
+
+    const measure = () => {
+      const rect = body.getBoundingClientRect()
+      bodyStart = rect.top + window.scrollY
+      bodyEnd = bodyStart + body.scrollHeight
+      headingPositions = headings.map((element) => ({
+        element,
+        top: element.getBoundingClientRect().top + window.scrollY,
+      }))
+      queueUpdate()
+    }
+
+    window.addEventListener('scroll', queueUpdate, { passive: true })
+    window.addEventListener('resize', measure, { passive: true })
+    if ('ResizeObserver' in window) new ResizeObserver(measure).observe(body)
+    document.fonts?.ready.then(measure)
+    measure()
+
+    if (mobileToc instanceof HTMLDetailsElement) {
+      mobileToc.addEventListener('click', (event) => {
+        if (event.target instanceof Element && event.target.closest('a')) {
+          mobileToc.open = false
+        }
+      })
+      mobileToc.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          mobileToc.open = false
+          mobileToc.querySelector('summary')?.focus()
+        }
+      })
+    }
+  })()
+</script>
 
 <script is:inline>
   (() => {
@@ -200,7 +600,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
         if (!entries.some((entry) => entry.isIntersecting)) return
         observer.disconnect()
         loadComments()
-      }, { rootMargin: '400px 0px' })
+      }, { rootMargin: '1600px 0px' })
       observer.observe(root)
     } else {
       loadComments()
