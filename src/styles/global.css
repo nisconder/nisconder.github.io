@@ -1,42 +1,43 @@
 :root {
   color-scheme: light;
-  --color-bg: #f7f8f7;
+  --color-bg: #e7edef;
   --color-surface: #ffffff;
-  --color-surface-soft: #eef2f1;
-  --color-text: #172022;
-  --color-muted: #687273;
-  --color-line: #dde2e1;
-  --color-line-strong: #aeb9b7;
-  --color-primary: #245f64;
-  --color-secondary: #62536f;
-  --color-primary-soft: #e4eded;
-  --color-secondary-soft: #ece8ef;
+  --color-surface-soft: #dbe4e7;
+  --color-text: #142126;
+  --color-muted: #506168;
+  --color-line: #b9c7cc;
+  --color-line-strong: #82959d;
+  --color-primary: #1e626b;
+  --color-secondary: #655170;
+  --color-primary-soft: #cfe3e6;
+  --color-secondary-soft: #e2d7e8;
   --color-on-primary: #ffffff;
   --color-on-secondary: #ffffff;
   --site-gutter: clamp(1rem, 4vw, 3rem);
   --content-width: 48rem;
   --frame-width: 61rem;
   --header-width: 76rem;
-  --font-display: ui-serif, Georgia, "Songti SC", "STSong", "Noto Serif CJK SC", serif;
-  --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-display: "Segoe UI Variable Display", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-editorial: ui-serif, Georgia, "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+  --font-body: "Segoe UI Variable Text", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-utility: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --color-bg: #12151a;
-  --color-surface: #181c22;
-  --color-surface-soft: #1e2329;
-  --color-text: #edf1f2;
-  --color-muted: #a8b0b2;
-  --color-line: #2c3238;
-  --color-line-strong: #4c565f;
-  --color-primary: #b8a3c7;
-  --color-secondary: #7db4b6;
-  --color-primary-soft: #29242e;
-  --color-secondary-soft: #1d2a2c;
-  --color-on-primary: #12151a;
-  --color-on-secondary: #12151a;
+  --color-bg: #0e141b;
+  --color-surface: #151d26;
+  --color-surface-soft: #202a35;
+  --color-text: #edf4f5;
+  --color-muted: #a9b8bd;
+  --color-line: #34424d;
+  --color-line-strong: #61717b;
+  --color-primary: #bba4ca;
+  --color-secondary: #78b7bb;
+  --color-primary-soft: #2b2232;
+  --color-secondary-soft: #173137;
+  --color-on-primary: #0e141b;
+  --color-on-secondary: #0e141b;
 }
 
 *,
@@ -82,7 +83,7 @@ input,
 textarea,
 select {
   width: 100%;
-  border: 1px solid var(--color-line);
+  border: 1px solid var(--color-line-strong);
   border-radius: 0.25rem;
   background: var(--color-surface);
 }
@@ -206,8 +207,35 @@ a:hover {
 }
 
 .site-main {
+  position: relative;
+  isolation: isolate;
   width: 100%;
+  overflow: clip;
   padding: clamp(2.75rem, 7vw, 6.5rem) var(--site-gutter) clamp(4.5rem, 9vw, 8rem);
+  background: var(--color-surface);
+}
+
+.site-main::before,
+.site-main::after {
+  position: absolute;
+  z-index: 0;
+  inset-block: 0;
+  content: '';
+  pointer-events: none;
+}
+
+.site-main::before {
+  inset-inline-start: 0;
+  width: 44%;
+  border-inline-end: 1px solid var(--color-line-strong);
+  background: var(--color-primary-soft);
+}
+
+.site-main::after {
+  inset-inline-start: 44%;
+  width: 22%;
+  border-inline-end: 1px solid var(--color-line-strong);
+  background: var(--color-secondary-soft);
 }
 
 /*
@@ -216,6 +244,7 @@ a:hover {
  */
 .reading-frame {
   position: relative;
+  z-index: 1;
   width: min(100%, var(--frame-width));
   min-width: 0;
   margin-inline: auto;
@@ -288,6 +317,13 @@ a:hover {
   font-size: clamp(2.25rem, 7vw, 4.5rem);
   letter-spacing: -0.035em;
   overflow-wrap: anywhere;
+}
+
+.article-header h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  font-family: var(--font-editorial);
 }
 
 .eyebrow,
@@ -693,6 +729,15 @@ a:hover {
 }
 
 @media (max-width: 31.25rem) {
+  .site-main::before {
+    width: 52%;
+  }
+
+  .site-main::after {
+    inset-inline-start: 52%;
+    width: 24%;
+  }
+
   .button-row {
     align-items: stretch;
     flex-direction: column;
