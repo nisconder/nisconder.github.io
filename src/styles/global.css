@@ -1,12 +1,18 @@
 :root {
   color-scheme: light;
   --color-bg: #f7f8f7;
+  --color-surface: #ffffff;
+  --color-surface-soft: #eef2f1;
   --color-text: #172022;
   --color-muted: #687273;
   --color-line: #dde2e1;
+  --color-line-strong: #aeb9b7;
   --color-primary: #245f64;
   --color-secondary: #62536f;
+  --color-primary-soft: #e4eded;
+  --color-secondary-soft: #ece8ef;
   --color-on-primary: #ffffff;
+  --color-on-secondary: #ffffff;
   --site-gutter: clamp(1rem, 4vw, 3rem);
   --content-width: 48rem;
   --frame-width: 61rem;
@@ -19,12 +25,18 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
   --color-bg: #12151a;
+  --color-surface: #181c22;
+  --color-surface-soft: #1e2329;
   --color-text: #edf1f2;
   --color-muted: #a8b0b2;
   --color-line: #2c3238;
+  --color-line-strong: #4c565f;
   --color-primary: #b8a3c7;
   --color-secondary: #7db4b6;
+  --color-primary-soft: #29242e;
+  --color-secondary-soft: #1d2a2c;
   --color-on-primary: #12151a;
+  --color-on-secondary: #12151a;
 }
 
 *,
@@ -72,7 +84,7 @@ select {
   width: 100%;
   border: 1px solid var(--color-line);
   border-radius: 0.25rem;
-  background: transparent;
+  background: var(--color-surface);
 }
 
 input,
@@ -104,7 +116,8 @@ input,
 textarea,
 select,
 a {
-  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: color-mix(in srgb, var(--color-secondary), transparent 72%);
+  touch-action: manipulation;
 }
 
 img,
@@ -186,18 +199,6 @@ a:hover {
   inset-block-start: 0.75rem;
 }
 
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
 .site-shell {
   display: grid;
   min-height: 100vh;
@@ -210,8 +211,8 @@ a:hover {
 }
 
 /*
- * The single reading axis is the site's one decorative gesture. Sections can
- * opt into margin annotations with class="axis-section" data-note="…".
+ * The reading axis is both route and map. Its primary rail keeps the page
+ * linear; alternating secondary branches mark where a visitor may diverge.
  */
 .reading-frame {
   position: relative;
@@ -225,7 +226,7 @@ a:hover {
   position: absolute;
   inset-block: 0;
   inset-inline-start: 0;
-  width: 1px;
+  width: 2px;
   background: var(--color-primary);
   content: '';
 }
@@ -260,10 +261,16 @@ a:hover {
   position: absolute;
   inset-block-start: calc(clamp(2.5rem, 6vw, 5.25rem) + 0.5rem);
   inset-inline-start: -1.25rem;
-  width: 0.75rem;
+  width: 1.25rem;
   height: 2px;
   background: var(--color-secondary);
+  border-inline-start: 0.5rem solid var(--color-primary);
   content: '';
+}
+
+.axis-section:nth-of-type(even)::after {
+  background: var(--color-primary);
+  border-inline-start-color: var(--color-secondary);
 }
 
 .axis-section:first-child::after {
@@ -280,6 +287,7 @@ a:hover {
   margin-block-end: 1.25rem;
   font-size: clamp(2.25rem, 7vw, 4.5rem);
   letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
 }
 
 .eyebrow,
@@ -306,8 +314,7 @@ a:hover {
   letter-spacing: -0.02em;
 }
 
-.button-row,
-.cluster {
+.button-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -321,6 +328,7 @@ a:hover {
   justify-content: center;
   padding: 0.65rem 1.05rem;
   border: 1px solid var(--color-primary);
+  border-inline-end: 0.3rem solid var(--color-secondary);
   border-radius: 0.25rem;
   background: var(--color-primary);
   color: var(--color-on-primary);
@@ -329,7 +337,6 @@ a:hover {
   line-height: 1.2;
   text-align: center;
   text-decoration: none;
-  transition: background-color 120ms linear, border-color 120ms linear, color 120ms linear;
 }
 
 .button:hover {
@@ -339,12 +346,14 @@ a:hover {
 }
 
 .button.secondary {
-  background: transparent;
-  color: var(--color-primary);
+  border-color: var(--color-secondary);
+  border-inline-end-color: var(--color-primary);
+  background: var(--color-secondary-soft);
+  color: var(--color-secondary);
 }
 
 .button.secondary:hover {
-  background: color-mix(in srgb, var(--color-primary), transparent 91%);
+  background: var(--color-primary-soft);
   color: var(--color-primary);
 }
 
@@ -352,10 +361,6 @@ a:hover {
 .button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
-}
-
-.stack > * + * {
-  margin-block-start: var(--stack-space, 1.25rem);
 }
 
 .post-list {
@@ -381,10 +386,31 @@ a:hover {
 }
 
 .article-tags {
-  margin: 1rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.7rem;
+  margin: 0.5rem 0 0;
   color: var(--color-muted);
   font-size: 0.8125rem;
   line-height: 1.65;
+}
+
+.article-kicker a,
+.article-tags a {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  color: var(--color-secondary);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  text-decoration-color: var(--color-primary);
+  text-underline-offset: 0.25em;
+}
+
+.article-kicker a:hover,
+.article-tags a:hover {
+  color: var(--color-primary);
+  text-decoration-color: var(--color-secondary);
 }
 
 .article-toc {
@@ -657,7 +683,8 @@ a:hover {
 
   .axis-section::after {
     inset-inline-start: -4.75rem;
-    width: 1.5rem;
+    width: 4.75rem;
+    border-inline-start-width: 0.75rem;
   }
 
   .article-neighbors {

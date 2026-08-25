@@ -44,6 +44,7 @@ const tags = getPostTags(post)
 const description = getPostDescription(post)
 const tableOfContents = headings.filter(({ depth }) => depth >= 2 && depth <= 3)
 const canonical = getPostUrl(post)
+const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 ---
 
 <BaseLayout
@@ -55,7 +56,9 @@ const canonical = getPostUrl(post)
 >
   <article>
     <header class="article-header">
-      <p class="article-kicker">{category ?? 'Article'}</p>
+      <p class="article-kicker">
+        {category ? <a href={searchHref(category)}>{category}</a> : 'Article'}
+      </p>
       <h1>{post.data.title}</h1>
       <div class="article-meta">
         <time datetime={getPostDateTime(post.data.date)}>
@@ -69,7 +72,11 @@ const canonical = getPostUrl(post)
           </span>
         )}
       </div>
-      {tags.length > 0 && <p class="article-tags">{tags.join(' · ')}</p>}
+      {tags.length > 0 && (
+        <nav class="article-tags" aria-label="文章标签">
+          {tags.map((tag) => <a href={searchHref(tag)}>#{tag}</a>)}
+        </nav>
+      )}
     </header>
 
     {

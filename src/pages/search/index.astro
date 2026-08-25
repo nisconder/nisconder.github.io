@@ -1,5 +1,9 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro"
+import { getPostTags, getPublishedPosts } from "../../lib/posts"
+
+const posts = await getPublishedPosts()
+const querySeeds = Array.from(new Set(posts.flatMap((post) => getPostTags(post)))).slice(0, 5)
 ---
 
 <BaseLayout
@@ -12,6 +16,10 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
     <p class="lede">
       输入标题、主题或标签。搜索索引会在你第一次输入时才载入，不增加其他页面的负担。
     </p>
+    <nav class="query-seeds" aria-label="常用搜索主题">
+      <span>从这些词出发</span>
+      {querySeeds.map((seed) => <a href={`/search/?q=${encodeURIComponent(seed)}`}>{seed}</a>)}
+    </nav>
   </header>
 
   <section class="axis-section" data-note="搜索">
@@ -21,7 +29,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
         id="site-search"
         type="search"
         name="q"
-        placeholder="例如：博客搭建、社会学、随笔"
+        placeholder="例如：博客搭建、社会学、随笔…"
         autocomplete="off"
         spellcheck="false"
         aria-describedby="search-hint search-status"
@@ -37,7 +45,21 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
     <p id="search-status" class="search-status" aria-live="polite" data-search-status>
       输入关键词后开始搜索。
     </p>
-    <div class="search-results" aria-live="polite" data-search-results></div>
+    <div class="search-results" data-search-results></div>
+  </section>
+
+  <section class="axis-section route-junction" data-note="下一站">
+    <p class="route-junction__intro">搜索是一条支路。你也可以先看全貌，或把节奏交给一张歌单。</p>
+    <nav class="route-junction__links" aria-label="从搜索页继续">
+      <a class="route-link route-link--primary" href="/articles/">
+        <span>回到写作主线</span>
+        <strong>按时间浏览全部文章</strong>
+      </a>
+      <a class="route-link route-link--secondary" href="/music/">
+        <span>向另一侧走</span>
+        <strong>去音乐页停一会儿</strong>
+      </a>
+    </nav>
   </section>
 </BaseLayout>
 
@@ -53,6 +75,13 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
     tags: string[]
     href: string
     url?: string
+    search: {
+      title: string
+      tags: string
+      category: string
+      description: string
+      content: string
+    }
   }
 
   const input = document.querySelector<HTMLInputElement>("[data-search-input]")
@@ -87,18 +116,35 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
         const items: Record<string, unknown>[] = Array.isArray(payload)
           ? payload
           : payload.items || payload.posts || []
-        searchIndex = items.map((item): SearchRecord => ({
-          title: typeof item.title === "string" ? item.title : undefined,
-          description: typeof item.description === "string" ? item.description : undefined,
-          excerpt: typeof item.excerpt === "string" ? item.excerpt : undefined,
-          content: typeof item.content === "string" ? item.content : undefined,
-          text: typeof item.text === "string" ? item.text : undefined,
-          date: typeof item.date === "string" ? item.date : undefined,
-          category: typeof item.category === "string" ? item.category : undefined,
-          href: String(item.href || item.url || "#"),
-          url: typeof item.url === "string" ? item.url : undefined,
-          tags: asArray(item.tags),
-        }))
+        searchIndex = items.map((item): SearchRecord => {
+          const title = typeof item.title === "string" ? item.title : undefined
+          const description = typeof item.description === "string" ? item.description : undefined
+          const excerpt = typeof item.excerpt === "string" ? item.excerpt : undefined
+          const content = typeof item.content === "string" ? item.content : undefined
+          const text = typeof item.text === "string" ? item.text : undefined
+          const category = typeof item.category === "string" ? item.category : undefined
+          const tags = asArray(item.tags)
+
+          return {
+            title,
+            description,
+            excerpt,
+            content,
+            text,
+            date: typeof item.date === "string" ? item.date : undefined,
+            category,
+            href: String(item.href || item.url || "#"),
+            url: typeof item.url === "string" ? item.url : undefined,
+            tags,
+            search: {
+              title: normalise(title),
+              tags: normalise(tags.join(" ")),
+              category: normalise(category),
+              description: normalise(description || excerpt),
+              content: normalise(content || text),
+            },
+          }
+        })
         return searchIndex
       })
       .catch((error) => {
@@ -112,13 +158,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
   }
 
   const scoreItem = (item: SearchRecord, tokens: string[]) => {
-    const fields = {
-      title: normalise(item.title),
-      tags: normalise(item.tags.join(" ")),
-      category: normalise(item.category),
-      description: normalise(item.description || item.excerpt),
-      content: normalise(item.content || item.text),
-    }
+    const fields = item.search
 
     let score = 0
     for (const token of tokens) {
@@ -166,8 +206,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
 
       const meta = document.createElement("p")
       meta.className = "search-result__meta"
-      const metaParts = [item.category, item.date].filter(Boolean)
-      appendText(meta, metaParts.join(" · "))
+      if (item.category) {
+        const categoryLink = document.createElement("a")
+        categoryLink.href = `/search/?q=${encodeURIComponent(item.category)}`
+        appendText(categoryLink, item.category)
+        meta.append(categoryLink)
+      }
+      if (item.category && item.date) meta.append(" · ")
+      if (item.date) meta.append(item.date)
 
       const heading = document.createElement("h2")
       const link = document.createElement("a")
@@ -186,9 +232,15 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
       }
 
       if (item.tags.length > 0) {
-        const tags = document.createElement("p")
+        const tags = document.createElement("nav")
         tags.className = "search-result__tags"
-        appendText(tags, item.tags.map((tag) => `#${tag}`).join("  "))
+        tags.setAttribute("aria-label", `《${item.title || "未命名文章"}》的标签`)
+        for (const tag of item.tags) {
+          const tagLink = document.createElement("a")
+          tagLink.href = `/search/?q=${encodeURIComponent(tag)}`
+          appendText(tagLink, `#${tag}`)
+          tags.append(tagLink)
+        }
         article.append(tags)
       }
 
@@ -197,8 +249,16 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
     results.append(fragment)
   }
 
+  const syncQueryToUrl = (query: string) => {
+    const url = new URL(window.location.href)
+    if (query) url.searchParams.set("q", query)
+    else url.searchParams.delete("q")
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`)
+  }
+
   input?.addEventListener("input", () => {
     const query = input.value.trim()
+    syncQueryToUrl(query)
     if (!query) {
       render("")
       return
@@ -208,11 +268,67 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
       .then(() => render(input.value.trim()))
       .catch(() => {})
   })
+
+  const initialQuery = new URLSearchParams(window.location.search).get("q")?.trim() ?? ""
+  if (input && initialQuery) {
+    input.value = initialQuery
+    void loadIndex()
+      .then(() => render(input.value.trim()))
+      .catch(() => {})
+  }
+
+  window.addEventListener("popstate", () => {
+    if (!input) return
+    const query = new URLSearchParams(window.location.search).get("q")?.trim() ?? ""
+    input.value = query
+    if (!query) {
+      render("")
+      return
+    }
+    void loadIndex()
+      .then(() => render(query))
+      .catch(() => {})
+  })
 </script>
 
 <style>
   .search-intro h1 {
     max-width: 17ch;
+  }
+
+  .query-seeds {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.2rem 1rem;
+    max-width: 39rem;
+    margin-top: 1.65rem;
+    border-block: 1px solid var(--color-line);
+  }
+
+  .query-seeds span {
+    color: var(--color-muted);
+    font-family: var(--font-utility);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+  }
+
+  .query-seeds a {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    color: var(--color-secondary);
+    font-size: 0.875rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+    text-decoration: none;
+  }
+
+  .query-seeds a:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-decoration-color: var(--color-secondary);
+    text-underline-offset: 0.25em;
   }
 
   .search-form label {
@@ -230,7 +346,6 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
     border: 0;
     border-bottom: 1px solid var(--color-line);
     border-radius: 0;
-    outline: none;
     background: transparent;
     color: inherit;
     font: inherit;
@@ -244,7 +359,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
 
   .search-form input:focus-visible {
     border-bottom-color: var(--color-primary);
-    border-bottom-width: 2px;
+    outline: 3px solid var(--color-secondary);
+    outline-offset: 4px;
   }
 
   .search-hint,
@@ -272,13 +388,29 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
     letter-spacing: 0.04em;
   }
 
+  :global(.search-result__meta a),
+  :global(.search-result__tags a) {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    color: var(--color-secondary);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+    text-decoration-color: var(--color-primary);
+    text-underline-offset: 0.25em;
+  }
+
   :global(.search-result h2) {
     margin: 0.4rem 0 0;
     font-size: clamp(1.15rem, 3vw, 1.45rem);
   }
 
   :global(.search-result h2 a) {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
     color: inherit;
+    overflow-wrap: anywhere;
     text-decoration: none;
   }
 
@@ -295,12 +427,100 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
   }
 
   :global(.search-result__tags) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.75rem;
     margin-top: 0.7rem;
+    overflow-wrap: anywhere;
+  }
+
+  .route-junction__intro {
+    max-width: 37rem;
+    margin: 0 0 1.5rem;
+    color: var(--color-muted);
+    line-height: 1.75;
+  }
+
+  .route-junction__links {
+    display: grid;
+    grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+  }
+
+  .route-link {
+    display: grid;
+    min-width: 0;
+    min-height: 5.5rem;
+    align-content: center;
+    gap: 0.25rem;
+    padding: 1rem 1.25rem 1rem 0;
+    border-block-start: 3px solid var(--route-color);
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .route-link + .route-link {
+    padding-inline: 1.5rem 0;
+    border-inline-start: 1px solid var(--color-line);
+  }
+
+  .route-link--primary {
+    --route-color: var(--color-primary);
+  }
+
+  .route-link--secondary {
+    --route-color: var(--color-secondary);
+  }
+
+  .route-link span {
+    color: var(--route-color);
+    font-family: var(--font-utility);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  .route-link strong {
+    overflow-wrap: anywhere;
+    font-family: var(--font-display);
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    line-height: 1.45;
+  }
+
+  .route-link:hover strong {
+    color: var(--route-color);
+    text-decoration: underline;
+    text-underline-offset: 0.24em;
+  }
+
+  @media (min-width: 52rem) {
+    .route-junction__links {
+      width: calc(100% - 2.5rem);
+      margin-inline-start: 2.5rem;
+    }
   }
 
   @media (max-width: 38rem) {
     .search-intro h1 br {
       display: none;
+    }
+
+    .query-seeds {
+      gap-inline: 0.75rem;
+    }
+
+    .query-seeds span {
+      flex-basis: 100%;
+      padding-top: 0.7rem;
+    }
+
+    .route-junction__links {
+      grid-template-columns: 1fr;
+    }
+
+    .route-link,
+    .route-link + .route-link {
+      padding-inline: 0;
+      border-inline-start: 0;
     }
   }
 </style>

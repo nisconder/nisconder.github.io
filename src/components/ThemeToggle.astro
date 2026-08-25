@@ -5,7 +5,7 @@
   aria-label="切换为深色模式"
   aria-pressed="false"
 >
-  <span class="theme-toggle__mark" aria-hidden="true">◐</span>
+  <span class="theme-toggle__mark" aria-hidden="true"></span>
   <span data-theme-label>深色</span>
 </button>
 
@@ -68,26 +68,38 @@
     justify-content: center;
     gap: 0.4rem;
     padding: 0.4rem 0.65rem;
-    border: 1px solid var(--color-line);
+    border: 1px solid var(--color-secondary);
+    border-inline-end: 0.25rem solid var(--color-primary);
     border-radius: 0.25rem;
-    background: transparent;
+    background: var(--color-surface-soft);
     color: var(--color-text);
     cursor: pointer;
     font-size: 0.8125rem;
     font-weight: 650;
-    line-height: 1;
-    transition: border-color 120ms linear, color 120ms linear;
   }
 
   .theme-toggle:hover {
-    border-color: var(--color-secondary);
+    border-color: var(--color-primary);
+    border-inline-end-color: var(--color-secondary);
+    background: var(--color-primary-soft);
     color: var(--color-primary);
   }
 
   .theme-toggle__mark {
-    color: var(--color-secondary);
-    font-size: 1rem;
-    line-height: 1;
+    position: relative;
+    width: 1rem;
+    height: 0.75rem;
+    background: var(--color-primary);
+  }
+
+  .theme-toggle__mark::after {
+    position: absolute;
+    width: 0.55rem;
+    height: 0.55rem;
+    inset-block-end: -0.15rem;
+    inset-inline-end: -0.15rem;
+    background: var(--color-secondary);
+    content: '';
   }
 
   @media (max-width: 24rem) {

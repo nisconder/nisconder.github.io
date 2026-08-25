@@ -4,18 +4,24 @@ import ThemeToggle from './ThemeToggle.astro'
 const pathname = Astro.url.pathname
 const navItems = [
   { href: '/articles/', label: '文章' },
+  { href: '/music/', label: '音乐' },
   { href: '/about/', label: '关于' },
   { href: '/search/', label: '搜索' },
 ]
 
-const isCurrent = (href: string) => pathname === href || pathname.startsWith(href)
+const isArticlePath = /^\/\d{4}\/\d{2}\/\d{2}\//.test(pathname)
+const isCurrent = (href: string) =>
+  pathname === href || pathname.startsWith(href) || (href === '/articles/' && isArticlePath)
 ---
 
 <header class="site-header">
   <div class="site-header__inner">
     <a class="site-brand" href="/" aria-label="Nisconder 首页">
-      <span>Nisconder</span>
-      <span class="site-brand__line" aria-hidden="true"></span>
+      <span class="site-brand__mark" aria-hidden="true">
+        <span></span>
+        <span></span>
+      </span>
+      <span class="site-brand__word">Nisconder</span>
     </a>
 
     <nav class="site-nav" aria-label="主要导航">
@@ -27,50 +33,66 @@ const isCurrent = (href: string) => pathname === href || pathname.startsWith(hre
       <ThemeToggle />
     </nav>
   </div>
+  <div class="site-header__signal" aria-hidden="true"><span></span><span></span></div>
 </header>
 
 <style>
   .site-header {
-    border-block-end: 1px solid var(--color-line);
-    background: var(--color-bg);
+    background: var(--color-surface);
   }
 
   .site-header__inner {
     display: flex;
     width: min(100%, var(--header-width));
-    min-height: 4rem;
+    min-height: 4.25rem;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
     margin-inline: auto;
-    padding: 0.65rem var(--site-gutter);
+    padding: 0.7rem var(--site-gutter);
   }
 
   .site-brand {
     display: inline-flex;
     flex: 0 0 auto;
-    align-items: baseline;
-    gap: 0.5rem;
+    align-items: center;
+    gap: 0.65rem;
     color: var(--color-text);
     font-family: var(--font-display);
-    font-size: 1.15rem;
+    font-size: 1.125rem;
     font-weight: 650;
-    letter-spacing: -0.015em;
-    line-height: 1;
     text-decoration: none;
   }
 
-  .site-brand__line {
-    width: 1.4rem;
-    height: 2px;
+  .site-brand__mark {
+    position: relative;
+    display: block;
+    width: 1.6rem;
+    height: 1.45rem;
+    flex: 0 0 auto;
+  }
+
+  .site-brand__mark span {
+    position: absolute;
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  .site-brand__mark span:first-child {
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    background: var(--color-primary);
+  }
+
+  .site-brand__mark span:last-child {
+    inset-block-end: 0;
+    inset-inline-end: 0;
     background: var(--color-secondary);
   }
 
   .site-nav {
     display: flex;
-    min-width: 0;
     align-items: center;
-    justify-content: flex-end;
     gap: clamp(0.25rem, 1.5vw, 0.8rem);
   }
 
@@ -78,7 +100,8 @@ const isCurrent = (href: string) => pathname === href || pathname.startsWith(hre
     display: inline-flex;
     min-height: 2.5rem;
     align-items: center;
-    padding-inline: clamp(0.4rem, 1.4vw, 0.7rem);
+    padding-inline: clamp(0.45rem, 1.4vw, 0.75rem);
+    border-block-end: 2px solid transparent;
     color: var(--color-muted);
     font-size: 0.875rem;
     font-weight: 650;
@@ -89,21 +112,31 @@ const isCurrent = (href: string) => pathname === href || pathname.startsWith(hre
   .site-nav > a:hover,
   .site-nav > a[aria-current='page'] {
     color: var(--color-primary);
-    text-decoration: underline;
-    text-decoration-color: var(--color-secondary);
-    text-decoration-thickness: 2px;
+    border-block-end-color: var(--color-secondary);
+    background: var(--color-primary-soft);
+    text-decoration: none;
   }
 
-  @media (max-width: 24rem) {
+  .site-header__signal {
+    display: grid;
+    height: 2px;
+    grid-template-columns: minmax(2rem, 38%) 1fr;
+  }
+
+  .site-header__signal span:first-child {
+    background: var(--color-primary);
+  }
+
+  .site-header__signal span:last-child {
+    background: var(--color-secondary);
+  }
+
+  @media (max-width: 30rem) {
     .site-header__inner {
-      gap: 0.4rem;
+      gap: 0.5rem;
     }
 
-    .site-brand {
-      font-size: 1rem;
-    }
-
-    .site-brand__line {
+    .site-brand__word {
       display: none;
     }
 
@@ -112,7 +145,7 @@ const isCurrent = (href: string) => pathname === href || pathname.startsWith(hre
     }
 
     .site-nav > a {
-      padding-inline: 0.4rem;
+      padding-inline: 0.45rem;
       font-size: 0.8125rem;
     }
   }

@@ -12,9 +12,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
     <p class="lede">
       Nisconder，在这里记录代码、阅读、音乐与生活观察。写给未来的自己，也写给偶然路过的你。
     </p>
+    <nav class="about-compass" aria-label="关于页章节">
+      <a href="#writing">正在写什么</a>
+      <a href="#site">这个站如何运作</a>
+      <a href="#contact">联系方式</a>
+    </nav>
   </header>
 
-  <section class="axis-section about-copy" data-note="我在写什么">
+  <section id="writing" class="axis-section about-copy" data-note="我在写什么">
     <h2>四类没有严格边界的记录</h2>
     <dl class="about-list">
       <div>
@@ -36,7 +41,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
     </dl>
   </section>
 
-  <section class="axis-section about-copy" data-note="关于本站">
+  <section id="site" class="axis-section about-copy about-copy--offset" data-note="关于本站">
     <h2>一处尽量安静的个人空间</h2>
     <p>
       站点由 Astro 生成静态页面并部署在 Netlify。文章保存在仓库中，页面尽量少依赖客户端脚本，让阅读本身保持直接、稳定。
@@ -46,7 +51,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
     </p>
   </section>
 
-  <section class="axis-section about-copy" data-note="联系">
+  <section id="contact" class="axis-section about-copy" data-note="联系">
     <h2>找到我</h2>
     <ul class="contact-list">
       <li>
@@ -59,6 +64,20 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
       </li>
     </ul>
   </section>
+
+  <section class="axis-section route-junction" data-note="接着走">
+    <p class="route-junction__intro">知道这里为何存在之后，可以回到文字，也可以从音乐认识另一个侧面。</p>
+    <nav class="route-junction__links" aria-label="从关于页继续">
+      <a class="route-link route-link--primary" href="/articles/">
+        <span>沿主线阅读</span>
+        <strong>查看全部文章</strong>
+      </a>
+      <a class="route-link route-link--secondary" href="/music/">
+        <span>转向声音</span>
+        <strong>打开最近的歌单</strong>
+      </a>
+    </nav>
+  </section>
 </BaseLayout>
 
 <style>
@@ -68,6 +87,32 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
 
   .about-list {
     margin: 1.5rem 0 0;
+  }
+
+  .about-compass {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.25rem;
+    max-width: 39rem;
+    margin-top: 1.65rem;
+    border-block: 1px solid var(--color-line);
+  }
+
+  .about-compass a {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    color: var(--color-secondary);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .about-compass a:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-decoration-color: var(--color-secondary);
+    text-underline-offset: 0.25em;
   }
 
   .about-copy {
@@ -128,9 +173,82 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
   }
 
   .contact-list a {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
     overflow-wrap: anywhere;
     text-decoration: underline;
     text-underline-offset: 0.25em;
+  }
+
+  .route-junction__intro {
+    max-width: 37rem;
+    margin: 0 0 1.5rem;
+    color: var(--color-muted);
+    line-height: 1.75;
+  }
+
+  .route-junction__links {
+    display: grid;
+    grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+  }
+
+  .route-link {
+    display: grid;
+    min-width: 0;
+    min-height: 5.5rem;
+    align-content: center;
+    gap: 0.25rem;
+    padding: 1rem 1.25rem 1rem 0;
+    border-block-start: 3px solid var(--route-color);
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .route-link + .route-link {
+    padding-inline: 1.5rem 0;
+    border-inline-start: 1px solid var(--color-line);
+  }
+
+  .route-link--primary {
+    --route-color: var(--color-primary);
+  }
+
+  .route-link--secondary {
+    --route-color: var(--color-secondary);
+  }
+
+  .route-link span {
+    color: var(--route-color);
+    font-family: var(--font-utility);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  .route-link strong {
+    overflow-wrap: anywhere;
+    font-family: var(--font-display);
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    line-height: 1.45;
+  }
+
+  .route-link:hover strong {
+    color: var(--route-color);
+    text-decoration: underline;
+    text-underline-offset: 0.24em;
+  }
+
+  @media (min-width: 52rem) {
+    .about-copy--offset {
+      width: calc(100% - 2.5rem);
+      margin-inline-start: 2.5rem;
+    }
+
+    .route-junction__links {
+      width: calc(100% - 2.5rem);
+      margin-inline-start: 2.5rem;
+    }
   }
 
   @media (max-width: 38rem) {
@@ -142,6 +260,26 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
     .contact-list li {
       grid-template-columns: 1fr;
       gap: 0.35rem;
+    }
+
+    .about-compass {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+
+    .about-compass a + a {
+      border-block-start: 1px solid var(--color-line);
+    }
+
+    .route-junction__links {
+      grid-template-columns: 1fr;
+    }
+
+    .route-link,
+    .route-link + .route-link {
+      padding-inline: 0;
+      border-inline-start: 0;
     }
   }
 </style>

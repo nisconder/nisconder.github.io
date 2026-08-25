@@ -4,31 +4,51 @@ const year = new Date().getFullYear()
 
 <footer class="site-footer">
   <div class="site-footer__inner">
-    <p class="site-footer__statement">认真写字，长期主义。</p>
+    <div class="site-footer__lead">
+      <p class="site-footer__kicker">CONTINUE / EXPLORE</p>
+      <p class="site-footer__statement">沿着文字继续，也可以换个方向。</p>
+    </div>
 
-    <nav class="site-footer__links" aria-label="页脚导航">
-      <a href="/music/">音乐</a>
-      <a href="https://github.com/nisconder" rel="me noopener" target="_blank">GitHub</a>
-      <a href="mailto:72447244.wnm@gmail.com">邮箱</a>
+    <nav class="site-footer__routes" aria-label="继续探索">
+      <a href="/articles/">
+        <span>继续阅读</span>
+        <small>按时间浏览全部文章</small>
+        <b aria-hidden="true">→</b>
+      </a>
+      <a href="/music/">
+        <span>换个频道</span>
+        <small>去音乐页听一会儿</small>
+        <b aria-hidden="true">→</b>
+      </a>
+      <a href="/about/">
+        <span>认识作者</span>
+        <small>了解这处个人空间</small>
+        <b aria-hidden="true">→</b>
+      </a>
     </nav>
 
-    <p class="site-footer__copyright">© {year} Nisconder</p>
+    <div class="site-footer__meta">
+      <nav class="site-footer__links" aria-label="站外联系">
+        <a href="https://github.com/nisconder" rel="me noopener" target="_blank">GitHub</a>
+        <a href="mailto:72447244.wnm@gmail.com">邮箱</a>
+      </nav>
+      <p class="site-footer__copyright">© {year} Nisconder</p>
+    </div>
   </div>
 </footer>
 
 <style>
   .site-footer {
     border-block-start: 1px solid var(--color-line);
+    background: var(--color-surface);
   }
 
   .site-footer__inner {
     display: grid;
     width: min(100%, var(--header-width));
-    grid-template-columns: 1fr auto auto;
-    align-items: center;
-    gap: 1rem 2rem;
+    gap: 1.5rem;
     margin-inline: auto;
-    padding: 1.5rem var(--site-gutter);
+    padding: clamp(2rem, 5vw, 3.5rem) var(--site-gutter) 1.5rem;
     color: var(--color-muted);
     font-size: 0.8125rem;
   }
@@ -37,14 +57,78 @@ const year = new Date().getFullYear()
     margin: 0;
   }
 
+  .site-footer__lead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+  }
+
+  .site-footer__kicker {
+    color: var(--color-secondary);
+    font-family: var(--font-utility);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+
   .site-footer__statement {
     color: var(--color-text);
     font-family: var(--font-display);
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+  }
+
+  .site-footer__routes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-block: 1px solid var(--color-line);
+  }
+
+  .site-footer__routes a {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.15rem 0.75rem;
+    padding: 1rem 1.1rem;
+    border-inline-start: 0.25rem solid var(--color-primary);
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .site-footer__routes a:nth-child(even) {
+    border-inline-start-color: var(--color-secondary);
+  }
+
+  .site-footer__routes a:hover {
+    background: var(--color-primary-soft);
+  }
+
+  .site-footer__routes span {
+    font-weight: 700;
+  }
+
+  .site-footer__routes small {
+    grid-column: 1;
+    color: var(--color-muted);
+  }
+
+  .site-footer__routes b {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    color: var(--color-secondary);
+    font-weight: 500;
+  }
+
+  .site-footer__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
   }
 
   .site-footer__links {
     display: flex;
-    flex-wrap: wrap;
     gap: 0.5rem 1rem;
   }
 
@@ -60,13 +144,21 @@ const year = new Date().getFullYear()
 
   .site-footer__copyright {
     font-family: var(--font-utility);
-    white-space: nowrap;
   }
 
   @media (max-width: 43.75rem) {
-    .site-footer__inner {
+    .site-footer__lead {
+      display: grid;
+      justify-content: start;
+      gap: 0.35rem;
+    }
+
+    .site-footer__routes {
       grid-template-columns: 1fr;
-      gap: 0.65rem;
+    }
+
+    .site-footer__routes a + a {
+      border-block-start: 1px solid var(--color-line);
     }
   }
 </style>

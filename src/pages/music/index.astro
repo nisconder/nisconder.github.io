@@ -37,6 +37,20 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
       >在网易云音乐中打开歌单 ↗</a>
     </p>
   </section>
+
+  <section class="axis-section route-junction" data-note="听完以后">
+    <p class="route-junction__intro">声音不会把路截断。你可以回到按时间排列的文字，也可以去看看写下这些内容的人。</p>
+    <nav class="route-junction__links" aria-label="从音乐页继续">
+      <a class="route-link route-link--primary" href="/articles/">
+        <span>回到写作主线</span>
+        <strong>浏览全部公开文章</strong>
+      </a>
+      <a class="route-link route-link--secondary" href="/about/">
+        <span>换一个方向</span>
+        <strong>认识这个站与作者</strong>
+      </a>
+    </nav>
+  </section>
 </BaseLayout>
 
 <script>
@@ -64,7 +78,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
         status.textContent = "歌单已载入。"
       })
 
+      status.tabIndex = -1
       loader.replaceChildren(iframe, status)
+      status.focus()
     },
     { once: true }
   )
@@ -126,9 +142,82 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
   }
 
   .music-fallback a {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
     color: inherit;
     text-decoration: underline;
     text-underline-offset: 0.25em;
+  }
+
+  .route-junction__intro {
+    max-width: 37rem;
+    margin: 0 0 1.5rem;
+    color: var(--color-muted);
+    line-height: 1.75;
+  }
+
+  .route-junction__links {
+    display: grid;
+    grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+  }
+
+  .route-link {
+    display: grid;
+    min-width: 0;
+    min-height: 5.5rem;
+    align-content: center;
+    gap: 0.25rem;
+    padding: 1rem 1.25rem 1rem 0;
+    border-block-start: 3px solid var(--route-color);
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .route-link + .route-link {
+    padding-inline: 1.5rem 0;
+    border-inline-start: 1px solid var(--color-line);
+  }
+
+  .route-link--primary {
+    --route-color: var(--color-primary);
+  }
+
+  .route-link--secondary {
+    --route-color: var(--color-secondary);
+  }
+
+  .route-link span {
+    color: var(--route-color);
+    font-family: var(--font-utility);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  .route-link strong {
+    overflow-wrap: anywhere;
+    font-family: var(--font-display);
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    line-height: 1.45;
+  }
+
+  .route-link:hover strong {
+    color: var(--route-color);
+    text-decoration: underline;
+    text-underline-offset: 0.24em;
+  }
+
+  @media (min-width: 52rem) {
+    .music-loader {
+      width: calc(100% - 2.5rem);
+      margin-inline-start: 2.5rem;
+    }
+
+    .route-junction__links {
+      width: calc(100% - 2.5rem);
+      margin-inline-start: 2.5rem;
+    }
   }
 
   @media (max-width: 38rem) {
@@ -138,6 +227,16 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
 
     :global(.music-embed) {
       height: 420px;
+    }
+
+    .route-junction__links {
+      grid-template-columns: 1fr;
+    }
+
+    .route-link,
+    .route-link + .route-link {
+      padding-inline: 0;
+      border-inline-start: 0;
     }
   }
 </style>
