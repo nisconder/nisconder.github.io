@@ -14,15 +14,15 @@ const querySeeds = Array.from(new Set(posts.flatMap((post) => getPostTags(post))
     <p class="eyebrow">SEARCH / ARCHIVE</p>
     <h1>从写过的内容里，<br />找到一个词。</h1>
     <p class="lede">
-      输入标题、主题或标签。搜索索引会在你第一次输入时才载入，不增加其他页面的负担。
+      按标题、正文、分类或标签搜索。
     </p>
     <nav class="query-seeds" aria-label="常用搜索主题">
-      <span>从这些词出发</span>
+      <span>常见标签</span>
       {querySeeds.map((seed) => <a href={`/search/?q=${encodeURIComponent(seed)}`}>{seed}</a>)}
     </nav>
   </header>
 
-  <section class="axis-section" data-note="搜索">
+  <section class="axis-section" data-note="搜索" aria-label="搜索">
     <form class="search-form" role="search" onsubmit="return false">
       <label for="site-search">搜索文章</label>
       <input
@@ -41,26 +41,13 @@ const querySeeds = Array.from(new Set(posts.flatMap((post) => getPostTags(post))
     </form>
   </section>
 
-  <section class="axis-section" data-note="结果">
+  <section class="axis-section" data-note="结果" aria-label="搜索结果">
     <p id="search-status" class="search-status" aria-live="polite" data-search-status>
       输入关键词后开始搜索。
     </p>
     <div class="search-results" data-search-results></div>
   </section>
 
-  <section class="axis-section route-junction" data-note="下一站">
-    <p class="route-junction__intro">搜索是一条支路。你也可以先看全貌，或把节奏交给一张歌单。</p>
-    <nav class="route-junction__links" aria-label="从搜索页继续">
-      <a class="route-link route-link--primary" href="/articles/">
-        <span>回到写作主线</span>
-        <strong>按时间浏览全部文章</strong>
-      </a>
-      <a class="route-link route-link--secondary" href="/music/">
-        <span>向另一侧走</span>
-        <strong>去音乐页停一会儿</strong>
-      </a>
-    </nav>
-  </section>
 </BaseLayout>
 
 <script>
@@ -198,6 +185,15 @@ const querySeeds = Array.from(new Set(posts.flatMap((post) => getPostTags(post))
     status.textContent = matches.length
       ? `找到 ${matches.length} 篇相关文章。`
       : `没有找到与“${rawQuery}”相关的文章。可以减少关键词后再试。`
+
+    if (matches.length === 0) {
+      const archiveLink = document.createElement("a")
+      archiveLink.className = "search-empty-link"
+      archiveLink.href = "/articles/"
+      appendText(archiveLink, "查看全部文章 →")
+      results.append(archiveLink)
+      return
+    }
 
     const fragment = document.createDocumentFragment()
     for (const { item } of matches) {
@@ -434,69 +430,12 @@ const querySeeds = Array.from(new Set(posts.flatMap((post) => getPostTags(post))
     overflow-wrap: anywhere;
   }
 
-  .route-junction__intro {
-    max-width: 37rem;
-    margin: 0 0 1.5rem;
-    color: var(--color-muted);
-    line-height: 1.75;
-  }
-
-  .route-junction__links {
-    display: grid;
-    grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
-  }
-
-  .route-link {
-    display: grid;
-    min-width: 0;
-    min-height: 5.5rem;
-    align-content: center;
-    gap: 0.25rem;
-    padding: 1rem 1.25rem 1rem 0;
-    border-block-start: 3px solid var(--route-color);
-    color: var(--color-text);
-    text-decoration: none;
-  }
-
-  .route-link + .route-link {
-    padding-inline: 1.5rem 0;
-    border-inline-start: 1px solid var(--color-line);
-  }
-
-  .route-link--primary {
-    --route-color: var(--color-primary);
-  }
-
-  .route-link--secondary {
-    --route-color: var(--color-secondary);
-  }
-
-  .route-link span {
-    color: var(--route-color);
-    font-family: var(--font-utility);
-    font-size: 0.7rem;
+  :global(.search-empty-link) {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    margin-block-start: 1rem;
     font-weight: 700;
-    letter-spacing: 0.06em;
-  }
-
-  .route-link strong {
-    overflow-wrap: anywhere;
-    font-family: var(--font-display);
-    font-size: clamp(1rem, 2.5vw, 1.2rem);
-    line-height: 1.45;
-  }
-
-  .route-link:hover strong {
-    color: var(--route-color);
-    text-decoration: underline;
-    text-underline-offset: 0.24em;
-  }
-
-  @media (min-width: 52rem) {
-    .route-junction__links {
-      width: calc(100% - 2.5rem);
-      margin-inline-start: 2.5rem;
-    }
   }
 
   @media (max-width: 38rem) {
@@ -513,14 +452,5 @@ const querySeeds = Array.from(new Set(posts.flatMap((post) => getPostTags(post))
       padding-top: 0.7rem;
     }
 
-    .route-junction__links {
-      grid-template-columns: 1fr;
-    }
-
-    .route-link,
-    .route-link + .route-link {
-      padding-inline: 0;
-      border-inline-start: 0;
-    }
   }
 </style>

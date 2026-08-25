@@ -39,7 +39,6 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     {
       tags.length > 0 && (
         <nav class="post-row__branches" aria-label={`《${title}》的相关标签`}>
-          <span aria-hidden="true">继续探索</span>
           <ul>
             {tags.map((tag) => (
               <li>
@@ -191,22 +190,6 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     color: var(--color-muted);
     font-family: var(--font-utility);
     font-size: 0.75rem;
-  }
-
-  .post-row__branches > span {
-    position: relative;
-    padding-inline-start: 1.15rem;
-    white-space: nowrap;
-  }
-
-  .post-row__branches > span::before {
-    position: absolute;
-    inset-block-start: 50%;
-    inset-inline-start: 0;
-    width: 0.75rem;
-    height: 2px;
-    background: var(--color-secondary);
-    content: '';
   }
 
   .post-row__branches ul {
