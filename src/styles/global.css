@@ -16,10 +16,14 @@
   --color-reading: #1e626b;
   --color-reading-soft: #cfe3e6;
   --color-on-reading: #ffffff;
+  --color-reading-panel: #1e626b;
+  --color-on-reading-panel: #ffffff;
   --color-media: #655170;
   --color-media-soft: #e2d7e8;
   --color-on-media: #ffffff;
-  --card-radius: 0.5rem;
+  --color-media-panel: #655170;
+  --color-on-media-panel: #ffffff;
+  --card-radius: 0.75rem;
   --site-gutter: clamp(1rem, 4vw, 3rem);
   --content-width: 43rem;
   --frame-width: 68rem;
@@ -32,25 +36,29 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --color-bg: #0e141b;
-  --color-surface: #151d26;
-  --color-surface-soft: #202a35;
-  --color-text: #edf4f5;
-  --color-muted: #a9b8bd;
-  --color-line: #34424d;
-  --color-line-strong: #61717b;
-  --color-primary: #bba4ca;
-  --color-secondary: #78b7bb;
-  --color-primary-soft: #2b2232;
-  --color-secondary-soft: #173137;
-  --color-on-primary: #0e141b;
-  --color-on-secondary: #0e141b;
-  --color-reading: #78b7bb;
-  --color-reading-soft: #173137;
-  --color-on-reading: #0e141b;
-  --color-media: #bba4ca;
-  --color-media-soft: #2b2232;
-  --color-on-media: #0e141b;
+  --color-bg: #11171c;
+  --color-surface: #182027;
+  --color-surface-soft: #222b31;
+  --color-text: #e6ecec;
+  --color-muted: #9eabad;
+  --color-line: #354148;
+  --color-line-strong: #59686e;
+  --color-primary: #a897af;
+  --color-secondary: #84aaac;
+  --color-primary-soft: #2e2733;
+  --color-secondary-soft: #1d3438;
+  --color-on-primary: #11171c;
+  --color-on-secondary: #11171c;
+  --color-reading: #84aaac;
+  --color-reading-soft: #1d3438;
+  --color-on-reading: #11171c;
+  --color-reading-panel: #28474c;
+  --color-on-reading-panel: #edf4f4;
+  --color-media: #a897af;
+  --color-media-soft: #2e2733;
+  --color-on-media: #11171c;
+  --color-media-panel: #403647;
+  --color-on-media-panel: #f1edf3;
 }
 
 *,
@@ -97,7 +105,7 @@ textarea,
 select {
   width: 100%;
   border: 1px solid var(--color-line-strong);
-  border-radius: 0.25rem;
+  border-radius: var(--card-radius);
   background: var(--color-surface);
 }
 
@@ -317,7 +325,7 @@ a:hover {
   padding: 0.65rem 1.05rem;
   border: 1px solid var(--color-primary);
   border-inline-end: 0.3rem solid var(--color-secondary);
-  border-radius: 0.25rem;
+  border-radius: var(--card-radius);
   background: var(--color-primary);
   color: var(--color-on-primary);
   font-size: 0.9375rem;
@@ -597,7 +605,7 @@ a:hover {
   margin: 0 !important;
   overflow: visible;
   border-color: var(--color-line-strong) !important;
-  border-radius: 0 !important;
+  border-radius: var(--card-radius) !important;
   background: var(--color-surface) !important;
   color: var(--color-text) !important;
   font-family: var(--font-body) !important;
@@ -607,7 +615,7 @@ a:hover {
 [data-waline-root] .wl-input,
 [data-waline-root] .wl-btn {
   border-color: var(--color-line-strong) !important;
-  border-radius: 0.25rem !important;
+  border-radius: var(--card-radius) !important;
   background: var(--color-surface) !important;
   color: var(--color-text) !important;
   font-family: var(--font-body) !important;

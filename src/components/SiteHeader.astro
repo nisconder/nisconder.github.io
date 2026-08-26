@@ -5,6 +5,7 @@ const pathname = Astro.url.pathname
 const navItems = [
   { href: '/articles/', label: '文章' },
   { href: '/music/', label: '音乐' },
+  { href: '/software/', label: '软件园' },
   { href: '/about/', label: '关于' },
 ]
 
@@ -23,19 +24,17 @@ const isCurrent = (href: string) =>
       <span class="site-brand__word">Nisconder</span>
     </a>
 
-    <div class="site-header__actions">
-      <nav class="site-nav" aria-label="主要导航">
-        {navItems.map((item) => (
-          <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
-            {item.label}
-          </a>
-        ))}
-      </nav>
-      <nav class="site-tools" aria-label="站点工具">
-        <a href="/search/" aria-current={isCurrent('/search/') ? 'page' : undefined}>搜索</a>
-        <ThemeToggle />
-      </nav>
-    </div>
+    <nav class="site-nav" aria-label="主要导航">
+      {navItems.map((item) => (
+        <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+          {item.label}
+        </a>
+      ))}
+    </nav>
+    <nav class="site-tools" aria-label="站点工具">
+      <a href="/search/" aria-current={isCurrent('/search/') ? 'page' : undefined}>搜索</a>
+      <ThemeToggle />
+    </nav>
   </div>
   <div class="site-header__signal" aria-hidden="true"><span></span><span></span></div>
 </header>
@@ -46,11 +45,11 @@ const isCurrent = (href: string) =>
   }
 
   .site-header__inner {
-    display: flex;
+    display: grid;
     width: min(100%, var(--header-width));
     min-height: 4.25rem;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
     gap: 1rem;
     margin-inline: auto;
     padding: 0.7rem var(--site-gutter);
@@ -97,20 +96,14 @@ const isCurrent = (href: string) =>
   .site-nav {
     display: flex;
     align-items: center;
+    justify-self: center;
     gap: clamp(0.25rem, 1.5vw, 0.8rem);
   }
 
-  .site-header__actions,
   .site-tools {
     display: flex;
     align-items: center;
-  }
-
-  .site-header__actions {
-    gap: clamp(0.5rem, 2vw, 1.25rem);
-  }
-
-  .site-tools {
+    justify-self: end;
     gap: 0.45rem;
     padding-inline-start: clamp(0.5rem, 1.5vw, 1rem);
     border-inline-start: 1px solid var(--color-line);
@@ -122,6 +115,7 @@ const isCurrent = (href: string) =>
     align-items: center;
     padding-inline: clamp(0.45rem, 1.4vw, 0.75rem);
     border-block-end: 2px solid transparent;
+    border-radius: var(--card-radius);
     color: var(--color-muted);
     font-size: 0.875rem;
     font-weight: 650;
@@ -134,6 +128,7 @@ const isCurrent = (href: string) =>
     min-height: 2.75rem;
     align-items: center;
     padding-inline: clamp(0.45rem, 1.4vw, 0.75rem);
+    border-radius: var(--card-radius);
     color: var(--color-muted);
     font-size: 0.875rem;
     font-weight: 650;
@@ -164,27 +159,44 @@ const isCurrent = (href: string) =>
     background: var(--color-secondary);
   }
 
-  @media (max-width: 30rem) {
+  @media (max-width: 42rem) {
     .site-header__inner {
+      grid-template-columns: auto minmax(0, 1fr);
       gap: 0.5rem;
-    }
-
-    .site-brand__word {
-      display: none;
+      padding-block-end: 0;
     }
 
     .site-nav {
-      gap: 0;
+      display: grid;
+      width: 100%;
+      grid-column: 1 / -1;
+      grid-row: 2;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.25rem;
+      padding-block: 0.4rem;
+      border-block-start: 1px solid var(--color-line);
+    }
+
+    .site-nav > a {
+      justify-content: center;
+      padding-inline: 0.25rem;
+    }
+
+    .site-tools {
+      grid-column: 2;
+      grid-row: 1;
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .site-brand__word {
+      display: none;
     }
 
     .site-nav > a,
     .site-tools > a {
       padding-inline: 0.45rem;
       font-size: 0.8125rem;
-    }
-
-    .site-header__actions {
-      gap: 0.25rem;
     }
 
     .site-tools {

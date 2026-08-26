@@ -54,6 +54,12 @@
   status = 301
   force = true
 
+[[redirects]]
+  from = "/resources"
+  to = "/software/"
+  status = 301
+  force = true
+
 [[headers]]
   for = "/_astro/*"
   [headers.values]

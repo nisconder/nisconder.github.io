@@ -14,6 +14,7 @@ export default defineConfig({
     '/tags': '/articles/',
     '/link': '/about/',
     '/movies': '/music/',
+    '/resources': '/software/',
   },
   markdown: {
     shikiConfig: {

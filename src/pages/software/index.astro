@@ -1,0 +1,333 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { softwareProjects } from '../../data/software'
+
+const isExternal = (href: string) => /^https?:\/\//.test(href)
+---
+
+<BaseLayout
+  title="软件园"
+  description="Nisconder 做过、正在维护与公开实验的软件项目。"
+>
+  <header class="page-intro software-intro">
+    <div class="software-intro__copy">
+      <p class="eyebrow">SOFTWARE / GARDEN</p>
+      <h1>我做过、正在做，<br />也愿意公开的东西。</h1>
+      <p class="lede">
+        这里不是下载站目录，而是 Nisconder 的项目索引。每个条目都写清它解决什么问题，以及去哪里查看。
+      </p>
+    </div>
+    <dl class="software-intro__facts" aria-label="软件园概况">
+      <div>
+        <dt>项目</dt>
+        <dd>{softwareProjects.length.toString().padStart(2, '0')}</dd>
+      </div>
+      <div>
+        <dt>方向</dt>
+        <dd>安全 · AI · Web</dd>
+      </div>
+      <div>
+        <dt>原则</dt>
+        <dd>真实项目，直接入口</dd>
+      </div>
+    </dl>
+  </header>
+
+  <section class="axis-section" data-note="项目" aria-labelledby="software-list-title">
+    <div class="section-head section-head--split">
+      <div>
+        <p class="eyebrow">PROJECT INDEX</p>
+        <h2 id="software-list-title">项目列表</h2>
+      </div>
+      <p>站长项目优先，持续补充。</p>
+    </div>
+
+    <div class="software-grid">
+      {softwareProjects.map((project, index) => (
+        <article
+          class:list={['software-card', project.featured && 'software-card--featured']}
+          id={project.slug}
+        >
+          <header class="software-card__head">
+            <span class="software-card__mark" aria-hidden="true">{project.label}</span>
+            <div>
+              <p>{project.status}</p>
+              <h3>{project.name}</h3>
+            </div>
+            <span class="software-card__number" aria-hidden="true">
+              {(index + 1).toString().padStart(2, '0')}
+            </span>
+          </header>
+          <p class="software-card__summary">{project.summary}</p>
+          <ul class="software-card__tags" aria-label={`${project.name} 技术标签`}>
+            {project.tags.map((tag) => <li>{tag}</li>)}
+          </ul>
+          <div class="software-card__actions">
+            {project.projectUrl && (
+              <a
+                href={project.projectUrl}
+                target={isExternal(project.projectUrl) ? '_blank' : undefined}
+                rel={isExternal(project.projectUrl) ? 'noopener noreferrer' : undefined}
+              >
+                {isExternal(project.projectUrl) ? '打开项目' : '查看本站'}
+                <span aria-hidden="true">{isExternal(project.projectUrl) ? '↗' : '→'}</span>
+              </a>
+            )}
+            <a href={project.sourceUrl} target="_blank" rel="noopener noreferrer">
+              查看源码 <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .software-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(15rem, 0.55fr);
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--card-radius);
+    background: var(--color-surface);
+  }
+
+  .software-intro__copy {
+    min-width: 0;
+    padding: clamp(1.75rem, 5vw, 3.5rem);
+  }
+
+  .software-intro h1 {
+    max-width: 16ch;
+  }
+
+  .software-intro__facts {
+    display: grid;
+    align-content: center;
+    gap: 0;
+    margin: 0;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    border-inline-start: 1px solid var(--color-line-strong);
+    background: var(--color-media-soft);
+  }
+
+  .software-intro__facts > div {
+    padding-block: 1rem;
+    border-block-start: 1px solid var(--color-line-strong);
+  }
+
+  .software-intro__facts > div:last-child {
+    border-block-end: 1px solid var(--color-line-strong);
+  }
+
+  .software-intro__facts dt {
+    color: var(--color-muted);
+    font-family: var(--font-utility);
+    font-size: 0.7rem;
+    letter-spacing: 0.07em;
+  }
+
+  .software-intro__facts dd {
+    margin: 0.2rem 0 0;
+    color: var(--color-text);
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .section-head {
+    margin-block-end: clamp(1.5rem, 4vw, 2.5rem);
+  }
+
+  .section-head--split {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+  }
+
+  .section-head h2 {
+    margin: 0.25rem 0 0;
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+  }
+
+  .section-head > p {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 0.82rem;
+  }
+
+  .software-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .software-card {
+    display: flex;
+    min-width: 0;
+    grid-column: span 5;
+    flex-direction: column;
+    padding: clamp(1.35rem, 3vw, 2rem);
+    border: 1px solid var(--color-line-strong);
+    border-block-start: 0.45rem solid var(--color-media);
+    border-radius: var(--card-radius);
+    background: var(--color-surface);
+  }
+
+  .software-card:first-child,
+  .software-card:nth-child(3n) {
+    grid-column: span 7;
+  }
+
+  .software-card--featured {
+    border-block-start-color: var(--color-reading);
+    background: var(--color-reading-soft);
+  }
+
+  .software-card__head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.9rem;
+  }
+
+  .software-card__mark {
+    display: grid;
+    width: 3.5rem;
+    height: 3.5rem;
+    place-items: center;
+    border-radius: var(--card-radius);
+    background: var(--color-media-panel);
+    color: var(--color-on-media-panel);
+    font-family: var(--font-utility);
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+  }
+
+  .software-card--featured .software-card__mark {
+    background: var(--color-reading-panel);
+    color: var(--color-on-reading-panel);
+  }
+
+  .software-card__head p,
+  .software-card__number {
+    margin: 0;
+    color: var(--color-muted);
+    font-family: var(--font-utility);
+    font-size: 0.7rem;
+  }
+
+  .software-card h3 {
+    margin: 0.1rem 0 0;
+    font-size: clamp(1.35rem, 3vw, 1.8rem);
+    overflow-wrap: anywhere;
+  }
+
+  .software-card__summary {
+    max-width: 34rem;
+    margin-block: 1.5rem;
+    color: var(--color-muted);
+    line-height: 1.75;
+  }
+
+  .software-card__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0;
+    margin: 0 0 1.5rem;
+    list-style: none;
+  }
+
+  .software-card__tags li {
+    padding: 0.28rem 0.5rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--card-radius);
+    color: var(--color-muted);
+    font-family: var(--font-utility);
+    font-size: 0.68rem;
+  }
+
+  .software-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1rem;
+    margin-block-start: auto;
+    border-block-start: 1px solid var(--color-line-strong);
+  }
+
+  .software-card__actions a {
+    display: inline-flex;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--color-reading);
+    font-size: 0.85rem;
+    font-weight: 750;
+    text-underline-offset: 0.24em;
+  }
+
+  .software-card__actions a + a {
+    color: var(--color-media);
+  }
+
+  @media (max-width: 52rem) {
+    .software-intro {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .software-intro__facts {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border-block-start: 1px solid var(--color-line-strong);
+      border-inline-start: 0;
+    }
+
+    .software-intro__facts > div,
+    .software-intro__facts > div:last-child {
+      padding: 0.75rem;
+      border-block: 0;
+    }
+
+    .software-intro__facts > div + div {
+      border-inline-start: 1px solid var(--color-line-strong);
+    }
+
+    .software-card,
+    .software-card:first-child,
+    .software-card:nth-child(3n) {
+      grid-column: span 6;
+    }
+  }
+
+  @media (max-width: 42rem) {
+    .software-card,
+    .software-card:first-child,
+    .software-card:nth-child(3n) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 34rem) {
+    .software-intro h1 br {
+      display: none;
+    }
+
+    .software-intro__facts {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .software-intro__facts > div + div {
+      border-block-start: 1px solid var(--color-line-strong);
+      border-inline-start: 0;
+    }
+
+    .section-head--split {
+      align-items: start;
+      flex-direction: column;
+    }
+  }
+</style>

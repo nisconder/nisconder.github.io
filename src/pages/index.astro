@@ -1,5 +1,6 @@
 ---
 import PostRow from '../components/PostRow.astro'
+import { featuredSoftware, softwareProjects } from '../data/software'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { getPlaylistTracks } from '../lib/playlist'
 import {
@@ -47,14 +48,36 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 >
   <header class="home-intro" aria-labelledby="home-title">
     <div class="home-intro__identity">
-      <p class="eyebrow">NISCONDER</p>
-      <p>{posts.length.toString().padStart(2, '0')} 篇公开文章</p>
+      <div class="home-intro__profile">
+        <img
+          src="/img/nisconder-avatar.png"
+          width="100"
+          height="100"
+          alt="Nisconder 的头像"
+          decoding="async"
+        />
+        <div>
+          <p class="eyebrow">PERSONAL SITE</p>
+          <p class="home-intro__name">Nisconder</p>
+        </div>
+      </div>
+      <p class="home-intro__bio">代码、阅读、音乐与生活观察。<br />认真写字，长期主义。</p>
+      <dl class="home-intro__stats" aria-label="站点内容统计">
+        <div><dt>文章</dt><dd>{posts.length.toString().padStart(2, '0')}</dd></div>
+        <div><dt>项目</dt><dd>{softwareProjects.length.toString().padStart(2, '0')}</dd></div>
+        <div><dt>歌单</dt><dd>{playlist.length.toString().padStart(2, '0')}</dd></div>
+      </dl>
+      <nav class="home-intro__links" aria-label="Nisconder 的个人链接">
+        <a href="/about/">关于我</a>
+        <a href="https://github.com/nisconder" rel="me noreferrer">GitHub</a>
+        <a href="mailto:72447244.wnm@gmail.com">邮箱</a>
+      </nav>
     </div>
     <div class="home-intro__copy">
-      <p class="eyebrow">OPEN NOTES</p>
-      <h1 id="home-title">写代码，也拆解那些<br />被说得太理所当然的事情。</h1>
+      <p class="eyebrow">OPEN NOTES / BY NISCONDER</p>
+      <h1 id="home-title">我写代码，也拆解那些<br />被说得太理所当然的事情。</h1>
       <p class="lede">
-        这里写技术，也写社会、音乐和生活里那些不太容易被一句话说完的部分。
+        这是 Nisconder 的个人站。这里写技术，也写社会、音乐和生活里那些不太容易被一句话说完的部分。
       </p>
     </div>
   </header>
@@ -65,7 +88,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
         <p class="eyebrow">SITE / INDEX</p>
         <h2 id="home-feature-title">站内一览</h2>
       </div>
-      <p>{posts.length} 篇文章 · {playlist.length} 首歌 · {topicCounts.size} 个主题词</p>
+      <p>{posts.length} 篇文章 · {softwareProjects.length} 个项目 · {playlist.length} 首歌</p>
     </header>
 
     <div class="home-card-grid">
@@ -133,10 +156,10 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
       <form class="home-card search-card" action="/search/" method="get" role="search">
         <p class="card-kicker">SEARCH</p>
         <h3>站内搜索</h3>
-        <label for="home-search">标题、正文或标签</label>
+        <label for="home-search">文章、项目或标签</label>
         <div class="search-card__controls">
-          <input id="home-search" name="q" type="search" autocomplete="off" placeholder="输入标题、正文或标签…" />
-          <button type="submit">搜索文章</button>
+          <input id="home-search" name="q" type="search" autocomplete="off" placeholder="输入文章、项目或标签…" />
+          <button type="submit">搜索站内</button>
         </div>
         {querySeeds.length > 0 && (
           <nav class="search-card__seeds" aria-label="常用搜索标签">
@@ -145,15 +168,19 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
         )}
       </form>
 
-      <article class="home-card about-card" aria-labelledby="about-card-title">
-        <p class="card-kicker">ABOUT / NISCONDER</p>
-        <h3 id="about-card-title">本站与我</h3>
-        <p>记录代码、阅读、音乐与生活观察。这里为什么存在，我在写什么，以及还在关注什么。</p>
-        <div class="about-card__links">
-          <a href="/about/">关于 Nisconder <span aria-hidden="true">→</span></a>
-          <a href="https://github.com/nisconder" rel="me noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+      <a class="home-card software-card" href="/software/" aria-labelledby="software-card-title">
+        <p class="card-kicker">SOFTWARE / GARDEN</p>
+        <div class="software-card__lead">
+          <span aria-hidden="true">{featuredSoftware.label}</span>
+          <div>
+            <small>{featuredSoftware.status}</small>
+            <strong>{featuredSoftware.name}</strong>
+          </div>
         </div>
-      </article>
+        <h3 id="software-card-title">我做的软件</h3>
+        <p>{featuredSoftware.summary}</p>
+        <span class="home-card__action">查看 {softwareProjects.length} 个项目 <span aria-hidden="true">→</span></span>
+      </a>
     </div>
   </section>
 
@@ -210,9 +237,11 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 <style>
   .home-intro {
     display: grid;
-    grid-template-columns: minmax(9rem, 0.32fr) minmax(0, 1.68fr);
+    grid-template-columns: minmax(16rem, 0.58fr) minmax(0, 1.42fr);
+    overflow: hidden;
     margin-block-end: clamp(2.75rem, 6vw, 4.5rem);
     border: 1px solid var(--color-line-strong);
+    border-radius: var(--card-radius);
   }
 
   .home-intro__identity,
@@ -225,18 +254,89 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     display: flex;
     min-height: 100%;
     flex-direction: column;
-    justify-content: space-between;
-    gap: 3rem;
+    gap: 1.5rem;
     border-inline-end: 1px solid var(--color-line-strong);
-    background: var(--color-primary-soft);
+    background: var(--color-media-soft);
   }
 
-  .home-intro__identity p:last-child {
+  .home-intro__profile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .home-intro__profile img {
+    width: 5.25rem;
+    height: 5.25rem;
+    flex: 0 0 auto;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--card-radius);
+    object-fit: cover;
+  }
+
+  .home-intro__name {
+    margin: 0.2rem 0 0;
+    color: var(--color-text);
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 750;
+    letter-spacing: -0.025em;
+  }
+
+  .home-intro__bio {
     margin: 0;
-    color: var(--color-primary);
+    color: var(--color-muted);
+    font-size: 0.9rem;
+    line-height: 1.75;
+  }
+
+  .home-intro__stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0;
+    border-block: 1px solid var(--color-line-strong);
+  }
+
+  .home-intro__stats > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column-reverse;
+    padding-block: 0.75rem;
+  }
+
+  .home-intro__stats > div + div {
+    padding-inline-start: 0.75rem;
+    border-inline-start: 1px solid var(--color-line-strong);
+  }
+
+  .home-intro__stats dt {
+    color: var(--color-muted);
+    font-size: 0.68rem;
+  }
+
+  .home-intro__stats dd {
+    margin: 0;
+    color: var(--color-media);
     font-family: var(--font-utility);
-    font-size: 0.72rem;
-    font-weight: 700;
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  .home-intro__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1rem;
+    margin-block-start: auto;
+  }
+
+  .home-intro__links a {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    color: var(--color-reading);
+    font-size: 0.78rem;
+    font-weight: 750;
+    text-underline-offset: 0.24em;
   }
 
   .home-intro__copy {
@@ -379,17 +479,21 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
   }
 
   .home-card-grid {
+    position: relative;
     display: grid;
     min-width: 0;
     grid-template-columns: repeat(12, minmax(0, 1fr));
     align-items: stretch;
+    isolation: isolate;
     gap: 1rem;
     padding: 1rem;
     border: 1px solid var(--color-line-strong);
+    border-radius: var(--card-radius);
     background: var(--color-surface-soft);
   }
 
   .home-card {
+    position: relative;
     min-width: 0;
     overflow: hidden;
     border: 1px solid var(--color-line-strong);
@@ -409,6 +513,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
   }
 
   .home-card:focus-within {
+    z-index: 10;
     outline: 3px solid var(--color-media);
     outline-offset: 3px;
   }
@@ -447,12 +552,12 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
   }
 
   .lead-story__band {
-    background: var(--color-reading);
-    color: var(--color-on-reading);
+    background: var(--color-reading-panel);
+    color: var(--color-on-reading-panel);
   }
 
   .lead-story__band a:focus-visible {
-    outline-color: var(--color-on-reading);
+    outline-color: var(--color-on-reading-panel);
   }
 
   .lead-story__body {
@@ -533,15 +638,15 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     grid-column: span 5;
     flex-direction: column;
     padding: clamp(1.5rem, 3vw, 2rem);
-    border-color: var(--color-media);
-    background: var(--color-media);
-    color: var(--color-on-media);
+    border-color: var(--color-media-panel);
+    background: var(--color-media-panel);
+    color: var(--color-on-media-panel);
   }
 
   a.music-card:hover,
   a.music-card:focus-visible {
     border-color: var(--color-reading);
-    color: var(--color-on-media);
+    color: var(--color-on-media-panel);
   }
 
   .music-card .card-kicker,
@@ -622,14 +727,14 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
   .search-card__controls button {
     min-height: 3rem;
     border-color: var(--color-line-strong);
-    border-radius: 0.375rem;
+    border-radius: var(--card-radius);
   }
 
   .search-card__controls button {
     padding-inline: 1rem;
-    border: 1px solid var(--color-reading);
-    background: var(--color-reading);
-    color: var(--color-on-reading);
+    border: 1px solid var(--color-reading-panel);
+    background: var(--color-reading-panel);
+    color: var(--color-on-reading-panel);
     cursor: pointer;
     font-size: 0.85rem;
     font-weight: 750;
@@ -637,9 +742,9 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 
   .search-card__controls button:hover,
   .search-card__controls button:focus-visible {
-    border-color: var(--color-media);
-    background: var(--color-media);
-    color: var(--color-on-media);
+    border-color: var(--color-media-panel);
+    background: var(--color-media-panel);
+    color: var(--color-on-media-panel);
   }
 
   .search-card__controls button:focus-visible {
@@ -666,7 +771,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     text-underline-offset: 0.23em;
   }
 
-  .about-card {
+  a.software-card {
     display: flex;
     grid-column: span 7;
     flex-direction: column;
@@ -675,37 +780,49 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     background: var(--color-surface);
   }
 
-  .about-card > p:not(.card-kicker) {
+  .software-card__lead {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.85rem;
+    margin-block-end: 1.25rem;
+  }
+
+  .software-card__lead > span {
+    display: grid;
+    width: 3.25rem;
+    height: 3.25rem;
+    place-items: center;
+    border-radius: var(--card-radius);
+    background: var(--color-media-panel);
+    color: var(--color-on-media-panel);
+    font-family: var(--font-utility);
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+
+  .software-card__lead div {
+    display: grid;
+    min-width: 0;
+  }
+
+  .software-card__lead small {
+    color: var(--color-muted);
+    font-family: var(--font-utility);
+    font-size: 0.68rem;
+  }
+
+  .software-card__lead strong {
+    overflow-wrap: anywhere;
+    font-size: 1.05rem;
+  }
+
+  .software-card > p:not(.card-kicker) {
     max-width: 34rem;
     margin-block-end: 1.25rem;
     color: var(--color-muted);
     font-size: 0.95rem;
     line-height: 1.75;
-  }
-
-  .about-card__links {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 0.75rem 1.25rem;
-    margin-block-start: auto;
-    border-block-start: 1px solid var(--color-line-strong);
-  }
-
-  .about-card__links a {
-    display: inline-flex;
-    min-height: 3rem;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    color: var(--color-reading);
-    font-size: 0.875rem;
-    font-weight: 750;
-    text-underline-offset: 0.24em;
-  }
-
-  .about-card__links a:last-child {
-    color: var(--color-media);
   }
 
   .section-aside {
@@ -781,9 +898,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 
     .home-intro__identity {
       min-height: auto;
-      align-items: center;
-      flex-direction: row;
-      gap: 1rem;
+      gap: 1.25rem;
       border-block-end: 1px solid var(--color-line-strong);
       border-inline-end: 0;
     }
@@ -832,6 +947,39 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     }
   }
 
+  @media (min-width: 56.0625rem) {
+    .lead-story,
+    .lead-story--empty {
+      z-index: 4;
+      grid-column: 1 / span 7;
+      grid-row: 1;
+    }
+
+    a.music-card {
+      z-index: 2;
+      grid-column: 8 / -1;
+      grid-row: 1;
+      align-self: start;
+      margin-block-start: 2.5rem;
+      margin-inline-start: -1.75rem;
+    }
+
+    .search-card {
+      z-index: 3;
+      grid-column: 2 / span 5;
+      grid-row: 2;
+      margin-block-start: -1.75rem;
+    }
+
+    a.software-card {
+      z-index: 2;
+      grid-column: 7 / -1;
+      grid-row: 2;
+      margin-block-start: 0.75rem;
+      margin-inline-start: -1.75rem;
+    }
+  }
+
   @media (max-width: 56rem) {
     .home-card-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -839,7 +987,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 
     .lead-story,
     .lead-story--empty,
-    .about-card {
+    .software-card {
       grid-column: 1 / -1;
     }
 
@@ -869,7 +1017,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     .lead-story--empty,
     .music-card,
     .search-card,
-    .about-card {
+    .software-card {
       grid-column: 1;
     }
 
@@ -877,14 +1025,6 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
       flex-wrap: wrap;
     }
 
-    .about-card__links {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 0;
-    }
-
-    .about-card__links a + a {
-      border-block-start: 1px solid var(--color-line);
-    }
   }
 
   @media (max-width: 30rem) {

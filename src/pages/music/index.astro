@@ -219,8 +219,10 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
   .music-intro {
     display: grid;
     grid-template-columns: minmax(11rem, 0.42fr) minmax(0, 1.58fr);
+    overflow: hidden;
     margin-block-end: clamp(3rem, 7vw, 5rem);
     border: 1px solid var(--color-line-strong);
+    border-radius: var(--card-radius);
   }
 
   .music-intro__identity,
@@ -235,12 +237,12 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
     justify-content: space-between;
     gap: 3rem;
     border-inline-end: 1px solid var(--color-line-strong);
-    background: var(--color-secondary-soft);
+    background: var(--color-media-soft);
   }
 
   .music-intro__identity p:last-child {
     margin: 0;
-    color: var(--color-secondary);
+    color: var(--color-media);
     font-family: var(--font-utility);
     font-size: 0.72rem;
     font-weight: 700;
@@ -265,15 +267,17 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
     display: grid;
     grid-template-columns: minmax(17rem, 21rem) minmax(0, 1fr);
     min-width: 0;
+    overflow: hidden;
     border: 1px solid var(--color-line-strong);
+    border-radius: var(--card-radius);
     background: var(--color-surface);
   }
 
   .now-playing {
     min-width: 0;
     border-inline-end: 1px solid var(--color-line-strong);
-    background: var(--color-secondary);
-    color: var(--color-on-secondary);
+    background: var(--color-media-panel);
+    color: var(--color-on-media-panel);
   }
 
   .now-playing__inner {
@@ -331,7 +335,7 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
   .player-actions button {
     min-height: 2.75rem;
     border: 1px solid currentColor;
-    border-radius: 0;
+    border-radius: var(--card-radius);
     background: transparent;
     color: inherit;
     cursor: pointer;
@@ -340,8 +344,8 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
   }
 
   .player-actions button:hover:not(:disabled) {
-    background: var(--color-on-secondary);
-    color: var(--color-secondary);
+    background: var(--color-on-media-panel);
+    color: var(--color-media-panel);
   }
 
   .player-actions button:disabled {
@@ -432,8 +436,8 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
   }
 
   .track-row__control[aria-current='true'] {
-    background: var(--color-primary);
-    color: var(--color-on-primary);
+    background: var(--color-reading-panel);
+    color: var(--color-on-reading-panel);
   }
 
   .track-row__number,

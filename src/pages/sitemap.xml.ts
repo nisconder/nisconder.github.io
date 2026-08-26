@@ -18,7 +18,7 @@ const escapeXml = (value: string) =>
 export const GET: APIRoute = async ({ site, url }) => {
   const posts = await getPublishedPosts()
   const base = site ?? new URL(url.origin)
-  const staticPaths = ['/', '/articles/', '/about/', '/search/', '/music/']
+  const staticPaths = ['/', '/articles/', '/about/', '/search/', '/music/', '/software/']
 
   const staticEntries = staticPaths.map((path) =>
     `<url><loc>${escapeXml(new URL(path, base).href)}</loc></url>`,
