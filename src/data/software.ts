@@ -129,7 +129,7 @@ export const softwareProjects: SoftwareProject[] = [
     language: 'JavaScript',
     stars: 0,
     updatedAt: '2026-08-06',
-    projectUrl: 'https://my-waline-9uvuuvnty-nisconders-projects.vercel.app',
+    projectUrl: 'https://my-waline-pink.vercel.app',
     actionLabel: '服务地址',
   },
 ]
