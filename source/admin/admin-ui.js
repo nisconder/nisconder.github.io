@@ -6,7 +6,7 @@
   var loading = document.getElementById('admin-loading');
   var decorationFrame = 0;
   var preferredViewMode = null;
-  var walineAdminUrl = 'https://my-waline-pink.vercel.app/ui';
+  var commentsAdminPath = '/admin/comments/';
 
   var cleanText = function (value) {
     return String(value || '').replace(/\s+/g, ' ').trim();
@@ -160,11 +160,9 @@
 
     if (navGroup && !navGroup.querySelector('[data-admin-destination="comments"]')) {
       var commentsLink = document.createElement('a');
-      commentsLink.href = walineAdminUrl;
-      commentsLink.target = '_blank';
-      commentsLink.rel = 'noopener noreferrer';
+      commentsLink.href = commentsAdminPath;
       commentsLink.textContent = '\u7559\u8a00';
-      commentsLink.title = '\u6253\u5f00 Waline \u7559\u8a00\u7ba1\u7406';
+      commentsLink.title = '\u6253\u5f00\u7559\u8a00\u7ba1\u7406';
       commentsLink.dataset.adminNav = 'top';
       commentsLink.dataset.adminDestination = 'comments';
       commentsLink.dataset.adminActive = 'false';
