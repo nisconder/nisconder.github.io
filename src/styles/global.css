@@ -31,6 +31,7 @@
   --card-radius: 0.75rem;
   --site-gutter: clamp(1rem, 4vw, 3rem);
   --content-width: 42rem;
+  --discussion-width: 62rem;
   --frame-width: 70rem;
   --header-width: 76rem;
   --text-xs: 0.75rem;
@@ -609,7 +610,7 @@ a:hover {
 [data-waline-root] {
   width: 100%;
   min-width: 0;
-  min-height: 12rem;
+  min-height: 8rem;
   --waline-light-grey: var(--color-muted);
   --waline-dark-grey: var(--color-text);
   --waline-theme-color: var(--color-primary);
@@ -666,7 +667,7 @@ a:hover {
 }
 
 [data-waline-root] .wl-editor {
-  min-height: 10rem !important;
+  min-height: 7.5rem !important;
 }
 
 [data-waline-root] .wl-btn {

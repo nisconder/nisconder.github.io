@@ -35,19 +35,19 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
 <style>
   .site-comments {
     position: relative;
-    width: min(100%, var(--content-width));
-    margin: clamp(1.5rem, 3vw, 2.5rem) auto 0;
-    padding-block-start: clamp(1.75rem, 3vw, 2.5rem);
+    width: min(100%, var(--discussion-width));
+    margin: clamp(2.5rem, 5vw, 4.5rem) auto 0;
+    padding-block-start: clamp(1.5rem, 2.5vw, 2rem);
     overflow: visible;
     border-block-start: 1px solid var(--color-line-strong);
   }
 
   .site-comments__header {
     display: grid;
-    grid-template-columns: minmax(12rem, 0.75fr) minmax(18rem, 1.25fr);
-    align-items: start;
-    gap: 1rem clamp(2rem, 6vw, 5rem);
-    margin-block-end: clamp(1.25rem, 3vw, 2rem);
+    grid-template-columns: minmax(14rem, 0.7fr) minmax(22rem, 1.3fr);
+    align-items: end;
+    gap: 1rem clamp(2rem, 7vw, 6rem);
+    margin-block-end: clamp(1.25rem, 2.5vw, 1.75rem);
   }
 
   .site-comments__header h2,
@@ -56,7 +56,7 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
   }
 
   .site-comments__header h2 {
-    font-size: clamp(1.45rem, 2.5vw, 1.85rem);
+    font-size: clamp(1.6rem, 2.7vw, 2.15rem);
     line-height: 1.25;
   }
 
@@ -73,7 +73,7 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
 
   @media (max-width: 40rem) {
     .site-comments {
-      margin-block-start: 1.25rem;
+      margin-block-start: 2rem;
       padding-block-start: 1.5rem;
     }
 

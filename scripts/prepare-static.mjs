@@ -1,4 +1,4 @@
-import { access, cp, mkdir } from 'node:fs/promises'
+import { access, cp, mkdir, rm } from 'node:fs/promises'
 import { constants } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -21,7 +21,13 @@ for (const [sourcePath, targetPath] of mappings) {
     continue
   }
 
-  await cp(source, resolve(staticRoot, targetPath), {
+  const target = resolve(staticRoot, targetPath)
+
+  if (targetPath === 'admin') {
+    await rm(target, { recursive: true, force: true })
+  }
+
+  await cp(source, target, {
     recursive: true,
     force: true,
   })

@@ -7,7 +7,12 @@
   <meta name="theme-color" content="#245f64">
   <title>管理后台｜不知名博客</title>
   <link rel="icon" type="image/png" href="/img/nisconder-avatar.png">
-  <link rel="stylesheet" href="/admin/admin-portal.css?v=1">
+  <link rel="stylesheet" href="/admin/admin-portal.css?v=2">
+  <script>
+    if (window.location.hash) {
+      window.history.replaceState(null, '', '/admin/');
+    }
+  </script>
 </head>
 <body>
   <header class="portal-header">
@@ -26,7 +31,7 @@
     </div>
 
     <nav class="portal-destinations" aria-label="后台功能">
-      <a class="portal-card portal-card--content" href="/admin/content/#/collections/posts">
+      <a class="portal-card portal-card--content" href="/admin/content/">
         <span class="portal-card__label">内容</span>
         <span class="portal-card__copy">
           <strong>文章与媒体</strong>

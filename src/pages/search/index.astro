@@ -39,20 +39,22 @@ const categoryCounts = Array.from(
     <form class="search-form" action="/search/" method="get" role="search" data-search-form>
       <label for="site-search">搜索站内内容</label>
       <div class="search-form__bar">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="11" cy="11" r="6.5"></circle>
-          <path d="m16 16 4 4"></path>
-        </svg>
-        <input
-          id="site-search"
-          type="search"
-          name="q"
-          placeholder="例如：npm-safe、社会学、TypeScript…"
-          autocomplete="off"
-          spellcheck="false"
-          aria-describedby="search-hint search-status"
-          data-search-input
-        />
+        <div class="search-form__input-shell">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5"></circle>
+            <path d="m16 16 4 4"></path>
+          </svg>
+          <input
+            id="site-search"
+            type="search"
+            name="q"
+            placeholder="例如：npm-safe、社会学、TypeScript…"
+            autocomplete="off"
+            spellcheck="false"
+            aria-describedby="search-hint search-status"
+            data-search-input
+          />
+        </div>
         <button type="submit">搜索</button>
       </div>
       <p id="search-hint" class="search-hint">
@@ -428,39 +430,50 @@ const categoryCounts = Array.from(
 
   .search-form {
     width: min(100%, 58rem);
+    padding: clamp(1.15rem, 3vw, 1.75rem);
+    border: 1px solid var(--color-line-strong);
+    border-block-start: 0.5rem solid var(--color-primary);
+    border-radius: var(--card-radius);
+    background: var(--color-card);
   }
 
   .search-form > label {
     display: block;
-    margin-bottom: 0.75rem;
-    font-size: 0.9375rem;
+    margin-bottom: 0.65rem;
+    color: var(--color-heading);
+    font-size: 1rem;
     font-weight: 750;
   }
 
   .search-form__bar {
     display: grid;
     min-width: 0;
-    min-height: 3.5rem;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: stretch;
-    overflow: hidden;
-    border: 1px solid var(--color-line-strong);
-    border-inline-start: 0.4rem solid var(--color-primary);
+    gap: 0.75rem;
+  }
+
+  .search-form__input-shell {
+    display: grid;
+    min-width: 0;
+    min-height: 3.75rem;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    border: 2px solid var(--color-control-border);
     border-radius: var(--card-radius);
     background: var(--color-field);
   }
 
-  .search-form__bar:focus-within {
+  .search-form__input-shell:focus-within {
     border-color: var(--color-primary);
     outline: 3px solid var(--color-secondary);
     outline-offset: 3px;
   }
 
-  .search-form__bar svg {
-    width: 1.25rem;
-    height: 1.25rem;
-    align-self: center;
-    margin-inline: 0.9rem 0.15rem;
+  .search-form__input-shell svg {
+    width: 1.35rem;
+    height: 1.35rem;
+    margin-inline: 1rem 0.2rem;
     fill: none;
     stroke: var(--color-primary);
     stroke-linecap: round;
@@ -472,7 +485,7 @@ const categoryCounts = Array.from(
     width: 100%;
     min-width: 0;
     min-height: 3.5rem;
-    padding: 0.8rem 0.75rem;
+    padding: 0.8rem 0.9rem;
     border: 0;
     border-radius: 0;
     background: var(--color-field);
@@ -491,17 +504,16 @@ const categoryCounts = Array.from(
   }
 
   .search-form__bar > button {
-    min-width: 5.5rem;
-    min-height: 3.5rem;
-    padding-inline: 1.15rem;
-    border: 0;
-    border-inline-start: 1px solid var(--color-primary);
-    border-radius: 0;
+    min-width: 7rem;
+    min-height: 3.75rem;
+    padding-inline: 1.35rem;
+    border: 2px solid var(--color-reading-panel);
+    border-radius: var(--card-radius);
     background: var(--color-reading-panel);
     color: var(--color-on-reading-panel);
     cursor: pointer;
-    font-size: 0.9375rem;
-    font-weight: 750;
+    font-size: 1rem;
+    font-weight: 800;
   }
 
   .search-form__bar > button:hover {
@@ -509,20 +521,22 @@ const categoryCounts = Array.from(
   }
 
   .search-form__bar > button:focus-visible {
-    outline: 0;
-    box-shadow: inset 0 0 0 3px var(--color-secondary);
+    outline: 3px solid var(--color-secondary);
+    outline-offset: 3px;
   }
 
   .category-filter {
     min-width: 0;
-    padding: 0;
-    margin: 1.35rem 0 0;
-    border: 0;
+    padding: 1rem;
+    margin: 1.25rem 0 0;
+    border: 1px solid var(--color-secondary);
+    border-radius: var(--card-radius);
+    background: var(--color-secondary-soft);
   }
 
   .category-filter legend {
-    padding: 0;
-    color: var(--color-text);
+    padding-inline: 0.35rem;
+    color: var(--color-secondary);
     font-size: 0.875rem;
     font-weight: 750;
   }
@@ -542,7 +556,7 @@ const categoryCounts = Array.from(
     padding: 0.55rem 0.8rem;
     border: 1px solid var(--color-line-strong);
     border-radius: var(--card-radius);
-    background: var(--color-card);
+    background: var(--color-field);
     color: var(--color-text);
     cursor: pointer;
     font-size: 0.875rem;
@@ -662,13 +676,26 @@ const categoryCounts = Array.from(
       padding-top: 0.7rem;
     }
 
-    .search-form__bar svg {
+    .search-form {
+      padding: 1rem;
+    }
+
+    .search-form__bar {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .search-form__input-shell svg {
       margin-inline-start: 0.7rem;
     }
 
     .search-form__bar > button {
-      min-width: 4.75rem;
-      padding-inline: 0.8rem;
+      width: 100%;
+      min-width: 0;
+      min-height: 3.5rem;
+    }
+
+    .category-filter {
+      padding: 0.85rem;
     }
   }
 </style>
