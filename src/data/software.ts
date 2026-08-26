@@ -107,7 +107,7 @@ export const softwareProjects: SoftwareProject[] = [
     slug: 'nisconder-blog',
     name: 'Nisconder Blog',
     label: 'NB',
-    summary: '这个持续重写的个人站本身：文章、音乐、搜索、软件园和遍布主要页面的独立留言区。',
+    summary: '这个持续重写的个人站本身：文章、音乐、搜索、软件园和主要页面末尾的讨论区。',
     kind: 'site',
     status: 'active',
     tags: ['Astro', 'Netlify', '静态站点', 'Waline'],

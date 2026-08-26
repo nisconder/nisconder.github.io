@@ -90,7 +90,7 @@ const imageUrl = image ? new URL(image, baseUrl) : undefined
   <body>
     <a class="skip-link" href="#main-content">跳到正文</a>
     <div class="site-shell">
-      <SiteHeader hasComments={comments} />
+      <SiteHeader />
       <main id="main-content" class="site-main" tabindex="-1">
         <div class="reading-frame">
           <slot />
@@ -103,7 +103,7 @@ const imageUrl = image ? new URL(image, baseUrl) : undefined
           )}
         </div>
       </main>
-      <SiteFooter hasComments={comments} />
+      <SiteFooter />
     </div>
   </body>
 </html>

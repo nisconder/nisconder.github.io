@@ -7,6 +7,24 @@
   NPM_FLAGS = "--ignore-scripts"
 
 [[redirects]]
+  from = "/admin"
+  to = "/admin/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/admin/content"
+  to = "/admin/content/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/admin/comments"
+  to = "/admin/comments/"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "/archives/*"
   to = "/articles/"
   status = 301

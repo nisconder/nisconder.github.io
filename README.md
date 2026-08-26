@@ -137,13 +137,13 @@ Decap CMS 写作后台已切换为 GitHub OAuth 认证，使用免费的第三�
 ### 新建 / 编辑文章
 
 1. 登录后左侧菜单选择 `Posts`，点击 `New Post` 新建文章，或点击已有文章进行编辑。
-2. 填写标题、日期、分类、标签和正文。**文章 slug 使用纯 `{{slug}}`（不带日期前缀）**，Decap CMS 会根据标题自动生成 slug，编辑现有文章时不会因日期变化而重命名文件。
+2. 填写标题、日期、分类、标签和正文。新文章文件名由 Decap CMS 按 `YYYY-MM-DD-blogHHMMSS.md` 自动生成，例如 `2026-08-26-blog230400.md`；日期与精确到秒的时间共同避免文件名冲突，也延续现有文章的日期 + `blog` 命名习惯。
 3. 日期格式固定为 `YYYY-MM-DD HH:mm:ss`，避免时区偏移导致文章排序错乱。
 4. 点击右上角 `Publish` → 选择 `Publish now`，Decap CMS 会自动提交一个 commit 到 GitHub `main` 分支。
 5. GitHub 收到 commit 后自动触发 Netlify 重建，几分钟后文章即上线。
 
 ### 注意事项
 
-- **不要手动改动文章 slug 的前缀约定**：Decap CMS 配置中 slug 为纯 `{{slug}}`（无日期前缀），文件名由 slug 决定。如果手动在文件名前加日期前缀，下次用 Decap CMS 编辑时文件会被重命名。
+- **不要重命名现有文章文件**：文章公开 URL 使用文件名作为 slug，改名会改变已经发布的链接。新的命名规则只应用于此后新建的文章，不会主动改动现有文件。
 - 图片上传功能（`media_folder`）已配置占位字段 `source/images/uploads`，如需启用图片上传请在 Decap CMS 配置中补充实际路径。
 - 所有写作操作通过 Git Gateway 直接提交到 GitHub，可在 GitHub 仓库的 commit 历史中查看。

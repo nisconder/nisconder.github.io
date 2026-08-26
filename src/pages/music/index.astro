@@ -21,7 +21,7 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
     </div>
     <div class="music-intro__copy">
       <h1 id="music-title">有些阶段，适合用一张歌单保存。</h1>
-      <p class="lede">曲目已经完整列出；选中一首后才会请求音频，不会在打开页面时偷跑流量。</p>
+      <p class="lede">这里收着最近反复播放的曲目。挑一首开始听，歌单也会继续更新。</p>
     </div>
   </header>
 
@@ -29,38 +29,38 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
     <aside class="now-playing" aria-label="当前播放">
       <div class="now-playing__inner">
         <div class="now-playing__meta">
-          <span>NETEASE / 17846303428</span>
-          <span>{playableCount} 可直接播放</span>
+          <span>网易云歌单</span>
+          <span>{playableCount} 首可在本站播放</span>
         </div>
-        <p class="eyebrow">NOW PLAYING</p>
-        <h2 data-now-title>选择一首歌</h2>
+        <p class="eyebrow">正在播放</p>
+        <h2 data-now-title>选一首开始播放</h2>
         <p class="now-playing__artist" data-now-artist>
-          歌单已经载入。受版权限制的曲目会明确跳转到网易云，不再出现“点了没反应”。
+          从歌单中挑一首，音乐会从这里开始。
         </p>
 
-        <audio data-audio controls preload="none" playsinline hidden></audio>
+        <audio data-audio controls preload="none" playsinline hidden aria-label="当前播放曲目"></audio>
 
         <div class="player-actions" aria-label="曲目切换">
           <button type="button" data-player-prev disabled>上一首</button>
           <button type="button" data-player-next disabled>下一首</button>
         </div>
-        <p class="player-status" data-player-status aria-live="polite">尚未选择曲目。</p>
+        <p class="player-status" data-player-status aria-live="polite">等待选择曲目。</p>
         <a
           class="playlist-external"
           href="https://music.163.com/#/playlist?id=17846303428"
           target="_blank"
           rel="noreferrer"
-        >在网易云查看完整歌单 <span aria-hidden="true">↗</span></a>
+        >去网易云看完整歌单 <span aria-hidden="true">↗</span></a>
       </div>
     </aside>
 
     <div class="track-panel">
       <header class="track-panel__head">
         <div>
-          <p class="eyebrow">PLAYLIST</p>
+          <p class="eyebrow">歌单曲目</p>
           <h2 id="playlist-title">最近反复播放</h2>
         </div>
-        <p>{playlist.length} 首 · 页面自然滚动</p>
+        <p>{playlist.length} 首 · 持续更新</p>
       </header>
 
       <ol class="track-list" data-track-list>
@@ -169,6 +169,7 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
     currentIndex = index
     audio.pause()
     audio.hidden = false
+    document.documentElement.classList.add("music-player-active")
     audio.src = source
     audio.load()
     title.textContent = button.dataset.trackTitle || "未命名曲目"
@@ -269,23 +270,24 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
   .music-library {
     display: grid;
     grid-template-columns: minmax(17rem, 21rem) minmax(0, 1fr);
+    align-items: start;
+    gap: clamp(1rem, 2.5vw, 1.75rem);
+    min-width: 0;
+  }
+
+  .now-playing {
+    position: sticky;
+    inset-block-start: 1.25rem;
+    align-self: start;
     min-width: 0;
     overflow: hidden;
     border: 1px solid var(--color-line-strong);
     border-radius: var(--card-radius);
-    background: var(--color-card);
-  }
-
-  .now-playing {
-    min-width: 0;
-    border-inline-end: 1px solid var(--color-line-strong);
     background: var(--color-media-panel);
     color: var(--color-on-media-panel);
   }
 
   .now-playing__inner {
-    position: sticky;
-    inset-block-start: 1.25rem;
     display: grid;
     gap: 1rem;
     padding: clamp(1.5rem, 4vw, 2.5rem);
@@ -381,6 +383,9 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
 
   .track-panel {
     min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--card-radius);
     background: var(--color-card);
   }
 
@@ -509,12 +514,8 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
     }
 
     .now-playing {
-      border-block-end: 1px solid var(--color-line-strong);
-      border-inline-end: 0;
-    }
-
-    .now-playing__inner {
       position: static;
+      overflow: visible;
     }
 
     .now-playing audio:not([hidden]) {
@@ -529,6 +530,14 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
 
     .track-panel {
       padding-block-end: calc(4rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    :global(html.music-player-active) {
+      scroll-padding-block-end: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    :global(html.music-player-active body .site-shell) {
+      padding-block-end: calc(4.5rem + env(safe-area-inset-bottom, 0px));
     }
   }
 

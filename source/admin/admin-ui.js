@@ -6,6 +6,7 @@
   var loading = document.getElementById('admin-loading');
   var decorationFrame = 0;
   var preferredViewMode = null;
+  var adminHomePath = '/admin/';
   var commentsAdminPath = '/admin/comments/';
 
   var cleanText = function (value) {
@@ -49,6 +50,18 @@
     return Array.prototype.slice.call(root.querySelectorAll(selector)).filter(function (element) {
       return cleanLabel(element.textContent) === text;
     });
+  };
+
+  var findSmallestTextMatch = function (root, selector, pattern) {
+    return Array.prototype.slice.call(root.querySelectorAll(selector)).filter(function (element) {
+      var text = cleanText(element.textContent);
+      if (!pattern.test(text)) return false;
+      return !Array.prototype.slice.call(element.children).some(function (child) {
+        return pattern.test(cleanText(child.textContent));
+      });
+    }).sort(function (left, right) {
+      return elementDepth(right) - elementDepth(left);
+    })[0] || null;
   };
 
   var accessibleName = function (element) {
@@ -158,6 +171,17 @@
       mediaLink.dataset.adminActive = String(route === '#/media');
     }
 
+    if (navGroup && !navGroup.querySelector('[data-admin-destination="home"]')) {
+      var homeLink = document.createElement('a');
+      homeLink.href = adminHomePath;
+      homeLink.textContent = '\u603b\u89c8';
+      homeLink.title = '\u8fd4\u56de\u7ba1\u7406\u540e\u53f0';
+      homeLink.dataset.adminNav = 'top';
+      homeLink.dataset.adminDestination = 'home';
+      homeLink.dataset.adminActive = 'false';
+      navGroup.insertBefore(homeLink, navGroup.firstChild);
+    }
+
     if (navGroup && !navGroup.querySelector('[data-admin-destination="comments"]')) {
       var commentsLink = document.createElement('a');
       commentsLink.href = commentsAdminPath;
@@ -193,7 +217,9 @@
     root.querySelectorAll('button, a, [role="button"]').forEach(function (control) {
       var label = accessibleName(control);
       if (label.indexOf('\u5feb\u901f\u65b0\u5efa') !== -1) control.dataset.adminAction = 'quick-create';
-      if (label === '\u53d1\u5e03' || label.indexOf('\u53d1\u5e03 ') === 0) control.dataset.adminAction = 'publish';
+      if (/^(\u53d1\u5e03|\u5df2\u53d1\u5e03|\u6b63\u5728\u53d1\u5e03|\u53d1\u5e03\u4e2d|\u53d6\u6d88\u53d1\u5e03)/.test(label) || /^(publish|published|publishing|unpublishing)\b/i.test(label)) {
+        control.dataset.adminAction = 'publish';
+      }
       if (label.indexOf('\u6392\u5e8f') === 0 || label.indexOf('\u7b5b\u9009') === 0) control.dataset.adminAction = 'list-control';
       if (label === '\u73b0\u5728') control.dataset.adminAction = 'set-current-date';
       if (label === '\u6e05\u9664') control.dataset.adminAction = 'clear-date';
@@ -352,20 +378,28 @@
 
   var decorateEditor = function (root) {
     var definitions = [
-      { labels: ['\u6807\u9898'], name: 'title' },
-      { labels: ['\u6458\u8981'], name: 'description' },
-      { labels: ['\u6587\u7ae0\u65e5\u671f', '\u53d1\u5e03\u65f6\u95f4'], name: 'date' },
-      { labels: ['\u4f5c\u4e3a\u8349\u7a3f'], name: 'draft' },
-      { labels: ['\u9996\u9875\u4f4d\u7f6e', '\u9996\u9875\u6392\u5e8f'], name: 'position' },
-      { labels: ['\u5206\u7c7b'], name: 'category' },
-      { labels: ['\u6807\u7b7e'], name: 'tags' },
-      { labels: ['\u6b63\u6587'], name: 'body' }
+      { fields: ['title'], labels: ['\u6807\u9898'], name: 'title' },
+      { fields: ['description'], labels: ['\u6458\u8981'], name: 'description' },
+      { fields: ['date'], labels: ['\u6587\u7ae0\u65e5\u671f', '\u53d1\u5e03\u65f6\u95f4'], name: 'date' },
+      { fields: ['draft'], labels: ['\u4f5c\u4e3a\u8349\u7a3f'], name: 'draft' },
+      { fields: ['sticky'], labels: ['\u9996\u9875\u4f4d\u7f6e', '\u9996\u9875\u6392\u5e8f'], name: 'position' },
+      { fields: ['categories'], labels: ['\u5206\u7c7b'], name: 'category' },
+      { fields: ['tags'], labels: ['\u6807\u7b7e'], name: 'tags' },
+      { fields: ['body'], labels: ['\u6b63\u6587'], name: 'body' }
     ];
     var fields = [];
 
     definitions.forEach(function (definition) {
       var label = null;
+      definition.fields.some(function (fieldName) {
+        label = Array.prototype.slice.call(root.querySelectorAll('label[for], [class*="FieldLabel"][for]')).filter(function (candidate) {
+          var target = candidate.getAttribute('for') || '';
+          return target === fieldName || target.indexOf(fieldName + '-field-') === 0;
+        })[0] || null;
+        return Boolean(label);
+      });
       definition.labels.some(function (text) {
+        if (label) return true;
         label = findExactText(root, 'label, [class*="FieldLabel"]', text)[0] || null;
         return Boolean(label);
       });
@@ -376,7 +410,8 @@
       fields.push({ name: definition.name, wrapper: wrapper });
     });
 
-    if (fields.length < 4) return;
+    var fieldNames = fields.map(function (field) { return field.name; });
+    if (fields.length < 4 || fieldNames.indexOf('title') === -1 || fieldNames.indexOf('body') === -1) return;
     var form = lowestCommonAncestor(fields.map(function (field) { return field.wrapper; }));
     if (!form || form.id === 'nc-root') return;
 
@@ -387,7 +422,138 @@
       slot.dataset.adminFieldSlot = field.name;
       usedSlots.push(slot);
     });
-    if (usedSlots.length >= 4) form.dataset.adminForm = 'post';
+    if (usedSlots.length < 4) return;
+    form.dataset.adminForm = 'post';
+
+    var bodyField = root.querySelector('[data-admin-field="body"]');
+    if (bodyField) {
+      var toolbars = Array.prototype.slice.call(bodyField.querySelectorAll('[role="toolbar"], [class*="Toolbar"]')).filter(function (candidate) {
+        return candidate.querySelectorAll('button, [role="button"]').length >= 2;
+      }).sort(function (left, right) {
+        return elementDepth(right) - elementDepth(left);
+      });
+      if (toolbars[0]) toolbars[0].dataset.adminSection = 'editor-toolbar';
+    }
+
+    var editorBackLink = null;
+    var editorShell = null;
+    var editorShellDepth = -1;
+    Array.prototype.slice.call(root.querySelectorAll('a[href]')).forEach(function (link) {
+      var href = link.getAttribute('href') || '';
+      if (!/^#\/collections\/posts\/?$/.test(href)) return;
+      var candidateShell = lowestCommonAncestor([link, form]);
+      if (!candidateShell || candidateShell.id === 'nc-root') return;
+      var candidateDepth = elementDepth(candidateShell);
+      if (candidateDepth <= editorShellDepth) return;
+      editorBackLink = link;
+      editorShell = candidateShell;
+      editorShellDepth = candidateDepth;
+    });
+
+    var editorHeader = editorShell && editorBackLink
+      ? directChildWithin(editorShell, editorBackLink)
+      : null;
+    if (editorHeader) editorHeader.dataset.adminShell = 'editor-toolbar';
+    if (editorBackLink) {
+      editorBackLink.dataset.adminAction = 'editor-back';
+      editorBackLink.setAttribute('aria-label', '\u8fd4\u56de\u6587\u7ae0\u5217\u8868');
+      editorBackLink.setAttribute('title', '\u8fd4\u56de\u6587\u7ae0\u5217\u8868');
+
+      if (editorBackLink.children.length > 1) {
+        editorBackLink.lastElementChild.dataset.adminSection = 'editor-back-copy';
+      }
+    }
+
+    if (editorHeader) {
+      var context = findSmallestTextMatch(editorHeader, 'div, span, p', /\u6b63\u5728\u96c6\u5408.*\u4e2d\u7f16\u5199/);
+      var status = findSmallestTextMatch(editorHeader, 'div, span, p', /(\u672a\u4fdd\u5b58|\u4fee\u6539\u5df2\u4fdd\u5b58|\u5df2\u4fdd\u5b58)/);
+      if (context) context.dataset.adminEditorContext = 'true';
+      if (status) status.dataset.adminEditorStatus = /\u672a\u4fdd\u5b58/.test(cleanText(status.textContent)) ? 'unsaved' : 'saved';
+    }
+
+    var publishAction = editorHeader && Array.prototype.slice.call(editorHeader.querySelectorAll('button, [role="button"]')).filter(function (control) {
+      var label = accessibleName(control);
+      return /^(\u53d1\u5e03|\u5df2\u53d1\u5e03|\u6b63\u5728\u53d1\u5e03|\u53d1\u5e03\u4e2d|\u53d6\u6d88\u53d1\u5e03)/.test(label) || /^(publish|published|publishing|unpublishing)\b/i.test(label);
+    })[0] || null;
+    if (publishAction) {
+      publishAction.dataset.adminAction = 'publish';
+      var publishSource = publishAction.parentElement;
+      var publishWrapper = publishSource && publishSource.children.length === 1 && publishSource.firstElementChild === publishAction
+        ? publishSource.parentElement
+        : null;
+      if (publishWrapper && publishWrapper !== editorHeader && editorHeader.contains(publishWrapper)) {
+        publishWrapper.dataset.adminSection = 'publish-menu';
+      }
+    }
+
+    var editorControls = Array.prototype.slice.call(root.querySelectorAll('button, [role="button"]')).filter(function (control) {
+      return !(editorHeader && editorHeader.contains(control)) && !control.closest('[data-admin-field="body"]');
+    });
+    var previewToggle = editorControls.filter(function (control) {
+      return /(\u9884\u89c8|preview)/i.test(accessibleName(control));
+    })[0] || null;
+    var scrollToggle = editorControls.filter(function (control) {
+      return /(\u6eda\u52a8|scroll)/i.test(accessibleName(control));
+    })[0] || null;
+    var previewFrame = root.querySelector('iframe#preview-pane');
+    var previewOpen = Boolean(previewFrame);
+
+    root.dataset.adminPreview = previewOpen ? 'open' : 'closed';
+    if (!previewOpen) {
+      root.querySelectorAll('[data-admin-editor-layout]').forEach(function (element) {
+        delete element.dataset.adminEditorLayout;
+      });
+      root.querySelectorAll('[data-admin-editor-pane]').forEach(function (element) {
+        delete element.dataset.adminEditorPane;
+      });
+      root.querySelectorAll('[data-admin-editor-resizer]').forEach(function (element) {
+        delete element.dataset.adminEditorResizer;
+      });
+      root.querySelectorAll('[data-admin-preview-layer]').forEach(function (element) {
+        delete element.dataset.adminPreviewLayer;
+      });
+    }
+    if (previewToggle) {
+      previewToggle.dataset.adminAction = 'preview-toggle';
+      previewToggle.dataset.adminActive = String(previewOpen);
+      previewToggle.setAttribute('aria-label', previewOpen ? '\u5173\u95ed\u9884\u89c8\u5e76\u7ee7\u7eed\u5199\u4f5c' : '\u9884\u89c8\u6587\u7ae0');
+      previewToggle.setAttribute('aria-pressed', String(previewOpen));
+      previewToggle.setAttribute('title', previewOpen ? '\u5173\u95ed\u9884\u89c8\u5e76\u7ee7\u7eed\u5199\u4f5c' : '\u9884\u89c8\u6587\u7ae0');
+      if (previewToggle.parentElement) previewToggle.parentElement.dataset.adminSection = 'editor-view-controls';
+    }
+    if (scrollToggle) scrollToggle.dataset.adminAction = 'scroll-sync';
+
+    if (editorShell && editorShell.id !== 'nc-root') {
+      editorShell.dataset.adminEditorShell = 'post';
+      var editorContent = directChildWithin(editorShell, form);
+      if (editorContent && editorContent !== editorHeader) editorContent.dataset.adminEditorContent = 'post';
+
+      var layer = form.parentElement;
+      while (layer && layer !== editorShell) {
+        layer.dataset.adminEditorLayer = 'flow';
+        layer = layer.parentElement;
+      }
+    }
+
+    if (previewFrame) {
+      var split = lowestCommonAncestor([form, previewFrame]);
+      var formPane = split && directChildWithin(split, form);
+      var previewPane = split && directChildWithin(split, previewFrame);
+      if (split && split.id !== 'nc-root' && formPane && previewPane && formPane !== previewPane) {
+        split.dataset.adminEditorLayout = 'split';
+        formPane.dataset.adminEditorPane = 'form';
+        previewPane.dataset.adminEditorPane = 'preview';
+        Array.prototype.slice.call(split.children).forEach(function (child) {
+          if (/(^|\s)Resizer(\s|$)/.test(child.className || '')) child.dataset.adminEditorResizer = 'true';
+        });
+        var previewContainer = previewFrame.parentElement;
+        while (previewContainer && previewContainer !== previewPane) {
+          previewContainer.dataset.adminPreviewLayer = 'flow';
+          previewContainer = previewContainer.parentElement;
+        }
+        previewPane.dataset.adminPreviewLayer = 'flow';
+      }
+    }
   };
 
   var finishLoading = function () {

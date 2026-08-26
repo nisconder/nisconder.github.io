@@ -21,18 +21,25 @@ const playlistPreview = playablePlaylist.slice(0, 3)
 const musicianCount = new Set(
   playlist.flatMap((track) => track.author.split('/').map((artist) => artist.trim()).filter(Boolean)),
 ).size
+const latestPost = posts[0]
 const featuredPost = await getFeaturedPost(posts)
+const pinnedPost = featuredPost?.id !== latestPost?.id ? featuredPost : undefined
 const recentPosts = posts
-  .filter((post) => post.id !== featuredPost?.id)
+  .filter((post) => post.id !== latestPost?.id)
   .slice(0, 4)
 
 const topicCounts = new Map<string, number>()
+const categoryCounts = new Map<string, number>()
 for (const post of posts) {
+  const category = getPostCategory(post)
+  if (category) categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1)
   for (const tag of getPostTags(post)) {
     topicCounts.set(tag, (topicCounts.get(tag) ?? 0) + 1)
   }
 }
 
+const categories = [...categoryCounts]
+  .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0], 'zh-CN'))
 const topics = [...topicCounts]
   .filter(([, count]) => count >= 2)
   .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0], 'zh-CN'))
@@ -40,6 +47,7 @@ const topics = [...topicCounts]
 const querySeeds = [...topicCounts.keys()].slice(0, 5)
 
 const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
+const categoryHref = (category: string) => `/search/?category=${encodeURIComponent(category)}`
 ---
 
 <BaseLayout
@@ -96,33 +104,47 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 
     <div class="home-card-grid">
       {
-        featuredPost ? (
+        latestPost ? (
           <article class="home-card lead-story">
             <header class="lead-story__band">
               <span>LATEST / ARTICLE</span>
               <div class="lead-story__meta">
-                <time datetime={getPostDateTime(featuredPost.data.date)}>
-                  {formatPostDate(featuredPost.data.date)}
+                <time datetime={getPostDateTime(latestPost.data.date)}>
+                  {formatPostDate(latestPost.data.date)}
                 </time>
-                {getPostCategory(featuredPost) && (
-                  <a href={searchHref(getPostCategory(featuredPost)!)}>
-                    {getPostCategory(featuredPost)}
+                {getPostCategory(latestPost) && (
+                  <a href={categoryHref(getPostCategory(latestPost)!)}>
+                    {getPostCategory(latestPost)}
                   </a>
                 )}
               </div>
             </header>
             <div class="lead-story__body">
-              <h3><a href={getPostUrl(featuredPost)}>{featuredPost.data.title}</a></h3>
-              <p class="lead-story__summary">{getPostDescription(featuredPost)}</p>
-              {getPostTags(featuredPost).length > 0 && (
+              <h3><a href={getPostUrl(latestPost)}>{latestPost.data.title}</a></h3>
+              <p class="lead-story__summary">{getPostDescription(latestPost)}</p>
+              {getPostTags(latestPost).length > 0 && (
                 <nav class="lead-story__tags" aria-label="文章标签">
-                  {getPostTags(featuredPost).slice(0, 3).map((tag) => (
+                  {getPostTags(latestPost).slice(0, 3).map((tag) => (
                     <a href={searchHref(tag)}>#{tag}</a>
                   ))}
                 </nav>
               )}
+              {pinnedPost && (
+                <aside class="lead-story__pinned" aria-label="置顶推荐">
+                  <div class="lead-story__pinned-label">
+                    <span>置顶推荐</span>
+                    <time datetime={getPostDateTime(pinnedPost.data.date)}>
+                      {formatPostDate(pinnedPost.data.date)}
+                    </time>
+                  </div>
+                  <a href={getPostUrl(pinnedPost)}>
+                    <strong>{pinnedPost.data.title}</strong>
+                    <span aria-hidden="true">→</span>
+                  </a>
+                </aside>
+              )}
               <div class="lead-story__actions">
-                <a class="lead-story__read" href={getPostUrl(featuredPost)}>
+                <a class="lead-story__read" href={getPostUrl(latestPost)}>
                   阅读全文 <span aria-hidden="true">→</span>
                 </a>
                 <a class="lead-story__archive" href="/articles/">全部 {posts.length} 篇</a>
@@ -159,9 +181,9 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
       <form class="home-card search-card" action="/search/" method="get" role="search">
         <p class="card-kicker">SEARCH</p>
         <h3>站内搜索</h3>
-        <label for="home-search">文章、项目或标签</label>
+        <label for="home-search">文章、项目、分类或标签</label>
         <div class="search-card__controls">
-          <input id="home-search" name="q" type="search" autocomplete="off" placeholder="输入文章、项目或标签…" />
+          <input id="home-search" name="q" type="search" autocomplete="off" placeholder="输入文章、项目、分类或标签…" />
           <button type="submit">搜索站内</button>
         </div>
         {querySeeds.length > 0 && (
@@ -186,6 +208,30 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
       </a>
     </div>
   </section>
+
+  {categories.length > 0 && (
+    <section class="axis-section home-category-section" data-note="分类">
+      <div class="section-head section-head--split">
+        <div>
+          <p class="eyebrow">BROWSE / CATEGORY</p>
+          <h2>按分类进入</h2>
+        </div>
+        <p class="section-aside">先选择一条明确的路径，再继续搜索或阅读。</p>
+      </div>
+
+      <nav class="home-category-field" aria-label="文章分类">
+        {categories.map(([category, count], index) => (
+          <a href={categoryHref(category)} data-tone={index % 2 === 0 ? 'reading' : 'media'}>
+            <span>
+              <strong>{category}</strong>
+              <small>{count} 篇文章</small>
+            </span>
+            <span aria-hidden="true">→</span>
+          </a>
+        ))}
+      </nav>
+    </section>
+  )}
 
   {topics.length >= 3 && (
     <section class="axis-section topic-section" data-note="词语">
@@ -582,6 +628,62 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     color: var(--color-media);
   }
 
+  .lead-story__pinned {
+    display: grid;
+    gap: 0.55rem;
+    margin-block-start: 1.35rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--color-line-strong);
+    border-inline-start: 0.35rem solid var(--color-secondary);
+    border-radius: var(--card-radius);
+    background: var(--color-secondary-soft);
+  }
+
+  .lead-story__pinned-label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.35rem 1rem;
+    color: var(--color-secondary);
+    font-family: var(--font-utility);
+    font-size: var(--text-xs);
+    font-weight: 750;
+    letter-spacing: 0.05em;
+  }
+
+  .lead-story__pinned a {
+    display: grid;
+    min-height: 2.75rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1rem;
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .lead-story__pinned strong {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .lead-story__pinned a > span {
+    color: var(--color-secondary);
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+
+  .lead-story__pinned a:hover strong,
+  .lead-story__pinned a:focus-visible strong {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-decoration-color: var(--color-secondary);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.22em;
+  }
+
   .lead-story__actions {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -823,6 +925,64 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     color: var(--color-muted);
     font-size: var(--text-sm);
     line-height: 1.65;
+  }
+
+  .home-category-field {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    gap: 0.75rem;
+  }
+
+  .home-category-field a {
+    display: flex;
+    min-width: 0;
+    min-height: 5rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--color-line-strong);
+    border-inline-start: 0.4rem solid var(--color-primary);
+    border-radius: var(--card-radius);
+    background: var(--color-card);
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .home-category-field a[data-tone='media'] {
+    border-inline-start-color: var(--color-secondary);
+    background: var(--color-secondary-soft);
+  }
+
+  .home-category-field a:hover,
+  .home-category-field a:focus-visible {
+    border-color: var(--color-secondary);
+    background: var(--color-primary-soft);
+  }
+
+  .home-category-field a > span:first-child {
+    display: grid;
+    min-width: 0;
+    gap: 0.15rem;
+  }
+
+  .home-category-field strong {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    overflow-wrap: anywhere;
+  }
+
+  .home-category-field small {
+    color: var(--color-muted);
+    font-family: var(--font-utility);
+    font-size: var(--text-xs);
+  }
+
+  .home-category-field a > span:last-child {
+    flex: 0 0 auto;
+    color: var(--color-secondary);
+    font-size: 1.1rem;
+    font-weight: 800;
   }
 
   .topic-field {

@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#245f64">
+  <title>文章管理｜不知名博客</title>
+  <link rel="icon" type="image/png" href="/img/nisconder-avatar.png">
+  <link href="/admin/config.yml" type="text/yaml" rel="cms-config-url">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="/admin/admin-theme.css?v=12">
+  <script>
+    try {
+      if (localStorage.getItem('nisconder.editor-layout') !== 'v2') {
+        localStorage.setItem('cms.preview-visible', 'false');
+        localStorage.setItem('cms.scroll-sync-enabled', 'false');
+        localStorage.setItem('nisconder.editor-layout', 'v2');
+      }
+    } catch (error) {
+      /* Storage may be unavailable in privacy mode; Decap still remains usable. */
+    }
+  </script>
+</head>
+<body>
+  <div id="admin-loading" role="status" aria-live="polite">
+    <div class="admin-loading__card">
+      <span class="admin-loading__eyebrow">NISCONDER · EDITORIAL DESK</span>
+      <img src="/img/nisconder-avatar.png" alt="" width="64" height="64">
+      <h1>写作后台</h1>
+      <p>正在整理你的稿纸…</p>
+      <span class="admin-loading__line" aria-hidden="true"></span>
+    </div>
+  </div>
+
+  <noscript>
+    <div class="admin-noscript">作者后台需要启用 JavaScript 才能工作。</div>
+  </noscript>
+
+  <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.15.1/dist/decap-cms.js"></script>
+  <script src="/admin/admin-ui.js?v=14"></script>
+  <script>
+    if (window.CMS) {
+      CMS.registerPreviewStyle('/admin/editor-preview.css?v=7');
+
+      window.__BLOG_TAGS = [];
+
+      var normalizeTags = function (value) {
+        if (!value) return [];
+        if (Array.isArray(value)) return value;
+        if (typeof value.toJS === 'function') return value.toJS();
+        if (typeof value.toArray === 'function') return value.toArray();
+        return String(value).split(',').map(function (tag) { return tag.trim(); }).filter(Boolean);
+      };
+
+      var TagListControl = window.createClass({
+        getInitialState: function () {
+          return { draft: '' };
+        },
+
+        componentDidMount: function () {
+          window.addEventListener('blog-tags-updated', this.refreshSuggestions);
+        },
+
+        componentWillUnmount: function () {
+          window.removeEventListener('blog-tags-updated', this.refreshSuggestions);
+        },
+
+        refreshSuggestions: function () {
+          this.forceUpdate();
+        },
+
+        addTag: function (tagValue) {
+          var tag = String(tagValue || this.state.draft).trim().replace(/^#/, '');
+          var tags = normalizeTags(this.props.value);
+          var alreadyExists = tags.some(function (existingTag) {
+            return existingTag.toLowerCase() === tag.toLowerCase();
+          });
+          if (tag && !alreadyExists) {
+            this.props.onChange(tags.concat(tag));
+          }
+          this.setState({ draft: '' });
+        },
+
+        removeTag: function (tagToRemove) {
+          this.props.onChange(normalizeTags(this.props.value).filter(function (tag) {
+            return tag !== tagToRemove;
+          }));
+        },
+
+        handleKeyDown: function (event) {
+          if (event.isComposing) return;
+          if (event.key === 'Enter' || event.key === ',') {
+            event.preventDefault();
+            this.addTag();
+          }
+        },
+
+        render: function () {
+          var self = this;
+          var tags = normalizeTags(this.props.value);
+          var draftQuery = this.state.draft.trim().toLowerCase();
+          var selectedTags = tags.map(function (tag) { return tag.toLowerCase(); });
+          var suggestions = window.__BLOG_TAGS.filter(function (tag) {
+            return selectedTags.indexOf(tag.toLowerCase()) === -1 && (!draftQuery || tag.toLowerCase().indexOf(draftQuery) !== -1);
+          }).slice(0, 10);
+
+          return window.h(
+            'div',
+            { className: 'admin-tag-control', 'data-admin-control': 'tags' },
+            window.h(
+              'div',
+              { className: 'admin-tag-control__tags', 'aria-live': 'polite' },
+              tags.map(function (tag) {
+                return window.h(
+                  'span',
+                  { className: 'admin-tag-control__tag', key: tag },
+                  window.h('span', null, tag),
+                  window.h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'admin-tag-control__remove',
+                      onClick: function () { self.removeTag(tag); },
+                      'aria-label': '移除标签 ' + tag
+                    },
+                    '×'
+                  )
+                );
+              })
+            ),
+            suggestions.length
+              ? window.h(
+                  'div',
+                  { className: 'admin-tag-control__suggestions' },
+                  window.h('span', { className: 'admin-tag-control__suggestions-label' }, draftQuery ? '匹配标签' : '已有标签'),
+                  window.h(
+                    'div',
+                    { className: 'admin-tag-control__suggestion-list' },
+                    suggestions.map(function (tag) {
+                      return window.h(
+                        'button',
+                        {
+                          type: 'button',
+                          className: 'admin-tag-control__suggestion',
+                          key: tag,
+                          onClick: function () { self.addTag(tag); }
+                        },
+                        tag
+                      );
+                    })
+                  )
+                )
+              : null,
+            window.h(
+              'div',
+              { className: 'admin-tag-control__input-row' },
+              window.h('input', {
+                id: this.props.forID,
+                type: 'text',
+                value: this.state.draft,
+                placeholder: '输入新标签',
+                'aria-label': '输入新标签',
+                onChange: function (event) { self.setState({ draft: event.target.value }); },
+                onKeyDown: this.handleKeyDown
+              }),
+              window.h(
+                'button',
+                { type: 'button', onClick: function () { self.addTag(); }, disabled: !this.state.draft.trim() },
+                '添加'
+              )
+            )
+          );
+        }
+      });
+
+      CMS.registerWidget('taglist', TagListControl);
+
+      var normalizeOptions = function (value) {
+        var options = value;
+        if (!options) return [];
+        if (typeof options.toJS === 'function') options = options.toJS();
+        if (!Array.isArray(options)) return [];
+        return options.map(function (option) {
+          return typeof option === 'string'
+            ? { label: option, value: option }
+            : { label: option.label || option.value, value: option.value || option.label };
+        });
+      };
+
+      var CategoryControl = window.createClass({
+        render: function () {
+          var value = this.props.value || '';
+          var options = normalizeOptions(this.props.field.get('options'));
+          var onChange = this.props.onChange;
+
+          return window.h(
+            'div',
+            { className: 'admin-category-control', 'data-admin-control': 'categories' },
+            window.h(
+              'select',
+              {
+                id: this.props.forID,
+                value: value,
+                onChange: function (event) { onChange(event.target.value || null); },
+                'aria-label': this.props.field.get('label') || '分类'
+              },
+              window.h('option', { value: '', disabled: true }, '选择分类'),
+              options.map(function (option) {
+                return window.h('option', { value: option.value, key: option.value }, option.label);
+              })
+            )
+          );
+        }
+      });
+
+      CMS.registerWidget('categoryselect', CategoryControl);
+
+      var normalizePinned = function (value) {
+        return value === true || value === 'true' || value === 1;
+      };
+
+      var PinControl = window.createClass({
+        render: function () {
+          var active = normalizePinned(this.props.value);
+          var onChange = this.props.onChange;
+          return window.h(
+            'div',
+            { className: 'admin-pin-control', 'data-admin-control': 'sticky' },
+            window.h(
+              'label',
+              { className: 'admin-pin-control__option' + (active ? ' is-active' : '') },
+              window.h('input', {
+                id: this.props.forID,
+                type: 'checkbox',
+                checked: active,
+                onChange: function (event) { onChange(event.target.checked); }
+              }),
+              window.h('span', { className: 'admin-pin-control__box', 'aria-hidden': 'true' }),
+              window.h(
+                'span',
+                { className: 'admin-pin-control__copy' },
+                window.h('strong', null, '置顶到首页')
+              )
+            )
+          );
+        }
+      });
+
+      CMS.registerWidget('pincontrol', PinControl);
+
+      var DraftControl = window.createClass({
+        render: function () {
+          var active = normalizePinned(this.props.value);
+          var onChange = this.props.onChange;
+          return window.h(
+            'div',
+            { className: 'admin-pin-control admin-draft-control', 'data-admin-control': 'draft' },
+            window.h(
+              'label',
+              { className: 'admin-pin-control__option' + (active ? ' is-active' : '') },
+              window.h('input', {
+                id: this.props.forID,
+                type: 'checkbox',
+                checked: active,
+                onChange: function (event) { onChange(event.target.checked); }
+              }),
+              window.h('span', { className: 'admin-pin-control__box', 'aria-hidden': 'true' }),
+              window.h(
+                'span',
+                { className: 'admin-pin-control__copy' },
+                window.h('strong', null, active ? '草稿' : '公开发布'),
+                window.h('small', null, active ? '不会出现在公开网站' : '发布后对访客可见')
+              )
+            )
+          );
+        }
+      });
+
+      CMS.registerWidget('draftcontrol', DraftControl);
+
+      window.fetch('/admin/tag-options.json', { cache: 'no-store' })
+        .then(function (response) { return response.ok ? response.json() : []; })
+        .then(function (tags) {
+          window.__BLOG_TAGS = Array.isArray(tags) ? tags : [];
+          window.dispatchEvent(new Event('blog-tags-updated'));
+        })
+        .catch(function () {
+          window.__BLOG_TAGS = [];
+        });
+    }
+
+    (function () {
+      if (window.__ADMIN_UI_V6__) return;
+      var loading = document.getElementById('admin-loading');
+      var decorationFrame = 0;
+
+      var finishLoading = function () {
+        if (!loading || !document.querySelector('#nc-root > *')) return;
+        loading.classList.add('is-finished');
+        window.setTimeout(function () { loading.remove(); }, 280);
+      };
+
+      var decorateCMS = function () {
+        decorationFrame = 0;
+        var root = document.getElementById('nc-root');
+        if (!root) return;
+
+        var currentRoute = window.location.hash || '#/';
+        root.querySelectorAll('a[href]').forEach(function (link) {
+          var href = link.getAttribute('href') || '';
+          var isTopNavigation = link.getBoundingClientRect().top < 120;
+
+          if (isTopNavigation && (href === '#/collections/posts' || href === '#/media')) {
+            link.dataset.adminNav = 'top';
+            link.dataset.adminActive = String(
+              href === '#/collections/posts'
+                ? currentRoute.indexOf('#/collections/posts') === 0
+                : href === currentRoute
+            );
+          } else if (href === '#/collections/posts') {
+            link.dataset.adminNav = 'collection';
+            link.dataset.adminActive = String(currentRoute.indexOf('#/collections/posts') === 0);
+          }
+
+          if (/\/collections\/posts\/new$/.test(href)) {
+            link.dataset.adminAction = 'new-post';
+            link.setAttribute('aria-label', '新建文章');
+          }
+
+          if (/\/collections\/posts\/entries\//.test(href)) {
+            link.dataset.adminEntry = 'post';
+          }
+        });
+
+        root.querySelectorAll('input[placeholder]').forEach(function (input) {
+          if (input.placeholder.indexOf('查找') !== -1) {
+            input.dataset.adminSearch = 'posts';
+            input.placeholder = '搜索文章';
+          }
+        });
+
+        root.querySelectorAll('button').forEach(function (button) {
+          var label = button.textContent.trim();
+          if (label.indexOf('快速新建') !== -1) {
+            button.dataset.adminAction = 'quick-create';
+          }
+          if (label === '发布') {
+            button.dataset.adminAction = 'publish';
+          }
+          if (label.indexOf('排序') === 0 || label.indexOf('筛选') === 0) {
+            button.dataset.adminAction = 'list-control';
+          }
+        });
+
+        var newPostAction = root.querySelector('[data-admin-action="new-post"]');
+        if (newPostAction) {
+          var collectionTop = newPostAction.closest('[class*="CollectionTop"]');
+          if (collectionTop) {
+            collectionTop.dataset.adminSection = 'collection-heading';
+            var collectionTitle = collectionTop.querySelector('h1, h2');
+            if (collectionTitle) {
+              var postCount = root.querySelectorAll('[data-admin-entry="post"]').length;
+              collectionTitle.dataset.adminCount = postCount ? String(postCount).padStart(2, '0') + ' 篇' : '';
+            }
+          }
+        }
+
+        var firstListControl = root.querySelector('[data-admin-action="list-control"]');
+        if (firstListControl && firstListControl.parentElement) {
+          firstListControl.parentElement.dataset.adminSection = 'list-controls';
+        }
+      };
+
+      var scheduleDecoration = function () {
+        if (decorationFrame) return;
+        decorationFrame = window.requestAnimationFrame(decorateCMS);
+      };
+
+      var observer = new MutationObserver(function () {
+        finishLoading();
+        scheduleDecoration();
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      finishLoading();
+      scheduleDecoration();
+      window.addEventListener('hashchange', scheduleDecoration);
+      window.addEventListener('resize', scheduleDecoration);
+
+      window.setTimeout(function () {
+        if (!loading || loading.classList.contains('is-finished')) return;
+        var message = loading.querySelector('p');
+        if (message) message.textContent = '加载时间有点久，请检查网络后刷新页面。';
+      }, 10000);
+    }());
+  </script>
+</body>
+</html>

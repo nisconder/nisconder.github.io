@@ -17,8 +17,8 @@ import {
 
 interface Props {
   post: PostEntry
-  newerPost?: PostEntry
-  olderPost?: PostEntry
+  previousPost?: PostEntry
+  nextPost?: PostEntry
 }
 
 export const getStaticPaths = (async () => {
@@ -30,14 +30,14 @@ export const getStaticPaths = (async () => {
       params: { year, month, day, slug: getPostSlug(post) },
       props: {
         post,
-        newerPost: posts[index - 1],
-        olderPost: posts[index + 1],
+        previousPost: posts[index + 1],
+        nextPost: posts[index - 1],
       },
     }
   })
 }) satisfies GetStaticPaths
 
-const { post, newerPost, olderPost } = Astro.props
+const { post, previousPost, nextPost } = Astro.props
 const { Content, headings } = await render(post)
 const category = getPostCategory(post)
 const tags = getPostTags(post)
@@ -45,6 +45,7 @@ const description = getPostDescription(post)
 const tableOfContents = headings.filter(({ depth }) => depth >= 2 && depth <= 3)
 const canonical = getPostUrl(post)
 const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
+const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(value)}`
 ---
 
 <BaseLayout
@@ -106,7 +107,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
       <article>
         <header class="article-header" id="article-start">
           <p class="article-kicker">
-            {category ? <a href={searchHref(category)}>{category}</a> : 'Article'}
+            {category ? <a href={categoryHref(category)}>{category}</a> : 'Article'}
           </p>
           <h1>{post.data.title}</h1>
           <div class="article-meta">
@@ -159,25 +160,39 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
         </div>
 
         <footer class="article-footer">
-          <a class="button secondary" href="/articles/">返回全部文章</a>
-          {
-            (newerPost || olderPost) && (
-              <nav class="article-neighbors" aria-label="相邻文章">
-                {newerPost && (
-                  <a href={getPostUrl(newerPost)}>
-                    <span>较新一篇</span>
-                    <strong>{newerPost.data.title}</strong>
-                  </a>
-                )}
-                {olderPost && (
-                  <a href={getPostUrl(olderPost)}>
-                    <span>较早一篇</span>
-                    <strong>{olderPost.data.title}</strong>
-                  </a>
-                )}
-              </nav>
-            )
-          }
+          <nav class="article-pagination" aria-label="上一篇和下一篇文章">
+            {
+              previousPost ? (
+                <a class="article-pagination__item article-pagination__item--previous" href={getPostUrl(previousPost)}>
+                  <span class="article-pagination__direction"><span aria-hidden="true">←</span> 上一篇</span>
+                  <strong>{previousPost.data.title}</strong>
+                  <small>较早 · {formatPostDate(previousPost.data.date)}</small>
+                </a>
+              ) : (
+                <div class="article-pagination__item article-pagination__item--previous is-disabled">
+                  <span class="article-pagination__direction"><span aria-hidden="true">←</span> 上一篇</span>
+                  <strong>已经是最早一篇</strong>
+                  <small>向前没有更多文章</small>
+                </div>
+              )
+            }
+            {
+              nextPost ? (
+                <a class="article-pagination__item article-pagination__item--next" href={getPostUrl(nextPost)}>
+                  <span class="article-pagination__direction">下一篇 <span aria-hidden="true">→</span></span>
+                  <strong>{nextPost.data.title}</strong>
+                  <small>较新 · {formatPostDate(nextPost.data.date)}</small>
+                </a>
+              ) : (
+                <div class="article-pagination__item article-pagination__item--next is-disabled">
+                  <span class="article-pagination__direction">下一篇 <span aria-hidden="true">→</span></span>
+                  <strong>已经是最新一篇</strong>
+                  <small>新文章会从这里继续</small>
+                </div>
+              )
+            }
+          </nav>
+          <a class="button secondary article-footer__archive" href="/articles/">返回全部文章</a>
         </footer>
       </article>
 
@@ -186,6 +201,90 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 </BaseLayout>
 
 <style>
+  .article-footer {
+    max-width: none;
+  }
+
+  .article-pagination {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-block-end: 1.5rem;
+  }
+
+  .article-pagination__item {
+    display: grid;
+    min-width: 0;
+    min-height: 10rem;
+    align-content: space-between;
+    gap: 0.75rem;
+    padding: clamp(1.1rem, 3vw, 1.5rem);
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--card-radius);
+    background: var(--color-card);
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .article-pagination__item--previous {
+    border-inline-start: 0.4rem solid var(--color-primary);
+  }
+
+  .article-pagination__item--next {
+    border-inline-end: 0.4rem solid var(--color-secondary);
+    text-align: end;
+  }
+
+  a.article-pagination__item:hover,
+  a.article-pagination__item:focus-visible {
+    border-color: var(--color-secondary);
+    background: var(--color-primary-soft);
+  }
+
+  a.article-pagination__item:focus-visible {
+    outline: 3px solid var(--color-secondary);
+    outline-offset: 3px;
+  }
+
+  .article-pagination__direction {
+    color: var(--color-primary);
+    font-family: var(--font-utility);
+    font-size: var(--text-xs);
+    font-weight: 800;
+    letter-spacing: 0.06em;
+  }
+
+  .article-pagination__item--next .article-pagination__direction {
+    color: var(--color-secondary);
+  }
+
+  .article-pagination__item strong {
+    font-family: var(--font-display);
+    font-size: clamp(1.05rem, 2vw, 1.3rem);
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .article-pagination__item small {
+    color: var(--color-muted);
+    font-size: var(--text-xs);
+    line-height: 1.45;
+  }
+
+  .article-pagination__item.is-disabled {
+    border-color: var(--color-line);
+    background: var(--color-surface-soft);
+    color: var(--color-muted);
+  }
+
+  .article-pagination__item.is-disabled .article-pagination__direction {
+    color: var(--color-muted);
+  }
+
+  .article-footer__archive {
+    min-height: 2.75rem;
+  }
+
   .reading-progress-line {
     position: fixed;
     z-index: 80;
@@ -415,6 +514,17 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
       display: flex;
       justify-content: space-between;
       cursor: default;
+    }
+  }
+
+  @media (max-width: 42rem) {
+    .article-pagination {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.75rem;
+    }
+
+    .article-pagination__item {
+      min-height: 8rem;
     }
   }
 

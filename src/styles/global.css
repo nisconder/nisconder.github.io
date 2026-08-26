@@ -31,7 +31,6 @@
   --card-radius: 0.75rem;
   --site-gutter: clamp(1rem, 4vw, 3rem);
   --content-width: 42rem;
-  --comment-width: 48rem;
   --frame-width: 70rem;
   --header-width: 76rem;
   --text-xs: 0.75rem;
@@ -644,7 +643,7 @@ a:hover {
 }
 
 [data-waline-root] .wl-panel {
-  width: auto !important;
+  width: 100% !important;
   min-width: 0;
   margin: 0 !important;
   overflow: visible;
@@ -664,6 +663,10 @@ a:hover {
   font-family: var(--font-body) !important;
   font-size: 1rem !important;
   line-height: 1.65 !important;
+}
+
+[data-waline-root] .wl-editor {
+  min-height: 10rem !important;
 }
 
 [data-waline-root] .wl-btn {
@@ -686,8 +689,26 @@ a:hover {
 [data-waline-root] .wl-comment {
   display: grid !important;
   min-width: 0;
-  grid-template-columns: 4rem minmax(0, 1fr) !important;
-  gap: 1rem !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 0.75rem !important;
+}
+
+[data-waline-root] .wl-login-info {
+  display: flex !important;
+  max-width: 100% !important;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0 !important;
+  text-align: start !important;
+}
+
+[data-waline-root] .wl-login-info .wl-avatar {
+  flex: 0 0 auto;
+  margin: 0 !important;
+}
+
+[data-waline-root] .wl-actions > a[href*='guides.github.com/features/mastering-markdown'] {
+  display: none !important;
 }
 
 [data-waline-root] .wl-content,
@@ -701,10 +722,11 @@ a:hover {
   line-height: 1.7 !important;
 }
 
-[data-waline-root] button,
 [data-waline-root] .wl-btn,
 [data-waline-root] .wl-sort li,
-[data-waline-root] .wl-action {
+[data-waline-root] .wl-action,
+[data-waline-root] .wl-comment-actions > button,
+[data-waline-root] .wl-edit {
   min-width: 2.75rem;
   min-height: 2.75rem;
 }
@@ -771,8 +793,8 @@ html[data-theme='dark'] .astro-code span {
 
   [data-waline-root] .wl-comment {
     display: grid !important;
-    grid-template-columns: 2.5rem minmax(0, 1fr) !important;
-    gap: 0.75rem !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0.625rem !important;
   }
 
   [data-waline-root] {
@@ -786,6 +808,7 @@ html[data-theme='dark'] .astro-code span {
   [data-waline-root] .wl-actions {
     display: grid !important;
     width: 100%;
+    flex: 0 0 100% !important;
     grid-template-columns: repeat(auto-fit, minmax(2.75rem, 1fr));
     gap: 0.25rem;
   }
@@ -801,8 +824,10 @@ html[data-theme='dark'] .astro-code span {
   }
 
   [data-waline-root] .wl-info {
+    width: 100%;
     min-width: 0;
-    grid-column: 1 / -1;
+    flex: 0 0 100% !important;
+    justify-content: flex-end !important;
   }
 }
 

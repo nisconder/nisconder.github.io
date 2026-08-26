@@ -13,6 +13,7 @@ interface Props {
 const { href, title, description, excerpt, date, datetime, category, tags = [] } = Astro.props
 const summary = description ?? excerpt
 const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
+const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(value)}`
 ---
 
 <article class="post-row">
@@ -22,7 +23,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
       category && (
         <a
           class="post-row__category"
-          href={searchHref(category)}
+          href={categoryHref(category)}
           aria-label={`查看“${category}”分类下的文章`}
         >
           <strong>{category}</strong>

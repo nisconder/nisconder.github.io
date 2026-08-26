@@ -12,6 +12,15 @@ import {
 } from '../../lib/posts'
 
 const posts = await getPublishedPosts()
+const categoryCounts = new Map<string, number>()
+for (const post of posts) {
+  const category = getPostCategory(post)
+  if (category) categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1)
+}
+const categories = [...categoryCounts].sort(
+  (left, right) => right[1] - left[1] || left[0].localeCompare(right[0], 'zh-CN'),
+)
+const categoryHref = (category: string) => `/search/?category=${encodeURIComponent(category)}`
 ---
 
 <BaseLayout
@@ -23,10 +32,46 @@ const posts = await getPublishedPosts()
   commentsDescription="不必针对某一篇文章。想讨论写作、选题，或者推荐一个值得继续展开的问题，都可以留言。"
 >
   <header class="article-header articles-intro">
-    <p class="article-kicker">Articles</p>
-    <h1>文章</h1>
-    <p>公开写作按时间排列，标题、摘要与标签都可以直接展开。</p>
-    <a class="button" href="/search/">搜索文章</a>
+    <div class="articles-intro__copy">
+      <p class="article-kicker">Articles</p>
+      <h1>文章</h1>
+      <p>公开写作按时间排列。可以直接搜索，也可以按分类缩小范围。</p>
+    </div>
+
+    <div class="articles-discovery">
+      <form class="articles-search" action="/search/" method="get" role="search">
+        <label for="articles-search">搜索文章</label>
+        <input type="hidden" name="type" value="article" />
+        <div class="articles-search__field">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5"></circle>
+            <path d="m16 16 4 4"></path>
+          </svg>
+          <input
+            id="articles-search"
+            name="q"
+            type="search"
+            autocomplete="off"
+            placeholder="标题、标签或正文关键词"
+          />
+          <button type="submit">搜索</button>
+        </div>
+      </form>
+
+      {categories.length > 0 && (
+        <nav class="category-index" aria-label="按分类浏览文章">
+          <span>按分类浏览</span>
+          <a class="is-current" href="/articles/" aria-current="page">
+            全部 <small>{posts.length}</small>
+          </a>
+          {categories.map(([category, count]) => (
+            <a href={categoryHref(category)}>
+              {category} <small>{count}</small>
+            </a>
+          ))}
+        </nav>
+      )}
+    </div>
   </header>
 
   <section class="axis-section" data-note="按时间">
@@ -65,6 +110,10 @@ const posts = await getPublishedPosts()
 
 <style>
   .articles-intro {
+    display: grid;
+    grid-template-columns: minmax(14rem, 0.78fr) minmax(18rem, 1.22fr);
+    align-items: end;
+    gap: clamp(1.5rem, 4vw, 3rem);
     max-width: none;
     padding: clamp(1.5rem, 5vw, 3rem);
     border: 1px solid var(--color-line-strong);
@@ -73,12 +122,156 @@ const posts = await getPublishedPosts()
     background: var(--color-primary-soft);
   }
 
-  .articles-intro > p:not(.article-kicker) {
+  .articles-intro__copy,
+  .articles-discovery {
+    min-width: 0;
+  }
+
+  .articles-intro__copy > p:not(.article-kicker) {
     max-width: 34rem;
+    margin-block-end: 0;
     color: var(--color-muted);
   }
 
-  .articles-intro .button {
-    margin-block-start: 0.75rem;
+  .articles-discovery {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .articles-search label {
+    display: block;
+    margin-block-end: 0.45rem;
+    color: var(--color-text);
+    font-family: var(--font-utility);
+    font-size: var(--text-xs);
+    letter-spacing: 0.06em;
+  }
+
+  .articles-search__field {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 3.5rem;
+    overflow: hidden;
+    padding-inline-start: 0.9rem;
+    border: 1px solid var(--color-control-border);
+    border-inline-end: 0.35rem solid var(--color-secondary);
+    border-radius: var(--card-radius);
+    background: var(--color-field);
+  }
+
+  .articles-search__field svg {
+    color: var(--color-primary);
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-width: 2;
+  }
+
+  .articles-search__field input {
+    min-width: 0;
+    min-height: 3.35rem;
+    padding-inline: 0.2rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .articles-search__field input:focus-visible {
+    outline: 0;
+  }
+
+  .articles-search__field:focus-within {
+    border-color: var(--color-primary);
+    outline: 3px solid var(--color-secondary);
+    outline-offset: 3px;
+  }
+
+  .articles-search__field button {
+    min-width: 5rem;
+    min-height: 3.5rem;
+    padding-inline: 1rem;
+    border: 0;
+    border-radius: 0;
+    background: var(--color-reading-panel);
+    color: var(--color-on-reading-panel);
+    cursor: pointer;
+    font-weight: 750;
+  }
+
+  .articles-search__field button:hover {
+    background: var(--color-media-panel);
+    color: var(--color-on-media-panel);
+  }
+
+  .articles-search__field button:focus-visible {
+    outline: 0;
+    box-shadow: inset 0 0 0 3px var(--color-secondary);
+  }
+
+  .category-index {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .category-index > span {
+    margin-inline-end: 0.25rem;
+    color: var(--color-muted);
+    font-size: var(--text-xs);
+  }
+
+  .category-index a {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    gap: 0.4rem;
+    padding-inline: 0.75rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--card-radius);
+    background: var(--color-card);
+    color: var(--color-secondary);
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .category-index a:hover,
+  .category-index a.is-current {
+    border-color: var(--color-secondary);
+    background: var(--color-secondary-soft);
+  }
+
+  .category-index small {
+    font-family: var(--font-utility);
+    font-size: var(--text-xs);
+    font-weight: 700;
+  }
+
+  @media (max-width: 48rem) {
+    .articles-intro {
+      grid-template-columns: minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .articles-search__field {
+      grid-template-columns: auto minmax(0, 1fr);
+      padding: 0.25rem 0.25rem 0.25rem 0.85rem;
+    }
+
+    .articles-search__field button {
+      grid-column: 1 / -1;
+      width: 100%;
+      min-height: 3rem;
+      border-radius: calc(var(--card-radius) - 0.2rem);
+    }
+
+    .category-index > span {
+      flex-basis: 100%;
+    }
   }
 </style>

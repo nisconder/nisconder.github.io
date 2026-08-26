@@ -27,7 +27,7 @@ collections:
     label_singular: 文章
     folder: source/_posts
     create: true
-    slug: '{{slug}}'
+    slug: '{{year}}-{{month}}-{{day}}-blog{{hour}}{{minute}}{{second}}'
     summary: '{{title}}'
     sortable_fields: ['date', 'title']
     view_filters:
@@ -43,4 +43,4 @@ collections:
       - { label: 首页位置, name: sticky, widget: pincontrol, default: false, required: false, hint: 开启后，这篇文章会显示在普通文章之前。 }
       - { label: 分类, name: categories, widget: categoryselect, options: ['随笔', '公告', '技术', '阅读', '观影', '生活'], required: true, hint: 选择一个主分类。 }
       - { label: 标签, name: tags, widget: taglist, required: false, hint: 输入后按 Enter 添加；输入时会联想已有标签。 }
-      - { label: 正文, name: body, widget: richtext, modes: ['raw'], hint: 使用 Markdown 写作；右侧预览会模拟主站文章排版。 }
+      - { label: 正文, name: body, widget: richtext, modes: ['raw'], hint: 使用 Markdown 写作；需要检查排版时，点顶部“预览文章”。 }
