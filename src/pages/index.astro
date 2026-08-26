@@ -15,7 +15,11 @@ import {
 
 const posts = await getPublishedPosts()
 const playlist = await getPlaylistTracks()
-const playlistPreview = playlist.slice(0, 3)
+const playablePlaylist = playlist.filter((track) => track.fee === 0 || track.fee === 8)
+const playlistPreview = playablePlaylist.slice(0, 3)
+const musicianCount = new Set(
+  playlist.flatMap((track) => track.author.split('/').map((artist) => artist.trim()).filter(Boolean)),
+).size
 const featuredPost = await getFeaturedPost(posts)
 const recentPosts = posts
   .filter((post) => post.id !== featuredPost?.id)
@@ -32,6 +36,7 @@ const topics = [...topicCounts]
   .filter(([, count]) => count >= 2)
   .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0], 'zh-CN'))
   .slice(0, 8)
+const querySeeds = [...topicCounts.keys()].slice(0, 5)
 
 const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 ---
@@ -54,13 +59,21 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     </div>
   </header>
 
-  <section class="home-feature" id="latest" aria-label="最新内容">
-    <div class="editorial-splice">
+  <section class="home-feature" id="latest" aria-labelledby="home-feature-title">
+    <header class="home-feature__head">
+      <div>
+        <p class="eyebrow">SITE / INDEX</p>
+        <h2 id="home-feature-title">站内一览</h2>
+      </div>
+      <p>{posts.length} 篇文章 · {playlist.length} 首歌 · {topicCounts.size} 个主题词</p>
+    </header>
+
+    <div class="home-card-grid">
       {
         featuredPost ? (
-          <article class="lead-story">
+          <article class="home-card lead-story">
             <header class="lead-story__band">
-              <span>LATEST ARTICLE</span>
+              <span>LATEST / ARTICLE</span>
               <div class="lead-story__meta">
                 <time datetime={getPostDateTime(featuredPost.data.date)}>
                   {formatPostDate(featuredPost.data.date)}
@@ -73,51 +86,74 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
               </div>
             </header>
             <div class="lead-story__body">
-              <h2><a href={getPostUrl(featuredPost)}>{featuredPost.data.title}</a></h2>
+              <h3><a href={getPostUrl(featuredPost)}>{featuredPost.data.title}</a></h3>
               <p class="lead-story__summary">{getPostDescription(featuredPost)}</p>
               {getPostTags(featuredPost).length > 0 && (
                 <nav class="lead-story__tags" aria-label="文章标签">
-                  {getPostTags(featuredPost).map((tag) => (
+                  {getPostTags(featuredPost).slice(0, 3).map((tag) => (
                     <a href={searchHref(tag)}>#{tag}</a>
                   ))}
                 </nav>
               )}
-              <a class="lead-story__read" href={getPostUrl(featuredPost)}>
-                阅读全文 <span aria-hidden="true">→</span>
-              </a>
+              <div class="lead-story__actions">
+                <a class="lead-story__read" href={getPostUrl(featuredPost)}>
+                  阅读全文 <span aria-hidden="true">→</span>
+                </a>
+                <a class="lead-story__archive" href="/articles/">全部 {posts.length} 篇</a>
+              </div>
             </div>
           </article>
         ) : (
-          <div class="lead-story lead-story--empty">
-            <p class="lead-story__meta">WRITING</p>
-            <h2>文章正在整理。</h2>
+          <div class="home-card lead-story lead-story--empty">
+            <p class="card-kicker">WRITING</p>
+            <h3>文章正在整理。</h3>
             <a class="lead-story__read" href="/articles/">查看文章页 →</a>
           </div>
         )
       }
 
-      <div class="home-branches">
-        <aside class="side-notes" aria-labelledby="side-notes-title">
-          <p class="side-notes__label">NETEASE / PLAYLIST</p>
-          <h2 id="side-notes-title">最近反复播放</h2>
-          <ol class="side-notes__tracks" aria-label="歌单中的前三首曲目">
+      <a class="home-card music-card" href="/music/" aria-labelledby="music-card-title">
+          <p class="card-kicker">MUSIC / PLAYLIST</p>
+          <h3 id="music-card-title">最近反复播放</h3>
+          <p class="music-card__summary">{playlist.length} 首 · {musicianCount} 位音乐人</p>
+          <ol class="music-card__tracks" aria-label="歌单中的前三首曲目">
             {playlistPreview.map((track, index) => (
               <li>
                 <span>{(index + 1).toString().padStart(2, '0')}</span>
-                <strong>{track.title}</strong>
+                <span class="music-card__track-copy">
+                  <strong>{track.title}</strong>
+                  <small>{track.author}</small>
+                </span>
               </li>
             ))}
           </ol>
-          <a class="side-notes__main" href="/music/">打开 {playlist.length} 首歌 <span aria-hidden="true">→</span></a>
-        </aside>
+          <span class="home-card__action">打开 {playlist.length} 首歌 <span aria-hidden="true">→</span></span>
+      </a>
 
-        <aside class="about-note" aria-labelledby="about-note-title">
-          <p class="about-note__label">ABOUT</p>
-          <h2 id="about-note-title">本站与我</h2>
-          <p>这里为什么存在，以及我还在关注什么。</p>
+      <form class="home-card search-card" action="/search/" method="get" role="search">
+        <p class="card-kicker">SEARCH</p>
+        <h3>站内搜索</h3>
+        <label for="home-search">标题、正文或标签</label>
+        <div class="search-card__controls">
+          <input id="home-search" name="q" type="search" autocomplete="off" placeholder="输入标题、正文或标签…" />
+          <button type="submit">搜索文章</button>
+        </div>
+        {querySeeds.length > 0 && (
+          <nav class="search-card__seeds" aria-label="常用搜索标签">
+            {querySeeds.map((seed) => <a href={searchHref(seed)}>#{seed}</a>)}
+          </nav>
+        )}
+      </form>
+
+      <article class="home-card about-card" aria-labelledby="about-card-title">
+        <p class="card-kicker">ABOUT / NISCONDER</p>
+        <h3 id="about-card-title">本站与我</h3>
+        <p>记录代码、阅读、音乐与生活观察。这里为什么存在，我在写什么，以及还在关注什么。</p>
+        <div class="about-card__links">
           <a href="/about/">关于 Nisconder <span aria-hidden="true">→</span></a>
-        </aside>
-      </div>
+          <a href="https://github.com/nisconder" rel="me noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+        </div>
+      </article>
     </div>
   </section>
 
@@ -252,25 +288,6 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     font-weight: 700;
   }
 
-  .editorial-splice {
-    display: grid;
-    grid-template-columns: minmax(0, 1.62fr) minmax(17rem, 0.72fr);
-    align-items: start;
-    gap: clamp(1rem, 2.5vw, 1.5rem);
-  }
-
-  .lead-story,
-  .home-branches,
-  .side-notes,
-  .about-note {
-    min-width: 0;
-  }
-
-  .home-branches {
-    display: grid;
-    gap: clamp(1rem, 2.5vw, 1.5rem);
-  }
-
   .lead-story {
     border: 1px solid var(--color-line-strong);
     background: var(--color-surface);
@@ -310,28 +327,6 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     color: inherit;
   }
 
-  .lead-story h2 {
-    max-width: 18ch;
-    margin-block-end: 1.25rem;
-    font-family: var(--font-editorial);
-    font-size: clamp(1.85rem, 3.4vw, 2.55rem);
-    line-height: 1.22;
-    letter-spacing: -0.035em;
-    overflow-wrap: anywhere;
-  }
-
-  .lead-story h2 a {
-    color: inherit;
-    text-decoration: none;
-  }
-
-  .lead-story h2 a:hover,
-  .lead-story h2 a:focus-visible {
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 0.18em;
-  }
-
   .lead-story__summary {
     max-width: 34rem;
     margin-block-end: 1rem;
@@ -357,145 +352,360 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     overflow-wrap: anywhere;
   }
 
-  .lead-story__read {
-    display: flex;
-    min-height: 3.25rem;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-block-start: clamp(1.75rem, 4vw, 3rem);
-    border-block-start: 1px solid var(--color-line-strong);
-    color: var(--color-primary);
-    font-weight: 750;
-    text-decoration: none;
-  }
-
-  .lead-story__read:hover,
-  .lead-story__read:focus-visible,
-  .side-notes__main:hover,
-  .side-notes__main:focus-visible {
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 0.22em;
-  }
-
-  .lead-story--empty h2 {
-    margin-block-end: 2rem;
-  }
-
   .lead-story--empty {
     padding: clamp(1.75rem, 4vw, 3rem);
   }
 
-  .side-notes {
-    display: grid;
-    grid-template-rows: auto auto 1fr auto;
-    align-content: stretch;
-    padding: clamp(1.5rem, 3vw, 2rem);
-    border: 1px solid var(--color-secondary);
-    background: var(--color-secondary);
-    color: var(--color-on-secondary);
+  .home-feature__head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    margin-block-end: clamp(1.25rem, 3vw, 2rem);
   }
 
-  .about-note {
-    display: grid;
-    grid-template-rows: auto auto 1fr auto;
-    padding: clamp(1.35rem, 3vw, 1.75rem);
-    border: 1px solid var(--color-line-strong);
-    border-inline-start: 0.45rem solid var(--color-primary);
-    background: var(--color-primary-soft);
-    color: var(--color-text);
-  }
-
-  .side-notes__label,
-  .about-note__label {
-    margin: 0 0 1.5rem;
-    font-family: var(--font-utility);
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.07em;
-  }
-
-  .side-notes h2,
-  .about-note h2 {
-    max-width: 12ch;
-    margin-block-end: 0.75rem;
-    color: inherit;
-    font-size: clamp(1.45rem, 2.5vw, 1.8rem);
+  .home-feature__head h2 {
+    margin: 0.25rem 0 0;
+    font-size: clamp(1.75rem, 3.5vw, 2.35rem);
     letter-spacing: -0.025em;
   }
 
-  .side-notes__tracks {
+  .home-feature__head > p {
+    margin: 0;
+    color: var(--color-muted);
+    font-family: var(--font-utility);
+    font-size: 0.75rem;
+    text-align: end;
+  }
+
+  .home-card-grid {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--color-line-strong);
+    background: var(--color-surface-soft);
+  }
+
+  .home-card {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--card-radius);
+    background: var(--color-surface);
+  }
+
+  a.home-card {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  a.home-card:hover,
+  a.home-card:focus-visible,
+  .home-card:focus-within {
+    border-color: var(--color-reading);
+  }
+
+  .home-card:focus-within {
+    outline: 3px solid var(--color-media);
+    outline-offset: 3px;
+  }
+
+  .card-kicker {
+    margin: 0 0 1.25rem;
+    color: var(--color-media);
+    font-family: var(--font-utility);
+    font-size: 0.75rem;
+    font-weight: 750;
+    letter-spacing: 0.07em;
+  }
+
+  .home-card h3 {
+    margin-block-end: 0.75rem;
+    font-size: clamp(1.45rem, 2.8vw, 1.9rem);
+    letter-spacing: -0.025em;
+  }
+
+  .home-card__action {
+    display: flex;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-block-start: auto;
+    border-block-start: 1px solid currentColor;
+    font-size: 0.875rem;
+    font-weight: 750;
+  }
+
+  .lead-story {
+    display: grid;
+    grid-column: span 7;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .lead-story__band {
+    background: var(--color-reading);
+    color: var(--color-on-reading);
+  }
+
+  .lead-story__band a:focus-visible {
+    outline-color: var(--color-on-reading);
+  }
+
+  .lead-story__body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .lead-story h3 {
+    max-width: 19ch;
+    margin-block-end: 1.1rem;
+    font-family: var(--font-editorial);
+    font-size: clamp(1.9rem, 3.6vw, 2.55rem);
+    line-height: 1.22;
+    letter-spacing: -0.035em;
+    overflow-wrap: anywhere;
+  }
+
+  .lead-story h3 a {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .lead-story h3 a:hover,
+  .lead-story h3 a:focus-visible {
+    color: var(--color-reading);
+    text-decoration: underline;
+    text-decoration-color: var(--color-media);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.18em;
+  }
+
+  .lead-story__tags a {
+    color: var(--color-media);
+  }
+
+  .lead-story__actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    margin-block-start: auto;
+    padding-block-start: clamp(1.5rem, 3vw, 2.25rem);
+  }
+
+  .lead-story__read,
+  .lead-story__archive {
+    display: inline-flex;
+    min-height: 3rem;
+    align-items: center;
+    color: var(--color-reading);
+    font-size: 0.875rem;
+    font-weight: 750;
+  }
+
+  .lead-story__read {
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0;
+    border-block: 1px solid var(--color-line-strong);
+    text-decoration: none;
+  }
+
+  .lead-story__archive {
+    justify-content: center;
+    padding-inline: 0.25rem;
+    color: var(--color-media);
+    text-underline-offset: 0.25em;
+  }
+
+  .lead-story--empty {
+    display: flex;
+    grid-column: span 7;
+    flex-direction: column;
+  }
+
+  a.music-card {
+    display: flex;
+    grid-column: span 5;
+    flex-direction: column;
+    padding: clamp(1.5rem, 3vw, 2rem);
+    border-color: var(--color-media);
+    background: var(--color-media);
+    color: var(--color-on-media);
+  }
+
+  a.music-card:hover,
+  a.music-card:focus-visible {
+    border-color: var(--color-reading);
+    color: var(--color-on-media);
+  }
+
+  .music-card .card-kicker,
+  .music-card h3 {
+    color: inherit;
+  }
+
+  .music-card__summary {
+    margin-block-end: 1rem;
+    color: inherit;
+    font-size: 0.85rem;
+  }
+
+  .music-card__tracks {
     padding: 0;
-    margin: 0.5rem 0 1.25rem;
+    margin: 0 0 1.25rem;
     list-style: none;
   }
 
-  .side-notes__tracks li {
+  .music-card__tracks li {
     display: grid;
-    min-height: 2.75rem;
+    min-height: 3.25rem;
     grid-template-columns: 2rem minmax(0, 1fr);
     align-items: center;
-    gap: 0.5rem;
-    border-block-start: 1px solid color-mix(in srgb, currentColor, transparent 50%);
+    gap: 0.65rem;
+    border-block-start: 1px solid color-mix(in srgb, currentColor, transparent 48%);
   }
 
-  .side-notes__tracks span {
+  .music-card__tracks > li > span:first-child {
     font-family: var(--font-utility);
-    font-size: 0.65rem;
+    font-size: 0.7rem;
+    font-weight: 750;
   }
 
-  .side-notes__tracks strong {
+  .music-card__track-copy {
+    display: grid;
+    min-width: 0;
+    gap: 0.1rem;
+  }
+
+  .music-card__track-copy strong,
+  .music-card__track-copy small {
     overflow: hidden;
-    font-size: 0.78rem;
-    font-weight: 600;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .about-note > p:not(.about-note__label) {
+  .music-card__track-copy strong {
+    font-size: 0.84rem;
+  }
+
+  .music-card__track-copy small {
+    color: inherit;
+    font-size: 0.72rem;
+    opacity: 0.78;
+  }
+
+  .search-card {
+    display: flex;
+    grid-column: span 5;
+    flex-direction: column;
+    padding: clamp(1.5rem, 3vw, 2rem);
+    border-block-start: 0.45rem solid var(--color-reading);
+    background: var(--color-reading-soft);
+  }
+
+  .search-card label {
+    margin-block: 0.5rem 0.4rem;
+  }
+
+  .search-card__controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+  }
+
+  .search-card__controls input,
+  .search-card__controls button {
+    min-height: 3rem;
+    border-color: var(--color-line-strong);
+    border-radius: 0.375rem;
+  }
+
+  .search-card__controls button {
+    padding-inline: 1rem;
+    border: 1px solid var(--color-reading);
+    background: var(--color-reading);
+    color: var(--color-on-reading);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 750;
+  }
+
+  .search-card__controls button:hover,
+  .search-card__controls button:focus-visible {
+    border-color: var(--color-media);
+    background: var(--color-media);
+    color: var(--color-on-media);
+  }
+
+  .search-card__controls button:focus-visible {
+    outline-color: var(--color-text);
+    box-shadow: inset 0 0 0 2px var(--color-surface);
+  }
+
+  .search-card__seeds {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.35rem;
+    margin-block-start: 0.75rem;
+  }
+
+  .search-card__seeds a {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    padding-inline: 0.35rem;
+    color: var(--color-media);
+    font-family: var(--font-utility);
+    font-size: 0.72rem;
+    font-weight: 750;
+    text-underline-offset: 0.23em;
+  }
+
+  .about-card {
+    display: flex;
+    grid-column: span 7;
+    flex-direction: column;
+    padding: clamp(1.5rem, 3vw, 2rem);
+    border-block-start: 0.45rem solid var(--color-media);
+    background: var(--color-surface);
+  }
+
+  .about-card > p:not(.card-kicker) {
+    max-width: 34rem;
     margin-block-end: 1.25rem;
     color: var(--color-muted);
-    font-size: 0.88rem;
-    line-height: 1.7;
+    font-size: 0.95rem;
+    line-height: 1.75;
   }
 
-  .side-notes a {
-    color: inherit;
-    font-weight: 700;
+  .about-card__links {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    margin-block-start: auto;
+    border-block-start: 1px solid var(--color-line-strong);
   }
 
-  .side-notes__main {
-    display: flex;
+  .about-card__links a {
+    display: inline-flex;
     min-height: 3rem;
     align-items: center;
     justify-content: space-between;
-    align-self: end;
-    border-block: 1px solid currentColor;
-    text-decoration: none;
+    gap: 0.75rem;
+    color: var(--color-reading);
+    font-size: 0.875rem;
+    font-weight: 750;
+    text-underline-offset: 0.24em;
   }
 
-  .about-note a {
-    display: flex;
-    min-height: 3rem;
-    align-items: center;
-    justify-content: space-between;
-    align-self: end;
-    border-block: 1px solid var(--color-line-strong);
-    color: var(--color-primary);
-    font-weight: 700;
-    text-decoration: none;
-  }
-
-  .about-note a:hover,
-  .about-note a:focus-visible {
-    color: var(--color-secondary);
-    text-decoration: underline;
-    text-underline-offset: 0.22em;
-  }
-
-  .editorial-splice a:focus-visible {
-    outline-color: currentColor;
+  .about-card__links a:last-child {
+    color: var(--color-media);
   }
 
   .section-aside {
@@ -592,16 +802,8 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
       margin-block-start: 0.75rem;
     }
 
-    .editorial-splice {
-      grid-template-columns: 1fr;
-    }
-
     .lead-story {
       border-inline-end: 1px solid var(--color-line-strong);
-    }
-
-    .home-branches {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .topic-field {
@@ -620,10 +822,6 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
       flex-direction: column;
     }
 
-    .home-branches {
-      grid-template-columns: 1fr;
-    }
-
     .topic-field a {
       align-items: start;
       flex-direction: column;
@@ -631,6 +829,73 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 
     .topic-field small {
       white-space: normal;
+    }
+  }
+
+  @media (max-width: 56rem) {
+    .home-card-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .lead-story,
+    .lead-story--empty,
+    .about-card {
+      grid-column: 1 / -1;
+    }
+
+    .music-card,
+    .search-card {
+      grid-column: span 1;
+    }
+  }
+
+  @media (max-width: 44rem) {
+    .home-feature__head {
+      display: block;
+    }
+
+    .home-feature__head > p {
+      margin-block-start: 0.65rem;
+      text-align: start;
+    }
+
+    .home-card-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.75rem;
+      padding: 0.75rem;
+    }
+
+    .lead-story,
+    .lead-story--empty,
+    .music-card,
+    .search-card,
+    .about-card {
+      grid-column: 1;
+    }
+
+    .lead-story__band {
+      flex-wrap: wrap;
+    }
+
+    .about-card__links {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+    }
+
+    .about-card__links a + a {
+      border-block-start: 1px solid var(--color-line);
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .search-card__controls,
+    .lead-story__actions {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .search-card__controls button,
+    .lead-story__archive {
+      width: 100%;
     }
   }
 </style>
