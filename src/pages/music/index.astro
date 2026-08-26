@@ -10,6 +10,9 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
 <BaseLayout
   title="音乐"
   description="Nisconder 的网易云音乐收藏与正在反复播放的歌单。"
+  comments
+  commentsTitle="交换一首歌"
+  commentsDescription="留下你最近反复播放的曲目，也可以写下它为什么在这个时候找到你。"
 >
   <header class="music-intro" aria-labelledby="music-title">
     <div class="music-intro__identity">
@@ -249,7 +252,7 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
   }
 
   .music-intro__copy {
-    background: var(--color-surface);
+    background: var(--color-card);
   }
 
   .music-intro h1 {
@@ -270,7 +273,7 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
     overflow: hidden;
     border: 1px solid var(--color-line-strong);
     border-radius: var(--card-radius);
-    background: var(--color-surface);
+    background: var(--color-card);
   }
 
   .now-playing {
@@ -344,8 +347,8 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
   }
 
   .player-actions button:hover:not(:disabled) {
-    background: var(--color-on-media-panel);
-    color: var(--color-media-panel);
+    background: var(--color-media-soft);
+    color: var(--color-on-media-panel);
   }
 
   .player-actions button:disabled {
@@ -377,7 +380,7 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
 
   .track-panel {
     min-width: 0;
-    background: var(--color-surface);
+    background: var(--color-card);
   }
 
   .track-panel__head {
@@ -422,7 +425,7 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
     padding: 0.8rem 1rem;
     border: 0;
     border-radius: 0;
-    background: var(--color-surface);
+    background: var(--color-card);
     color: var(--color-text);
     cursor: pointer;
     font: inherit;
@@ -518,7 +521,7 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
       inset-inline: 0;
       width: 100%;
       margin: 0;
-      background: var(--color-surface);
+      background: var(--color-field);
     }
 
     .track-panel {

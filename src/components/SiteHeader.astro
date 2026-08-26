@@ -1,12 +1,18 @@
 ---
 import ThemeToggle from './ThemeToggle.astro'
 
+interface Props {
+  hasComments?: boolean
+}
+
+const { hasComments = false } = Astro.props
 const pathname = Astro.url.pathname
 const navItems = [
   { href: '/articles/', label: '文章' },
   { href: '/music/', label: '音乐' },
   { href: '/software/', label: '软件园' },
   { href: '/about/', label: '关于' },
+  ...(hasComments ? [{ href: '#comments', label: '留言' }] : []),
 ]
 
 const isArticlePath = /^\/\d{4}\/\d{2}\/\d{2}\//.test(pathname)
@@ -24,7 +30,7 @@ const isCurrent = (href: string) =>
       <span class="site-brand__word">Nisconder</span>
     </a>
 
-    <nav class="site-nav" aria-label="主要导航">
+    <nav class:list={['site-nav', hasComments && 'site-nav--comments']} aria-label="主要导航">
       {navItems.map((item) => (
         <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
           {item.label}
@@ -152,11 +158,11 @@ const isCurrent = (href: string) =>
   }
 
   .site-header__signal span:first-child {
-    background: var(--color-primary);
+    background: var(--color-reading-panel);
   }
 
   .site-header__signal span:last-child {
-    background: var(--color-secondary);
+    background: var(--color-media-panel);
   }
 
   @media (max-width: 42rem) {
@@ -177,6 +183,10 @@ const isCurrent = (href: string) =>
       border-block-start: 1px solid var(--color-line);
     }
 
+    .site-nav--comments {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
     .site-nav > a {
       justify-content: center;
       padding-inline: 0.25rem;
@@ -193,7 +203,11 @@ const isCurrent = (href: string) =>
       display: none;
     }
 
-    .site-nav > a,
+    .site-nav > a {
+      padding-inline: 0.2rem;
+      font-size: 0.78rem;
+    }
+
     .site-tools > a {
       padding-inline: 0.45rem;
       font-size: 0.8125rem;

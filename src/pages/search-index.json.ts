@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro'
-import { softwareProjects } from '../data/software'
+import { softwareKindLabels, softwareProjects, softwareStatusLabels } from '../data/software'
 import {
   formatPostDate,
   getPostCategory,
@@ -28,8 +28,13 @@ export const GET: APIRoute = async () => {
     kind: '软件',
     title: project.name,
     description: project.summary,
-    content: [project.status, ...project.tags].join(' '),
-    category: '软件园',
+    content: [
+      softwareKindLabels[project.kind],
+      softwareStatusLabels[project.status],
+      project.language,
+      ...project.tags,
+    ].filter(Boolean).join(' '),
+    category: softwareKindLabels[project.kind],
     tags: project.tags,
     url: `/software/#${project.slug}`,
   }))

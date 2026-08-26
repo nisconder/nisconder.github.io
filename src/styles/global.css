@@ -1,12 +1,17 @@
 :root {
   color-scheme: light;
   --color-bg: #e7edef;
+  --color-canvas: #e7edef;
   --color-surface: #ffffff;
   --color-surface-soft: #dbe4e7;
+  --color-card: #ffffff;
+  --color-field: #ffffff;
+  --color-heading: #142126;
   --color-text: #142126;
   --color-muted: #506168;
   --color-line: #b9c7cc;
   --color-line-strong: #82959d;
+  --color-control-border: #82959d;
   --color-primary: #1e626b;
   --color-secondary: #655170;
   --color-primary-soft: #cfe3e6;
@@ -36,29 +41,34 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --color-bg: #11171c;
-  --color-surface: #182027;
-  --color-surface-soft: #222b31;
-  --color-text: #e6ecec;
-  --color-muted: #9eabad;
-  --color-line: #354148;
-  --color-line-strong: #59686e;
-  --color-primary: #a897af;
-  --color-secondary: #84aaac;
-  --color-primary-soft: #2e2733;
-  --color-secondary-soft: #1d3438;
-  --color-on-primary: #11171c;
-  --color-on-secondary: #11171c;
-  --color-reading: #84aaac;
-  --color-reading-soft: #1d3438;
-  --color-on-reading: #11171c;
-  --color-reading-panel: #28474c;
-  --color-on-reading-panel: #edf4f4;
-  --color-media: #a897af;
-  --color-media-soft: #2e2733;
-  --color-on-media: #11171c;
-  --color-media-panel: #403647;
-  --color-on-media-panel: #f1edf3;
+  --color-bg: #0b1014;
+  --color-canvas: #0b1014;
+  --color-surface: #151d23;
+  --color-surface-soft: #1b252c;
+  --color-card: #202a31;
+  --color-field: #11181e;
+  --color-heading: #edf2f2;
+  --color-text: #d5dee0;
+  --color-muted: #95a3a8;
+  --color-line: #334047;
+  --color-line-strong: #52616a;
+  --color-control-border: #647780;
+  --color-primary: #79a5a8;
+  --color-secondary: #9c89a6;
+  --color-primary-soft: #193236;
+  --color-secondary-soft: #2b2431;
+  --color-on-primary: #0b1014;
+  --color-on-secondary: #0b1014;
+  --color-reading: #79a5a8;
+  --color-reading-soft: #193236;
+  --color-on-reading: #0b1014;
+  --color-reading-panel: #243b40;
+  --color-on-reading-panel: #dce9e9;
+  --color-media: #9c89a6;
+  --color-media-soft: #2b2431;
+  --color-on-media: #0b1014;
+  --color-media-panel: #393040;
+  --color-on-media-panel: #e5dee8;
 }
 
 *,
@@ -104,9 +114,9 @@ input,
 textarea,
 select {
   width: 100%;
-  border: 1px solid var(--color-line-strong);
+  border: 1px solid var(--color-control-border);
   border-radius: var(--card-radius);
-  background: var(--color-surface);
+  background: var(--color-field);
 }
 
 input,
@@ -170,7 +180,7 @@ h1,
 h2,
 h3,
 h4 {
-  color: var(--color-text);
+  color: var(--color-heading);
   font-family: var(--font-display);
   font-weight: 600;
   line-height: 1.24;
@@ -210,8 +220,8 @@ a:hover {
   inset-inline-start: 0.75rem;
   z-index: 100;
   padding: 0.55rem 0.8rem;
-  background: var(--color-primary);
-  color: var(--color-on-primary);
+  background: var(--color-reading-panel);
+  color: var(--color-on-reading-panel);
   font-size: 0.875rem;
   font-weight: 650;
   text-decoration: none;
@@ -230,7 +240,7 @@ a:hover {
 .site-main {
   width: 100%;
   padding: clamp(2.75rem, 7vw, 6.5rem) var(--site-gutter) clamp(4.5rem, 9vw, 8rem);
-  background: var(--color-surface);
+  background: var(--color-canvas);
 }
 
 .reading-frame {
@@ -323,11 +333,11 @@ a:hover {
   align-items: center;
   justify-content: center;
   padding: 0.65rem 1.05rem;
-  border: 1px solid var(--color-primary);
-  border-inline-end: 0.3rem solid var(--color-secondary);
+  border: 1px solid var(--color-reading);
+  border-inline-end: 0.3rem solid var(--color-media);
   border-radius: var(--card-radius);
-  background: var(--color-primary);
-  color: var(--color-on-primary);
+  background: var(--color-reading-panel);
+  color: var(--color-on-reading-panel);
   font-size: 0.9375rem;
   font-weight: 700;
   line-height: 1.2;
@@ -336,21 +346,21 @@ a:hover {
 }
 
 .button:hover {
-  border-color: color-mix(in srgb, var(--color-primary), var(--color-text) 14%);
-  background: color-mix(in srgb, var(--color-primary), var(--color-text) 14%);
-  color: var(--color-on-primary);
+  border-color: var(--color-media);
+  background: color-mix(in srgb, var(--color-reading-panel), var(--color-heading) 10%);
+  color: var(--color-on-reading-panel);
 }
 
 .button.secondary {
-  border-color: var(--color-secondary);
-  border-inline-end-color: var(--color-primary);
-  background: var(--color-secondary-soft);
-  color: var(--color-secondary);
+  border-color: var(--color-media);
+  border-inline-end-color: var(--color-reading);
+  background: var(--color-media-soft);
+  color: var(--color-media);
 }
 
 .button.secondary:hover {
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
+  background: var(--color-reading-soft);
+  color: var(--color-reading);
 }
 
 .button[aria-disabled='true'],
@@ -566,7 +576,6 @@ a:hover {
 [data-waline-root] {
   width: 100%;
   min-width: 0;
-  --waline-white: var(--color-on-primary);
   --waline-light-grey: var(--color-muted);
   --waline-dark-grey: var(--color-text);
   --waline-theme-color: var(--color-primary);
@@ -574,7 +583,7 @@ a:hover {
   --waline-color: var(--color-text);
   --waline-font-size: 1rem;
   --waline-avatar-size: 2.75rem;
-  --waline-bg-color: var(--color-surface);
+  --waline-bg-color: var(--color-card);
   --waline-bg-color-light: color-mix(in srgb, var(--color-primary), transparent 94%);
   --waline-bg-color-hover: color-mix(in srgb, var(--color-primary), transparent 90%);
   --waline-border-color: var(--color-line);
@@ -604,9 +613,9 @@ a:hover {
   min-width: 0;
   margin: 0 !important;
   overflow: visible;
-  border-color: var(--color-line-strong) !important;
+  border-color: var(--color-control-border) !important;
   border-radius: var(--card-radius) !important;
-  background: var(--color-surface) !important;
+  background: var(--color-card) !important;
   color: var(--color-text) !important;
   font-family: var(--font-body) !important;
 }
@@ -614,9 +623,9 @@ a:hover {
 [data-waline-root] .wl-editor,
 [data-waline-root] .wl-input,
 [data-waline-root] .wl-btn {
-  border-color: var(--color-line-strong) !important;
+  border-color: var(--color-control-border) !important;
   border-radius: var(--card-radius) !important;
-  background: var(--color-surface) !important;
+  background: var(--color-field) !important;
   color: var(--color-text) !important;
   font-family: var(--font-body) !important;
 }
@@ -659,9 +668,18 @@ a:hover {
 }
 
 [data-waline-root] .wl-btn.primary {
-  border-color: var(--color-primary) !important;
-  background: var(--color-primary) !important;
-  color: var(--color-on-primary) !important;
+  border-color: var(--color-reading) !important;
+  background: var(--color-reading-panel) !important;
+  color: var(--color-on-reading-panel) !important;
+}
+
+html[data-theme='dark'] .astro-code,
+html[data-theme='dark'] .astro-code span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
 }
 
 [data-waline-root] a {
@@ -714,7 +732,7 @@ a:hover {
   }
 
   :root[data-theme='dark'] {
-    --color-line: #716d7d;
+    --color-line: #73828a;
   }
 
   .button,

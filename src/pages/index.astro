@@ -1,6 +1,6 @@
 ---
 import PostRow from '../components/PostRow.astro'
-import { featuredSoftware, softwareProjects } from '../data/software'
+import { featuredSoftware, softwareProjects, softwareStatusLabels } from '../data/software'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { getPlaylistTracks } from '../lib/playlist'
 import {
@@ -45,6 +45,9 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 <BaseLayout
   title="不知名博客"
   description="Nisconder 的个人博客，记录技术、社会观察、音乐与生活。"
+  comments
+  commentsTitle="在首页碰个面"
+  commentsDescription="第一次来、想打个招呼，或只是想留下此刻想到的一句话，都可以写在这里。"
 >
   <header class="home-intro" aria-labelledby="home-title">
     <div class="home-intro__identity">
@@ -173,7 +176,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
         <div class="software-card__lead">
           <span aria-hidden="true">{featuredSoftware.label}</span>
           <div>
-            <small>{featuredSoftware.status}</small>
+            <small>{softwareStatusLabels[featuredSoftware.status]}</small>
             <strong>{featuredSoftware.name}</strong>
           </div>
         </div>
@@ -340,7 +343,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
   }
 
   .home-intro__copy {
-    background: var(--color-surface);
+    background: var(--color-card);
   }
 
   .home-intro h1 {
@@ -390,7 +393,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 
   .lead-story {
     border: 1px solid var(--color-line-strong);
-    background: var(--color-surface);
+    background: var(--color-card);
   }
 
   .lead-story__band {
@@ -400,8 +403,8 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     justify-content: space-between;
     gap: 0.75rem 1.5rem;
     padding: 0.75rem clamp(1.25rem, 3vw, 2rem);
-    background: var(--color-primary);
-    color: var(--color-on-primary);
+    background: var(--color-reading-panel);
+    color: var(--color-on-reading-panel);
     font-family: var(--font-utility);
     font-size: 0.68rem;
     font-weight: 700;
@@ -498,7 +501,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     overflow: hidden;
     border: 1px solid var(--color-line-strong);
     border-radius: var(--card-radius);
-    background: var(--color-surface);
+    background: var(--color-card);
   }
 
   a.home-card {
@@ -726,8 +729,11 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
   .search-card__controls input,
   .search-card__controls button {
     min-height: 3rem;
-    border-color: var(--color-line-strong);
     border-radius: var(--card-radius);
+  }
+
+  .search-card__controls input {
+    border-color: var(--color-control-border);
   }
 
   .search-card__controls button {
@@ -777,7 +783,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     flex-direction: column;
     padding: clamp(1.5rem, 3vw, 2rem);
     border-block-start: 0.45rem solid var(--color-media);
-    background: var(--color-surface);
+    background: var(--color-card);
   }
 
   .software-card__lead {

@@ -53,6 +53,10 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
   canonical={canonical}
   image={post.data.image ?? post.data.cover}
   ogType="article"
+  comments
+  commentsTitle="讨论这篇文章"
+  commentsDescription={`关于《${post.data.title}》的补充、不同意见或延伸话题，都可以留在这里。`}
+  commentsPath={canonical}
 >
   <div class="reading-progress-line" aria-hidden="true">
     <span data-reading-progress-bar></span>
@@ -177,15 +181,6 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
         </footer>
       </article>
 
-      <section class="comments-section" id="comments">
-        <div class="section-heading">
-          <p class="article-kicker">Comments</p>
-          <h2>评论</h2>
-        </div>
-        <p data-waline-status aria-live="polite">接近文末时自动载入评论。</p>
-        <div data-waline-root data-path={canonical}></div>
-        <noscript>评论区需要启用 JavaScript；正文阅读不受影响。</noscript>
-      </section>
     </div>
   </div>
 </BaseLayout>
@@ -216,31 +211,36 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
   .article-page {
     display: grid;
     grid-template-columns: minmax(11.75rem, 13.5rem) minmax(0, 1fr);
+    align-items: start;
+    gap: clamp(1.25rem, 3vw, 2rem);
     min-width: 0;
-    overflow: hidden;
-    border: 1px solid var(--color-line-strong);
-    border-radius: var(--card-radius);
-    background: var(--color-surface);
+    overflow: visible;
   }
 
   .article-page__content {
     min-width: 0;
     padding: clamp(2rem, 5vw, 4rem);
-    background: var(--color-surface);
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--card-radius);
+    background: var(--color-card);
   }
 
   .reading-guide--desktop {
+    position: sticky;
+    inset-block-start: 1.25rem;
     min-width: 0;
+    max-height: calc(100vh - 2.5rem);
+    overflow: hidden;
+    border: 1px solid var(--color-line-strong);
     border-inline-end: 0.35rem solid var(--color-secondary);
+    border-radius: var(--card-radius);
     background: var(--color-primary-soft);
   }
 
   .reading-guide__sticky {
-    position: sticky;
-    inset-block-start: 1.25rem;
     display: grid;
     gap: 2rem;
-    max-height: calc(100vh - 2.5rem);
+    max-height: inherit;
     padding: 1.5rem 1.15rem 1.5rem 1.25rem;
     overflow: hidden;
   }
@@ -268,7 +268,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     overflow: hidden;
     border: 1px solid var(--color-line-strong);
     border-radius: var(--card-radius);
-    background: var(--color-surface);
+    background: var(--color-field);
   }
 
   .reading-toc {
@@ -349,18 +349,6 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
     display: none;
   }
 
-  .comments-section {
-    max-width: var(--content-width);
-    margin-block-start: clamp(4rem, 9vw, 7rem);
-    padding-block-start: clamp(2rem, 5vw, 3rem);
-    border-block-start: 0.35rem solid var(--color-secondary);
-    background: var(--color-surface);
-  }
-
-  .comments-section .section-heading h2 {
-    font-size: clamp(1.875rem, 4vw, 2.4rem);
-  }
-
   @media (max-width: 60rem) {
     .article-page {
       grid-template-columns: minmax(0, 1fr);
@@ -377,6 +365,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
       display: block;
       margin-block: 1.5rem 2.5rem;
       border-block: 1px solid var(--color-line-strong);
+      border-radius: var(--card-radius);
       background: var(--color-primary-soft);
     }
 
@@ -433,9 +422,6 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
       padding: 1.25rem;
     }
 
-    .comments-section {
-      margin-block-start: 4.5rem;
-    }
   }
 </style>
 
@@ -533,80 +519,6 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
           mobileToc.querySelector('summary')?.focus()
         }
       })
-    }
-  })()
-</script>
-
-<script is:inline>
-  (() => {
-    const root = document.querySelector('[data-waline-root]')
-    const status = document.querySelector('[data-waline-status]')
-    if (!(root instanceof HTMLElement) || !(status instanceof HTMLElement)) return
-
-    let loading = false
-
-    const loadStyles = () => new Promise((resolve, reject) => {
-      const href = 'https://cdn.jsdelivr.net/npm/@waline/client@3.7.1/dist/waline.min.css'
-      const existing = document.querySelector(`link[href="${href}"]`)
-      if (existing) return resolve()
-
-      const link = document.createElement('link')
-      link.rel = 'stylesheet'
-      link.href = href
-      link.onload = resolve
-      link.onerror = reject
-      document.head.append(link)
-    })
-
-    const showRetry = () => {
-      status.textContent = '评论加载失败。'
-      const retry = document.createElement('button')
-      retry.type = 'button'
-      retry.className = 'button secondary'
-      retry.textContent = '重新加载评论'
-      retry.addEventListener('click', () => {
-        retry.remove()
-        loadComments()
-      }, { once: true })
-      status.append(' ', retry)
-    }
-
-    const loadComments = async () => {
-      if (loading || root.dataset.loaded === 'true') return
-      loading = true
-      status.textContent = '正在加载评论…'
-
-      try {
-        const [, module] = await Promise.all([
-          loadStyles(),
-          import('https://cdn.jsdelivr.net/npm/@waline/client@3.7.1/dist/waline.min.js'),
-        ])
-
-        module.init({
-          el: root,
-          serverURL: 'https://my-waline-9uvuuvnty-nisconders-projects.vercel.app',
-          path: root.dataset.path,
-          login: 'force',
-          dark: "html[data-theme='dark']",
-        })
-        root.dataset.loaded = 'true'
-        status.remove()
-      } catch {
-        showRetry()
-      } finally {
-        loading = false
-      }
-    }
-
-    if ('IntersectionObserver' in window) {
-      const observer = new IntersectionObserver((entries) => {
-        if (!entries.some((entry) => entry.isIntersecting)) return
-        observer.disconnect()
-        loadComments()
-      }, { rootMargin: '1600px 0px' })
-      observer.observe(root)
-    } else {
-      loadComments()
     }
   })()
 </script>

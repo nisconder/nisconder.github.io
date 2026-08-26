@@ -1,34 +1,52 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
-import { softwareProjects } from '../../data/software'
+import {
+  softwareKindLabels,
+  softwareProjects,
+  softwareStatusLabels,
+} from '../../data/software'
 
 const isExternal = (href: string) => /^https?:\/\//.test(href)
+const kinds = [...new Set(softwareProjects.map((project) => project.kind))]
+const statuses = [...new Set(softwareProjects.map((project) => project.status))]
+const formatUpdated = (value: string) => value.replace(/-/g, '.')
+const searchText = (project: (typeof softwareProjects)[number]) => [
+  project.name,
+  project.summary,
+  softwareKindLabels[project.kind],
+  softwareStatusLabels[project.status],
+  project.language,
+  ...project.tags,
+].filter(Boolean).join(' ').toLocaleLowerCase('zh-CN')
 ---
 
 <BaseLayout
   title="软件园"
   description="Nisconder 做过、正在维护与公开实验的软件项目。"
+  comments
+  commentsTitle="讨论这些项目"
+  commentsDescription="使用问题、功能建议、合作想法，或者你希望我继续做什么，都可以直接留在这里。"
 >
   <header class="page-intro software-intro">
     <div class="software-intro__copy">
       <p class="eyebrow">SOFTWARE / GARDEN</p>
-      <h1>我做过、正在做，<br />也愿意公开的东西。</h1>
+      <h1>做出来的东西，<br />都放在这里。</h1>
       <p class="lede">
-        这里不是下载站目录，而是 Nisconder 的项目索引。每个条目都写清它解决什么问题，以及去哪里查看。
+        从供应链安全工具到 AI 游戏，也包括支撑本站运行的服务。公开代码提供仓库入口，在线服务提供实际地址。
       </p>
     </div>
     <dl class="software-intro__facts" aria-label="软件园概况">
       <div>
-        <dt>项目</dt>
+        <dt>项目与服务</dt>
         <dd>{softwareProjects.length.toString().padStart(2, '0')}</dd>
       </div>
       <div>
-        <dt>方向</dt>
-        <dd>安全 · AI · Web</dd>
+        <dt>主要方向</dt>
+        <dd>安全 · 工具 · AI</dd>
       </div>
       <div>
-        <dt>原则</dt>
-        <dd>真实项目，直接入口</dd>
+        <dt>数据核对</dt>
+        <dd>GitHub · 2026.08.26</dd>
       </div>
     </dl>
   </header>
@@ -37,31 +55,78 @@ const isExternal = (href: string) => /^https?:\/\//.test(href)
     <div class="section-head section-head--split">
       <div>
         <p class="eyebrow">PROJECT INDEX</p>
-        <h2 id="software-list-title">项目列表</h2>
+        <h2 id="software-list-title">项目与服务</h2>
       </div>
-      <p>站长项目优先，持续补充。</p>
+      <p>先看用途，再决定要不要点进仓库。</p>
     </div>
 
-    <div class="software-grid">
-      {softwareProjects.map((project, index) => (
+    <form class="software-filter" data-software-filter role="search" aria-controls="software-projects">
+      <label class="software-filter__search">
+        <span>搜索项目</span>
+        <input
+          type="search"
+          name="q"
+          autocomplete="off"
+          placeholder="名称、用途或技术栈"
+        />
+      </label>
+      <label>
+        <span>类型</span>
+        <select name="kind">
+          <option value="">全部类型</option>
+          {kinds.map((kind) => <option value={kind}>{softwareKindLabels[kind]}</option>)}
+        </select>
+      </label>
+      <label>
+        <span>状态</span>
+        <select name="status">
+          <option value="">全部状态</option>
+          {statuses.map((status) => <option value={status}>{softwareStatusLabels[status]}</option>)}
+        </select>
+      </label>
+      <div class="software-filter__footer">
+        <output data-software-count aria-live="polite">显示 {softwareProjects.length} 个项目</output>
+        <button type="reset">清除筛选</button>
+      </div>
+    </form>
+
+    <p class="software-empty" data-software-empty hidden>
+      没有匹配项目。<button type="button" data-software-clear>清除筛选</button>
+    </p>
+
+    <div id="software-projects" class="software-grid">
+      {softwareProjects.map((project) => (
         <article
           class:list={['software-card', project.featured && 'software-card--featured']}
           id={project.slug}
+          data-kind={project.kind}
+          data-status={project.status}
+          data-search={searchText(project)}
         >
           <header class="software-card__head">
             <span class="software-card__mark" aria-hidden="true">{project.label}</span>
             <div>
-              <p>{project.status}</p>
+              <p class="software-card__meta">
+                <span>{softwareKindLabels[project.kind]}</span>
+                <span>{softwareStatusLabels[project.status]}</span>
+                {project.featured && <strong>重点维护</strong>}
+              </p>
               <h3>{project.name}</h3>
             </div>
-            <span class="software-card__number" aria-hidden="true">
-              {(index + 1).toString().padStart(2, '0')}
-            </span>
           </header>
+
           <p class="software-card__summary">{project.summary}</p>
+
+          <dl class="software-card__facts">
+            {project.language && <div><dt>语言</dt><dd>{project.language}</dd></div>}
+            <div><dt>Stars</dt><dd>{project.stars ?? 0}</dd></div>
+            <div><dt>更新</dt><dd><time datetime={project.updatedAt}>{formatUpdated(project.updatedAt)}</time></dd></div>
+          </dl>
+
           <ul class="software-card__tags" aria-label={`${project.name} 技术标签`}>
-            {project.tags.map((tag) => <li>{tag}</li>)}
+            {project.tags.slice(0, 4).map((tag) => <li>{tag}</li>)}
           </ul>
+
           <div class="software-card__actions">
             {project.projectUrl && (
               <a
@@ -69,13 +134,15 @@ const isExternal = (href: string) => /^https?:\/\//.test(href)
                 target={isExternal(project.projectUrl) ? '_blank' : undefined}
                 rel={isExternal(project.projectUrl) ? 'noopener noreferrer' : undefined}
               >
-                {isExternal(project.projectUrl) ? '打开项目' : '查看本站'}
+                {project.actionLabel ?? (isExternal(project.projectUrl) ? '打开项目' : '查看本站')}
                 <span aria-hidden="true">{isExternal(project.projectUrl) ? '↗' : '→'}</span>
               </a>
             )}
-            <a href={project.sourceUrl} target="_blank" rel="noopener noreferrer">
-              查看源码 <span aria-hidden="true">↗</span>
-            </a>
+            {project.sourceUrl && (
+              <a href={project.sourceUrl} target="_blank" rel="noopener noreferrer">
+                源码与说明 <span aria-hidden="true">↗</span>
+              </a>
+            )}
           </div>
         </article>
       ))}
@@ -86,12 +153,13 @@ const isExternal = (href: string) => /^https?:\/\//.test(href)
 <style>
   .software-intro {
     display: grid;
+    max-width: none;
     grid-template-columns: minmax(0, 1.45fr) minmax(15rem, 0.55fr);
     overflow: hidden;
     padding: 0;
     border: 1px solid var(--color-line-strong);
     border-radius: var(--card-radius);
-    background: var(--color-surface);
+    background: var(--color-card);
   }
 
   .software-intro__copy {
@@ -131,7 +199,7 @@ const isExternal = (href: string) => /^https?:\/\//.test(href)
 
   .software-intro__facts dd {
     margin: 0.2rem 0 0;
-    color: var(--color-text);
+    color: var(--color-heading);
     font-size: 0.95rem;
     font-weight: 700;
   }
@@ -158,79 +226,198 @@ const isExternal = (href: string) => /^https?:\/\//.test(href)
     font-size: 0.82rem;
   }
 
+  .software-filter {
+    display: grid;
+    grid-template-columns: minmax(14rem, 1fr) minmax(9rem, 11rem) minmax(9rem, 11rem);
+    gap: 0.75rem;
+    margin-block-end: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--card-radius);
+    background: var(--color-surface-soft);
+  }
+
+  .software-filter label {
+    display: grid;
+    align-content: end;
+    gap: 0.35rem;
+  }
+
+  .software-filter label > span {
+    font-family: var(--font-utility);
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+  }
+
+  .software-filter input,
+  .software-filter select,
+  .software-filter button {
+    min-height: 3rem;
+  }
+
+  .software-filter__footer {
+    display: flex;
+    min-height: 2.75rem;
+    grid-column: 1 / -1;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block-start: 0.5rem;
+    border-block-start: 1px solid var(--color-line);
+  }
+
+  .software-filter output {
+    color: var(--color-muted);
+    font-size: 0.8rem;
+  }
+
+  .software-filter button,
+  .software-empty button {
+    border: 1px solid var(--color-media);
+    border-radius: var(--card-radius);
+    background: var(--color-media-soft);
+    color: var(--color-media);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .software-filter button {
+    padding-inline: 1rem;
+  }
+
+  .software-empty {
+    padding: 1.25rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--card-radius);
+    background: var(--color-card);
+    color: var(--color-muted);
+    text-align: center;
+  }
+
+  .software-empty button {
+    min-height: 2.75rem;
+    margin-inline-start: 0.5rem;
+    padding-inline: 0.75rem;
+  }
+
   .software-grid {
     display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(17.5rem, 100%), 1fr));
+    align-items: stretch;
     gap: 1rem;
   }
 
   .software-card {
+    --project-accent: var(--color-line-strong);
     display: flex;
     min-width: 0;
-    grid-column: span 5;
+    min-height: 20rem;
     flex-direction: column;
-    padding: clamp(1.35rem, 3vw, 2rem);
+    padding: 1.25rem;
     border: 1px solid var(--color-line-strong);
-    border-block-start: 0.45rem solid var(--color-media);
+    border-block-start: 0.4rem solid var(--project-accent);
     border-radius: var(--card-radius);
-    background: var(--color-surface);
+    background: var(--color-card);
   }
 
-  .software-card:first-child,
-  .software-card:nth-child(3n) {
-    grid-column: span 7;
+  .software-card[hidden] {
+    display: none;
+  }
+
+  .software-card[data-status='active'] {
+    --project-accent: var(--color-reading);
+  }
+
+  .software-card[data-status='experimental'] {
+    --project-accent: var(--color-media);
   }
 
   .software-card--featured {
-    border-block-start-color: var(--color-reading);
     background: var(--color-reading-soft);
   }
 
   .software-card__head {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: 2.75rem minmax(0, 1fr);
     align-items: center;
-    gap: 0.9rem;
+    gap: 0.75rem;
   }
 
   .software-card__mark {
     display: grid;
-    width: 3.5rem;
-    height: 3.5rem;
+    width: 2.75rem;
+    height: 2.75rem;
     place-items: center;
     border-radius: var(--card-radius);
     background: var(--color-media-panel);
     color: var(--color-on-media-panel);
     font-family: var(--font-utility);
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     font-weight: 800;
     letter-spacing: 0.05em;
   }
 
-  .software-card--featured .software-card__mark {
+  .software-card[data-status='active'] .software-card__mark {
     background: var(--color-reading-panel);
     color: var(--color-on-reading-panel);
   }
 
-  .software-card__head p,
-  .software-card__number {
+  .software-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.65rem;
     margin: 0;
     color: var(--color-muted);
     font-family: var(--font-utility);
-    font-size: 0.7rem;
+    font-size: 0.66rem;
+    line-height: 1.45;
+  }
+
+  .software-card__meta strong {
+    color: var(--color-reading);
   }
 
   .software-card h3 {
     margin: 0.1rem 0 0;
-    font-size: clamp(1.35rem, 3vw, 1.8rem);
+    font-size: clamp(1.25rem, 3vw, 1.6rem);
     overflow-wrap: anywhere;
   }
 
   .software-card__summary {
-    max-width: 34rem;
-    margin-block: 1.5rem;
+    margin-block: 1rem;
     color: var(--color-muted);
-    line-height: 1.75;
+    font-size: 0.92rem;
+    line-height: 1.7;
+  }
+
+  .software-card__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1.1rem;
+    margin: 0 0 1rem;
+    padding-block: 0.7rem;
+    border-block: 1px solid var(--color-line);
+  }
+
+  .software-card__facts > div {
+    display: flex;
+    gap: 0.35rem;
+  }
+
+  .software-card__facts dt,
+  .software-card__facts dd {
+    margin: 0;
+    font-family: var(--font-utility);
+    font-size: 0.66rem;
+  }
+
+  .software-card__facts dt {
+    color: var(--color-muted);
+  }
+
+  .software-card__facts dd {
+    color: var(--color-text);
   }
 
   .software-card__tags {
@@ -238,41 +425,52 @@ const isExternal = (href: string) => /^https?:\/\//.test(href)
     flex-wrap: wrap;
     gap: 0.4rem;
     padding: 0;
-    margin: 0 0 1.5rem;
+    margin: 0 0 1rem;
     list-style: none;
   }
 
   .software-card__tags li {
-    padding: 0.28rem 0.5rem;
+    padding: 0.25rem 0.45rem;
     border: 1px solid var(--color-line);
     border-radius: var(--card-radius);
     color: var(--color-muted);
     font-family: var(--font-utility);
-    font-size: 0.68rem;
+    font-size: 0.65rem;
   }
 
   .software-card__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0 1rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     margin-block-start: auto;
     border-block-start: 1px solid var(--color-line-strong);
   }
 
   .software-card__actions a {
     display: inline-flex;
+    min-width: 0;
     min-height: 3rem;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 0.5rem;
     color: var(--color-reading);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 750;
-    text-underline-offset: 0.24em;
+    text-decoration: none;
   }
 
   .software-card__actions a + a {
+    padding-inline-start: 0.75rem;
+    border-inline-start: 1px solid var(--color-line);
     color: var(--color-media);
+  }
+
+  .software-card__actions a:only-child {
+    grid-column: 1 / -1;
+  }
+
+  .software-card__actions a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
   }
 
   @media (max-width: 52rem) {
@@ -295,19 +493,22 @@ const isExternal = (href: string) => /^https?:\/\//.test(href)
     .software-intro__facts > div + div {
       border-inline-start: 1px solid var(--color-line-strong);
     }
-
-    .software-card,
-    .software-card:first-child,
-    .software-card:nth-child(3n) {
-      grid-column: span 6;
-    }
   }
 
-  @media (max-width: 42rem) {
-    .software-card,
-    .software-card:first-child,
-    .software-card:nth-child(3n) {
+  @media (max-width: 46rem) {
+    .software-filter {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      padding: 0.75rem;
+    }
+
+    .software-filter__search,
+    .software-filter__footer {
       grid-column: 1 / -1;
+    }
+
+    .software-card {
+      min-height: 0;
+      padding: 1rem;
     }
   }
 
@@ -330,4 +531,58 @@ const isExternal = (href: string) => /^https?:\/\//.test(href)
       flex-direction: column;
     }
   }
+
+  @media (max-width: 22rem) {
+    .software-filter {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .software-filter > * {
+      grid-column: 1;
+    }
+  }
 </style>
+
+<script is:inline>
+  (() => {
+    const form = document.querySelector('[data-software-filter]')
+    const cards = [...document.querySelectorAll('#software-projects .software-card')]
+    const output = document.querySelector('[data-software-count]')
+    const empty = document.querySelector('[data-software-empty]')
+    const clear = document.querySelector('[data-software-clear]')
+    if (!(form instanceof HTMLFormElement) || !(output instanceof HTMLOutputElement)) return
+
+    const update = () => {
+      const data = new FormData(form)
+      const query = String(data.get('q') ?? '').trim().toLocaleLowerCase('zh-CN')
+      const kind = String(data.get('kind') ?? '')
+      const status = String(data.get('status') ?? '')
+      let visible = 0
+
+      cards.forEach((card) => {
+        if (!(card instanceof HTMLElement)) return
+        const matches = (!query || card.dataset.search?.includes(query))
+          && (!kind || card.dataset.kind === kind)
+          && (!status || card.dataset.status === status)
+        card.hidden = !matches
+        if (matches) visible += 1
+      })
+
+      output.value = `显示 ${visible} 个项目`
+      if (empty instanceof HTMLElement) empty.hidden = visible !== 0
+    }
+
+    form.addEventListener('input', update)
+    form.addEventListener('change', update)
+    form.addEventListener('submit', (event) => {
+      event.preventDefault()
+      update()
+    })
+    form.addEventListener('reset', () => requestAnimationFrame(update))
+    clear?.addEventListener('click', () => {
+      form.reset()
+      update()
+      form.querySelector('input')?.focus()
+    })
+  })()
+</script>

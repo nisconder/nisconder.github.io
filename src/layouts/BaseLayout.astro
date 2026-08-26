@@ -1,4 +1,5 @@
 ---
+import Comments from '../components/Comments.astro'
 import SiteFooter from '../components/SiteFooter.astro'
 import SiteHeader from '../components/SiteHeader.astro'
 import '../styles/global.css'
@@ -10,6 +11,10 @@ interface Props {
   image?: string
   noindex?: boolean
   ogType?: 'website' | 'article'
+  comments?: boolean
+  commentsTitle?: string
+  commentsDescription?: string
+  commentsPath?: string | URL
 }
 
 const {
@@ -19,6 +24,10 @@ const {
   image,
   noindex = false,
   ogType = 'website',
+  comments = false,
+  commentsTitle,
+  commentsDescription,
+  commentsPath,
 } = Astro.props
 
 const siteName = 'Nisconder'
@@ -37,7 +46,7 @@ const imageUrl = image ? new URL(image, baseUrl) : undefined
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
-    <meta id="theme-color" name="theme-color" content="#ffffff" />
+    <meta id="theme-color" name="theme-color" content="#e7edef" />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
 
     <link rel="canonical" href={canonicalUrl} />
@@ -74,17 +83,24 @@ const imageUrl = image ? new URL(image, baseUrl) : undefined
 
         root.dataset.theme = theme
         root.style.colorScheme = theme
-        document.querySelector('#theme-color')?.setAttribute('content', theme === 'dark' ? '#182027' : '#ffffff')
+        document.querySelector('#theme-color')?.setAttribute('content', theme === 'dark' ? '#0b1014' : '#e7edef')
       })()
     </script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">跳到正文</a>
     <div class="site-shell">
-      <SiteHeader />
+      <SiteHeader hasComments={comments} />
       <main id="main-content" class="site-main" tabindex="-1">
         <div class="reading-frame">
           <slot />
+          {comments && (
+            <Comments
+              path={commentsPath ?? canonicalUrl.pathname}
+              title={commentsTitle}
+              description={commentsDescription}
+            />
+          )}
         </div>
       </main>
       <SiteFooter />

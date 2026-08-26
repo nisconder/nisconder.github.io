@@ -1,0 +1,202 @@
+---
+interface Props {
+  path?: string | URL
+  title?: string
+  description?: string
+}
+
+const {
+  path = Astro.url.pathname,
+  title = '在这里留言',
+  description = '这一页有自己的讨论区。可以回应内容，也可以留下新的话题。',
+} = Astro.props
+
+const pathname = new URL(path.toString(), Astro.url.origin).pathname.replace(/\/{2,}/g, '/')
+const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
+---
+
+<section
+  class="comments-section site-comments"
+  id="comments"
+  aria-labelledby="comments-title"
+  data-site-comments
+>
+  <header class="site-comments__header">
+    <p class="eyebrow">OPEN THREAD</p>
+    <h2 id="comments-title">{title}</h2>
+    <p>{description}</p>
+  </header>
+  <p class="site-comments__status" data-waline-status aria-live="polite">
+    滚动到这里时自动载入留言。
+  </p>
+  <div data-waline-root data-waline-path={commentPath}></div>
+  <noscript>留言区需要启用 JavaScript；其他内容不受影响。</noscript>
+</section>
+
+<style>
+  .site-comments {
+    position: relative;
+    width: min(100%, var(--content-width));
+    margin: clamp(4rem, 9vw, 7rem) auto 0;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    overflow: visible;
+    border: 1px solid var(--color-line-strong);
+    border-block-start: 0.35rem solid var(--color-reading);
+    border-inline-end: 0.35rem solid var(--color-media);
+    border-radius: var(--card-radius);
+    background: var(--color-card);
+  }
+
+  .site-comments__header {
+    display: grid;
+    gap: 0.55rem;
+    margin-block-end: 1.75rem;
+    padding-block-end: 1.25rem;
+    border-block-end: 1px solid var(--color-line);
+  }
+
+  .site-comments__header .eyebrow,
+  .site-comments__header h2,
+  .site-comments__header p {
+    margin: 0;
+  }
+
+  .site-comments__header h2 {
+    font-size: clamp(1.875rem, 4vw, 2.5rem);
+  }
+
+  .site-comments__header > p:last-child,
+  .site-comments__status {
+    color: var(--color-muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 40rem) {
+    .site-comments {
+      margin-block-start: 4rem;
+      padding: 1.1rem;
+      border-inline-end-width: 1px;
+    }
+  }
+</style>
+
+<script is:inline>
+  (() => {
+    const sections = [...document.querySelectorAll('[data-site-comments]:not([data-comments-bound])')]
+    if (sections.length === 0) return
+
+    const styleHref = 'https://cdn.jsdelivr.net/npm/@waline/client@3.7.1/dist/waline.min.css'
+    const scriptHref = 'https://cdn.jsdelivr.net/npm/@waline/client@3.7.1/dist/waline.min.js'
+
+    const loadStyles = () => new Promise((resolve, reject) => {
+      let link = document.querySelector(`link[href="${styleHref}"]`)
+      if (link instanceof HTMLLinkElement && link.sheet) return resolve()
+
+      const shouldAppend = !(link instanceof HTMLLinkElement)
+      if (shouldAppend) {
+        link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = styleHref
+      }
+
+      if (!(link instanceof HTMLLinkElement)) {
+        reject(new Error('Waline stylesheet link could not be created'))
+        return
+      }
+
+      link.addEventListener('load', resolve, { once: true })
+      link.addEventListener('error', () => {
+        link.remove()
+        reject(new Error('Waline stylesheet failed to load'))
+      }, { once: true })
+
+      if (shouldAppend) document.head.append(link)
+    })
+
+    const loadAssets = () => {
+      if (window.__nisconderWalineAssets) return window.__nisconderWalineAssets
+      const assets = Promise.all([loadStyles(), import(scriptHref)])
+      window.__nisconderWalineAssets = assets
+      assets.catch(() => {
+        if (window.__nisconderWalineAssets === assets) {
+          delete window.__nisconderWalineAssets
+        }
+      })
+      return assets
+    }
+
+    const bindSection = (section) => {
+      if (!(section instanceof HTMLElement)) return
+      section.dataset.commentsBound = 'true'
+      const root = section.querySelector('[data-waline-root]')
+      const status = section.querySelector('[data-waline-status]')
+      if (!(root instanceof HTMLElement) || !(status instanceof HTMLElement)) return
+
+      const showRetry = () => {
+        status.replaceChildren('留言加载失败。 ')
+        const retry = document.createElement('button')
+        retry.type = 'button'
+        retry.className = 'button secondary'
+        retry.textContent = '重新加载'
+        retry.addEventListener('click', () => {
+          root.__walineInstance?.destroy?.()
+          delete root.__walineInstance
+          root.replaceChildren()
+          root.dataset.walineState = 'idle'
+          retry.remove()
+          loadComments()
+        }, { once: true })
+        status.append(retry)
+      }
+
+      const loadComments = async () => {
+        if (root.dataset.walineState === 'loading' || root.dataset.walineState === 'ready') return
+        root.dataset.walineState = 'loading'
+        status.textContent = '正在加载留言…'
+
+        try {
+          const [, module] = await loadAssets()
+          if (!root.isConnected) return
+          root.replaceChildren()
+          root.__walineInstance = module.init({
+            el: root,
+            serverURL: 'https://my-waline-9uvuuvnty-nisconders-projects.vercel.app',
+            path: root.dataset.walinePath,
+            lang: 'zh-CN',
+            login: 'enable',
+            dark: "html[data-theme='dark']",
+          })
+          root.dataset.walineState = 'ready'
+          status.remove()
+        } catch {
+          root.__walineInstance?.destroy?.()
+          delete root.__walineInstance
+          root.replaceChildren()
+          root.dataset.walineState = 'error'
+          showRetry()
+        }
+      }
+
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+          if (!entries.some((entry) => entry.isIntersecting)) return
+          observer.disconnect()
+          loadComments()
+        }, { rootMargin: '800px 0px' })
+        observer.observe(section)
+      } else {
+        loadComments()
+      }
+    }
+
+    sections.forEach(bindSection)
+
+    document.addEventListener('astro:before-swap', () => {
+      sections.forEach((section) => {
+        const root = section.querySelector('[data-waline-root]')
+        root?.__walineInstance?.destroy?.()
+      })
+    }, { once: true })
+  })()
+</script>
