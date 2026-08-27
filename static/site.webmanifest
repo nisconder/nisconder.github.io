@@ -1,0 +1,19 @@
+{
+  "name": "不知名博客 — Nisconder",
+  "short_name": "Nisconder",
+  "description": "Nisconder 的个人站，记录技术、阅读、音乐与生活思考。",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "browser",
+  "background_color": "#e7edef",
+  "theme_color": "#245f64",
+  "icons": [
+    {
+      "src": "/img/nisconder-avatar.png",
+      "sizes": "100x100",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

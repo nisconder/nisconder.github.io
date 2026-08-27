@@ -19,7 +19,7 @@ interface Props {
 
 const {
   title,
-  description = 'Nisconder 的个人博客，记录技术、阅读与对生活的思考。',
+  description = '不知名博客是 Nisconder 的个人站，记录技术、阅读、音乐与生活思考。',
   canonical,
   image,
   noindex = false,
@@ -30,13 +30,17 @@ const {
   commentsPath,
 } = Astro.props
 
-const siteName = 'Nisconder'
-const pageTitle = title && title !== siteName ? `${title} — ${siteName}` : siteName
+const authorName = 'Nisconder'
+const siteName = '不知名博客 — Nisconder'
+const pageTitle =
+  !title || title === '不知名博客' || title === siteName || title === authorName
+    ? siteName
+    : `${title} — ${authorName}`
 const baseUrl = Astro.site ?? Astro.url.origin
 const canonicalUrl = canonical
   ? new URL(canonical.toString(), baseUrl)
   : new URL(Astro.url.pathname, baseUrl)
-const imageUrl = image ? new URL(image, baseUrl) : undefined
+const imageUrl = new URL(image ?? '/img/nisconder-avatar.png', baseUrl)
 ---
 
 <!doctype html>
@@ -45,12 +49,18 @@ const imageUrl = image ? new URL(image, baseUrl) : undefined
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
+    <meta name="author" content={authorName} />
+    <meta name="application-name" content={siteName} />
+    <meta name="apple-mobile-web-app-title" content={siteName} />
     <meta name="description" content={description} />
     <meta id="theme-color" name="theme-color" content="#e7edef" />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
 
     <link rel="canonical" href={canonicalUrl} />
-    <link rel="icon" type="image/png" href="/img/nisconder-avatar.png" />
+    <link rel="icon" type="image/png" sizes="100x100" href="/img/nisconder-avatar.png" />
+    <link rel="shortcut icon" href="/img/nisconder-avatar.png" />
+    <link rel="apple-touch-icon" sizes="100x100" href="/img/nisconder-avatar.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <link rel="alternate" type="application/rss+xml" title="Nisconder RSS" href="/rss.xml" />
 
     <meta property="og:type" content={ogType} />
@@ -59,8 +69,12 @@ const imageUrl = image ? new URL(image, baseUrl) : undefined
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
-    {imageUrl && <meta property="og:image" content={imageUrl} />}
-    <meta name="twitter:card" content={imageUrl ? 'summary_large_image' : 'summary'} />
+    <meta property="og:image" content={imageUrl} />
+    <meta property="og:image:alt" content="Nisconder 的站点头像" />
+    <meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={imageUrl} />
 
     <title>{pageTitle}</title>
     <slot name="head" />

@@ -1,10 +1,21 @@
 ---
+import MusicTrackList from "../../components/MusicTrackList.astro"
 import BaseLayout from "../../layouts/BaseLayout.astro"
 import { getPlaylistTracks } from "../../lib/playlist"
 
 const playlist = await getPlaylistTracks()
 const isRestricted = (fee: number) => fee !== 0 && fee !== 8
-const playableCount = playlist.filter((track) => !isRestricted(track.fee)).length
+const playableEntries = playlist
+  .map((track, index) => ({ track, index }))
+  .filter(({ track }) => !isRestricted(track.fee))
+const playableCount = playableEntries.length
+const featuredEntries = playableEntries.length > 0
+  ? playableEntries.slice(0, 4)
+  : playlist.slice(0, 4).map((track, index) => ({ track, index }))
+const featuredTracks = featuredEntries.map(({ track }) => track)
+const featuredIndexes = featuredEntries.map(({ index }) => index)
+const firstPlayableIndex = playlist.findIndex((track) => !isRestricted(track.fee))
+const firstPlayable = firstPlayableIndex >= 0 ? playlist[firstPlayableIndex] : undefined
 ---
 
 <BaseLayout
@@ -21,114 +32,113 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
     </div>
     <div class="music-intro__copy">
       <h1 id="music-title">有些阶段，适合用一张歌单保存。</h1>
-      <p class="lede">这里收着最近反复播放的曲目。挑一首开始听，歌单也会继续更新。</p>
+      <p class="lede">先听正在反复播放的几首；想继续，再展开完整歌单。</p>
     </div>
   </header>
 
-  <section class="music-library" aria-labelledby="playlist-title">
+  <section
+    class="music-library"
+    aria-labelledby="playlist-title"
+    data-music-library
+    data-first-playable-index={firstPlayableIndex}
+  >
     <aside class="now-playing" aria-label="当前播放">
       <div class="now-playing__inner">
         <div class="now-playing__meta">
-          <span>网易云歌单</span>
-          <span>{playableCount} 首可在本站播放</span>
+          <span>NETEASE / 17846303428</span>
+          <span>{playableCount} 首可直接播放</span>
         </div>
-        <p class="eyebrow">正在播放</p>
-        <h2 data-now-title>选一首开始播放</h2>
-        <p class="now-playing__artist" data-now-artist>
-          从歌单中挑一首，音乐会从这里开始。
-        </p>
+
+        <div class="now-playing__copy">
+          <p class="eyebrow">NOW PLAYING</p>
+          <h2 data-now-title>{firstPlayable?.title ?? "暂时没有可播曲目"}</h2>
+          <p class="now-playing__artist" data-now-artist>
+            {firstPlayable?.author ?? "可以前往网易云查看完整歌单"}
+          </p>
+        </div>
 
         <audio data-audio controls preload="none" playsinline hidden aria-label="当前播放曲目"></audio>
 
-        <div class="player-actions" aria-label="曲目切换">
-          <button type="button" data-player-prev disabled>上一首</button>
-          <button type="button" data-player-next disabled>下一首</button>
+        <div class="player-actions" aria-label="播放控制">
+          <button type="button" data-player-prev disabled={firstPlayableIndex < 0}>上一首</button>
+          <button class="player-actions__primary" type="button" data-player-toggle disabled={firstPlayableIndex < 0}>
+            播放
+          </button>
+          <button type="button" data-player-next disabled={firstPlayableIndex < 0}>下一首</button>
         </div>
-        <p class="player-status" data-player-status aria-live="polite">等待选择曲目。</p>
+        <p class="player-status" data-player-status aria-live="polite">
+          {firstPlayable ? "已选好第一首，点击播放。" : "当前曲目需要在网易云播放。"}
+        </p>
         <a
           class="playlist-external"
           href="https://music.163.com/#/playlist?id=17846303428"
           target="_blank"
           rel="noreferrer"
-        >去网易云看完整歌单 <span aria-hidden="true">↗</span></a>
+        >在网易云查看歌单 <span aria-hidden="true">↗</span></a>
       </div>
     </aside>
 
     <div class="track-panel">
       <header class="track-panel__head">
         <div>
-          <p class="eyebrow">歌单曲目</p>
-          <h2 id="playlist-title">最近反复播放</h2>
+          <p class="eyebrow">QUICK PICKS</p>
+          <h2 id="playlist-title">先从这几首开始</h2>
         </div>
         <p>{playlist.length} 首 · 持续更新</p>
       </header>
 
-      <ol class="track-list" data-track-list>
-        {
-          playlist.map((track, index) => {
-            const restricted = isRestricted(track.fee)
-            const number = (index + 1).toString().padStart(2, "0")
-            const neteaseUrl = `https://music.163.com/#/song?id=${track.id}`
+      <MusicTrackList tracks={featuredTracks} indexes={featuredIndexes} label="精选曲目" />
 
-            return (
-              <li class:list={{ "track-row": true, "track-row--restricted": restricted }}>
-                {
-                  restricted ? (
-                    <a
-                      class="track-row__control"
-                      href={neteaseUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={`${track.title}，${track.author}，需在网易云播放`}
-                    >
-                      <span class="track-row__number">{number}</span>
-                      <span class="track-row__copy">
-                        <strong>{track.title}</strong>
-                        <small>{track.author}</small>
-                      </span>
-                      <span class="track-row__state">网易云 ↗</span>
-                    </a>
-                  ) : (
-                    <button
-                      class="track-row__control"
-                      type="button"
-                      data-track-index={index}
-                      data-track-title={track.title}
-                      data-track-author={track.author}
-                      data-track-audio={track.audio}
-                      data-track-external={neteaseUrl}
-                      aria-label={`播放 ${track.title}，${track.author}`}
-                    >
-                      <span class="track-row__number">{number}</span>
-                      <span class="track-row__copy">
-                        <strong>{track.title}</strong>
-                        <small>{track.author}</small>
-                      </span>
-                      <span class="track-row__state" data-track-state>播放</span>
-                    </button>
-                  )
-                }
-              </li>
-            )
-          })
-        }
-      </ol>
+      {
+        playlist.length > 0 && (
+          <details class="full-playlist" data-full-playlist>
+            <summary>
+              <span class="full-playlist__closed">查看完整 {playlist.length} 首</span>
+              <span class="full-playlist__open">收起完整歌单</span>
+              <span class="full-playlist__mark" aria-hidden="true">＋</span>
+            </summary>
+            <div class="full-playlist__body">
+              <MusicTrackList
+                tracks={playlist}
+                label={`完整 ${playlist.length} 首曲目`}
+              />
+            </div>
+          </details>
+        )
+      }
+    </div>
+
+    <div class="mobile-player" data-mobile-player hidden aria-label="移动播放控制">
+      <div class="mobile-player__copy">
+        <strong data-mobile-title>{firstPlayable?.title ?? "未选择曲目"}</strong>
+        <span data-mobile-artist>{firstPlayable?.author ?? ""}</span>
+      </div>
+      <div class="mobile-player__actions">
+        <button type="button" data-player-prev aria-label="上一首">上一首</button>
+        <button class="mobile-player__primary" type="button" data-player-toggle aria-label="播放当前曲目">
+          播放
+        </button>
+        <button type="button" data-player-next aria-label="下一首">下一首</button>
+      </div>
     </div>
   </section>
 </BaseLayout>
 
 <script>
+  const library = document.querySelector<HTMLElement>("[data-music-library]")
   const audio = document.querySelector<HTMLAudioElement>("[data-audio]")
-  const list = document.querySelector<HTMLElement>("[data-track-list]")
-  const title = document.querySelector<HTMLElement>("[data-now-title]")
-  const artist = document.querySelector<HTMLElement>("[data-now-artist]")
+  const titleNodes = [...document.querySelectorAll<HTMLElement>("[data-now-title], [data-mobile-title]")]
+  const artistNodes = [...document.querySelectorAll<HTMLElement>("[data-now-artist], [data-mobile-artist]")]
   const status = document.querySelector<HTMLElement>("[data-player-status]")
-  const previous = document.querySelector<HTMLButtonElement>("[data-player-prev]")
-  const next = document.querySelector<HTMLButtonElement>("[data-player-next]")
+  const previousButtons = [...document.querySelectorAll<HTMLButtonElement>("[data-player-prev]")]
+  const nextButtons = [...document.querySelectorAll<HTMLButtonElement>("[data-player-next]")]
+  const toggleButtons = [...document.querySelectorAll<HTMLButtonElement>("[data-player-toggle]")]
   const trackButtons = [...document.querySelectorAll<HTMLButtonElement>("[data-track-index]")]
-  const playableIndexes = trackButtons.map((button) => Number(button.dataset.trackIndex))
+  const mobilePlayer = document.querySelector<HTMLElement>("[data-mobile-player]")
+  const fullPlaylist = document.querySelector<HTMLDetailsElement>("[data-full-playlist]")
+  const playableIndexes = [...new Set(trackButtons.map((button) => Number(button.dataset.trackIndex)))]
 
-  let currentIndex = -1
+  let currentIndex = Number(library?.dataset.firstPlayableIndex ?? -1)
   let currentRequest = 0
 
   const currentButton = () =>
@@ -148,18 +158,39 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
     }
   }
 
-  const updateRows = (playing = false) => {
+  const setControlState = (playing = false) => {
+    const hasTrack = currentIndex >= 0
+    previousButtons.forEach((button) => { button.disabled = !hasTrack })
+    nextButtons.forEach((button) => { button.disabled = !hasTrack })
+    toggleButtons.forEach((button) => {
+      button.disabled = !hasTrack
+      button.textContent = playing ? "暂停" : "播放"
+      button.setAttribute("aria-label", playing ? "暂停当前曲目" : "播放当前曲目")
+    })
+
     trackButtons.forEach((button) => {
       const active = Number(button.dataset.trackIndex) === currentIndex
-      if (active) button.setAttribute("aria-current", "true")
-      else button.removeAttribute("aria-current")
-      const state = button.querySelector<HTMLElement>("[data-track-state]")
-      if (state) state.textContent = active ? (playing ? "播放中" : "已选择") : "播放"
+      button.toggleAttribute("aria-current", active)
+      const rowState = button.querySelector<HTMLElement>("[data-track-state]")
+      if (rowState) rowState.textContent = active ? (playing ? "播放中" : "已选择") : "播放"
     })
   }
 
+  const revealMobilePlayer = () => {
+    if (!mobilePlayer) return
+    mobilePlayer.hidden = false
+    document.documentElement.classList.add("music-player-active")
+  }
+
+  const updateTrackCopy = (button: HTMLButtonElement) => {
+    const trackTitle = button.dataset.trackTitle || "未命名曲目"
+    const trackAuthor = button.dataset.trackAuthor || "未知音乐人"
+    titleNodes.forEach((node) => { node.textContent = trackTitle })
+    artistNodes.forEach((node) => { node.textContent = trackAuthor })
+  }
+
   const selectTrack = async (index: number, startPlayback = true) => {
-    if (!audio || !title || !artist) return
+    if (!audio) return
     const button = trackButtons.find((item) => Number(item.dataset.trackIndex) === index)
     const source = button?.dataset.trackAudio
     if (!button || !source) return
@@ -167,18 +198,23 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
     currentRequest += 1
     const request = currentRequest
     currentIndex = index
-    audio.pause()
+    revealMobilePlayer()
+    updateTrackCopy(button)
+
+    if (button.closest("[data-full-playlist]") && fullPlaylist && !fullPlaylist.open) {
+      fullPlaylist.open = true
+    }
+
+    if (audio.dataset.trackIndex !== String(index)) {
+      audio.pause()
+      audio.src = source
+      audio.dataset.trackIndex = String(index)
+      audio.load()
+    }
+
     audio.hidden = false
-    document.documentElement.classList.add("music-player-active")
-    audio.src = source
-    audio.load()
-    title.textContent = button.dataset.trackTitle || "未命名曲目"
-    artist.textContent = button.dataset.trackAuthor || "未知音乐人"
-    previous?.removeAttribute("disabled")
-    next?.removeAttribute("disabled")
-    updateRows(false)
-    button.scrollIntoView({ block: "nearest" })
-    setStatus("正在准备音频…")
+    setControlState(false)
+    setStatus(startPlayback ? "正在准备音频…" : "已选择这首歌。")
 
     if (!startPlayback) return
 
@@ -186,45 +222,68 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
       await audio.play()
       if (request === currentRequest) setStatus("正在播放。")
     } catch {
-      if (request === currentRequest) {
-        setStatus("浏览器没有自动开始播放，请使用上方原生播放键。")
-      }
+      if (request === currentRequest) setStatus("浏览器没有开始播放，请使用原生播放键。")
     }
   }
 
   const move = (direction: number) => {
     if (playableIndexes.length === 0) return
-    const position = Math.max(0, playableIndexes.indexOf(currentIndex))
-    const nextPosition = (position + direction + playableIndexes.length) % playableIndexes.length
-    selectTrack(playableIndexes[nextPosition])
+    const currentPosition = playableIndexes.indexOf(currentIndex)
+    const position = currentPosition >= 0 ? currentPosition : 0
+    const targetPosition = (position + direction + playableIndexes.length) % playableIndexes.length
+    void selectTrack(playableIndexes[targetPosition])
   }
 
-  list?.addEventListener("click", (event) => {
-    const target = event.target instanceof Element
-      ? event.target.closest<HTMLButtonElement>("[data-track-index]")
-      : null
-    if (!target) return
-    selectTrack(Number(target.dataset.trackIndex))
+  const togglePlayback = async () => {
+    if (!audio || currentIndex < 0) return
+    if (audio.dataset.trackIndex !== String(currentIndex) || !audio.src) {
+      await selectTrack(currentIndex)
+      return
+    }
+
+    if (audio.paused) {
+      try {
+        await audio.play()
+      } catch {
+        setStatus("浏览器没有开始播放，请使用原生播放键。")
+      }
+    } else {
+      audio.pause()
+    }
+  }
+
+  trackButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const index = Number(button.dataset.trackIndex)
+      if (index === currentIndex && audio?.dataset.trackIndex === String(index) && !audio.paused) {
+        audio.pause()
+        return
+      }
+      void selectTrack(index)
+    })
   })
 
-  previous?.addEventListener("click", () => move(-1))
-  next?.addEventListener("click", () => move(1))
-  audio?.addEventListener("play", () => updateRows(true))
-  audio?.addEventListener("pause", () => updateRows(false))
+  previousButtons.forEach((button) => button.addEventListener("click", () => move(-1)))
+  nextButtons.forEach((button) => button.addEventListener("click", () => move(1)))
+  toggleButtons.forEach((button) => button.addEventListener("click", () => { void togglePlayback() }))
+  audio?.addEventListener("play", () => setControlState(true))
+  audio?.addEventListener("pause", () => setControlState(false))
   audio?.addEventListener("ended", () => move(1))
   audio?.addEventListener("error", () => {
     const button = currentButton()
     setStatus("这首歌当前无法直接播放。", button?.dataset.trackExternal)
-    updateRows(false)
+    setControlState(false)
   })
+
+  setControlState(false)
 </script>
 
 <style>
   .music-intro {
     display: grid;
-    grid-template-columns: minmax(11rem, 0.42fr) minmax(0, 1.58fr);
+    grid-template-columns: minmax(10rem, 0.42fr) minmax(0, 1.58fr);
     overflow: hidden;
-    margin-block-end: clamp(2.5rem, 5vw, 4rem);
+    margin-block-end: clamp(2rem, 5vw, 3.5rem);
     border: 1px solid var(--color-line-strong);
     border-radius: var(--card-radius);
   }
@@ -239,7 +298,7 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 3rem;
+    gap: 2rem;
     border-inline-end: 1px solid var(--color-line-strong);
     background: var(--color-media-soft);
   }
@@ -249,6 +308,7 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
     color: var(--color-media);
     font-family: var(--font-utility);
     font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
     font-weight: 700;
   }
 
@@ -258,7 +318,7 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
 
   .music-intro h1 {
     max-width: 16ch;
-    margin-block-end: 1.25rem;
+    margin-block-end: 1rem;
     font-size: var(--title-page);
     line-height: 1.16;
   }
@@ -268,17 +328,17 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
   }
 
   .music-library {
+    position: relative;
     display: grid;
-    grid-template-columns: minmax(17rem, 21rem) minmax(0, 1fr);
+    min-width: 0;
+    grid-template-columns: minmax(18rem, 21rem) minmax(0, 1fr);
     align-items: start;
     gap: clamp(1rem, 2.5vw, 1.75rem);
-    min-width: 0;
   }
 
   .now-playing {
     position: sticky;
     inset-block-start: 1.25rem;
-    align-self: start;
     min-width: 0;
     overflow: hidden;
     border: 1px solid var(--color-line-strong);
@@ -290,73 +350,93 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
   .now-playing__inner {
     display: grid;
     gap: 1rem;
-    padding: clamp(1.5rem, 4vw, 2.5rem);
+    padding: clamp(1.4rem, 3vw, 2rem);
   }
 
   .now-playing__meta {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 0.35rem 1rem;
-    margin-block-end: clamp(1.5rem, 4vw, 3rem);
+    display: grid;
+    gap: 0.25rem;
+    padding-block-end: 1rem;
+    border-block-end: 1px solid color-mix(in srgb, currentColor, transparent 55%);
     font-family: var(--font-utility);
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.035em;
   }
 
-  .now-playing .eyebrow {
+  .now-playing__copy {
+    display: grid;
+    gap: 0.6rem;
+    min-width: 0;
+  }
+
+  .now-playing .eyebrow,
+  .now-playing h2,
+  .now-playing__artist,
+  .player-status {
     margin: 0;
     color: inherit;
   }
 
   .now-playing h2 {
-    margin: 0;
-    color: inherit;
-    font-size: var(--title-section);
+    font-size: clamp(1.5rem, 3vw, 2rem);
     overflow-wrap: anywhere;
   }
 
   .now-playing__artist,
   .player-status {
-    margin: 0;
-    color: inherit;
     font-size: var(--text-sm);
-    line-height: 1.65;
+    line-height: 1.55;
   }
 
   .now-playing audio {
     width: 100%;
     min-height: 3.25rem;
-    margin-block: 0.5rem;
+    margin-block: 0.25rem;
   }
 
   .player-actions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
   }
 
-  .player-actions button {
+  .player-actions button,
+  .mobile-player__actions button {
+    min-width: 0;
     min-height: 2.75rem;
+    padding: 0.5rem;
     border: 1px solid currentColor;
     border-radius: var(--card-radius);
     background: transparent;
     color: inherit;
     cursor: pointer;
-    font-size: var(--text-sm);
+    font-size: var(--text-xs);
     font-weight: 700;
+    touch-action: manipulation;
   }
 
-  .player-actions button:hover:not(:disabled) {
-    background: var(--color-media-soft);
-    color: var(--color-on-media-panel);
+  .player-actions__primary,
+  .mobile-player__primary {
+    background: var(--color-card) !important;
+    color: var(--color-media-panel) !important;
   }
 
-  .player-actions button:disabled {
+  .player-actions button:hover:not(:disabled),
+  .mobile-player__actions button:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-card), transparent 82%);
+  }
+
+  .player-actions button:active:not(:disabled),
+  .mobile-player__actions button:active:not(:disabled) {
+    opacity: 0.74;
+  }
+
+  .player-actions button:disabled,
+  .mobile-player__actions button:disabled {
     cursor: not-allowed;
-    opacity: 0.5;
+    opacity: 0.42;
   }
 
   :global(.player-status__link),
@@ -369,7 +449,7 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
     min-height: 3rem;
     align-items: center;
     justify-content: space-between;
-    margin-block-start: 0.75rem;
+    margin-block-start: 0.25rem;
     border-block: 1px solid currentColor;
     font-size: var(--text-sm);
     font-weight: 700;
@@ -394,7 +474,7 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
     align-items: end;
     justify-content: space-between;
     gap: 1rem 2rem;
-    padding: clamp(1.5rem, 4vw, 2.5rem);
+    padding: clamp(1.4rem, 3vw, 2rem);
     border-block-end: 1px solid var(--color-line-strong);
     background: var(--color-primary-soft);
   }
@@ -412,153 +492,202 @@ const playableCount = playlist.filter((track) => !isRestricted(track.fee)).lengt
     white-space: nowrap;
   }
 
-  .track-list {
-    padding: 0;
-    margin: 0;
-    list-style: none;
+  .full-playlist {
+    border-block-start: 1px solid var(--color-line-strong);
   }
 
-  .track-row + .track-row {
-    border-block-start: 1px solid var(--color-line);
-  }
-
-  .track-row__control {
+  .full-playlist summary {
     display: grid;
-    width: 100%;
-    min-height: 4.25rem;
-    grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+    min-height: 3.5rem;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.8rem 1rem;
-    border: 0;
-    border-radius: 0;
-    background: var(--color-card);
-    color: var(--color-text);
+    gap: 1rem;
+    padding: 0.65rem 1rem;
+    color: var(--color-primary);
     cursor: pointer;
-    font: inherit;
-    text-align: start;
-    text-decoration: none;
+    font-weight: 700;
+    list-style: none;
+    touch-action: manipulation;
   }
 
-  .track-row__control:hover,
-  .track-row__control:focus-visible {
+  .full-playlist summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .full-playlist summary:hover,
+  .full-playlist summary:focus-visible {
     background: var(--color-primary-soft);
   }
 
-  .track-row__control[aria-current='true'] {
-    background: var(--color-reading-panel);
-    color: var(--color-on-reading-panel);
+  .full-playlist__open {
+    display: none;
   }
 
-  .track-row__number,
-  .track-row__state {
-    font-family: var(--font-utility);
-    font-size: var(--text-xs);
-    font-variant-numeric: tabular-nums;
-    font-weight: 700;
+  .full-playlist[open] .full-playlist__closed {
+    display: none;
   }
 
-  .track-row__number {
-    color: var(--color-secondary);
+  .full-playlist[open] .full-playlist__open {
+    display: inline;
   }
 
-  .track-row__control[aria-current='true'] .track-row__number,
-  .track-row__control[aria-current='true'] .track-row__state {
-    color: inherit;
-  }
-
-  .track-row__copy {
+  .full-playlist__mark {
     display: grid;
-    min-width: 0;
-    gap: 0.2rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    place-items: center;
+    border: 1px solid var(--color-primary);
+    border-radius: var(--card-radius);
+    font-size: 1.25rem;
+    line-height: 1;
   }
 
-  .track-row__copy strong,
-  .track-row__copy small {
-    overflow-wrap: anywhere;
+  .full-playlist[open] .full-playlist__mark {
+    transform: rotate(45deg);
   }
 
-  .track-row__copy strong {
-    font-size: 0.94rem;
-    line-height: 1.45;
+  .full-playlist__body {
+    border-block-start: 1px solid var(--color-line);
   }
 
-  .track-row__copy small {
-    color: var(--color-muted);
-    font-size: var(--text-xs);
-  }
-
-  .track-row__control[aria-current='true'] .track-row__copy small {
-    color: inherit;
-  }
-
-  .track-row--restricted .track-row__state {
-    color: var(--color-secondary);
+  .mobile-player {
+    display: none;
   }
 
   @media (max-width: 48rem) {
     .music-intro {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
+      margin-block-end: 1.5rem;
     }
 
     .music-intro__identity {
       align-items: center;
       flex-direction: row;
       gap: 1rem;
+      padding: 1rem 1.25rem;
       border-block-end: 1px solid var(--color-line-strong);
       border-inline-end: 0;
     }
 
+    .music-intro__copy {
+      padding: 1.5rem 1.25rem;
+    }
+
+    .music-intro h1 {
+      font-size: clamp(2rem, 9vw, 2.75rem);
+    }
+
     .music-library {
       grid-template-columns: minmax(0, 1fr);
+      gap: 1rem;
     }
 
     .now-playing {
       position: static;
-      overflow: visible;
     }
 
-    .now-playing audio:not([hidden]) {
+    .now-playing__inner {
+      gap: 0.875rem;
+      padding: 1.25rem;
+    }
+
+    .now-playing__meta {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+      gap: 0.75rem;
+    }
+
+    .now-playing__meta span:last-child {
+      text-align: end;
+    }
+
+    .track-panel__head {
+      align-items: start;
+      padding: 1.25rem;
+    }
+
+    .track-panel__head h2 {
+      font-size: clamp(1.5rem, 7vw, 1.9rem);
+    }
+
+    .mobile-player:not([hidden]) {
       position: fixed;
       z-index: 70;
-      inset-block-end: env(safe-area-inset-bottom, 0px);
-      inset-inline: 0;
-      width: 100%;
-      margin: 0;
-      background: var(--color-field);
+      inset-block-end: max(0.5rem, env(safe-area-inset-bottom, 0px));
+      inset-inline: 0.75rem;
+      display: grid;
+      min-width: 0;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.625rem;
+      border: 1px solid var(--color-line-strong);
+      border-radius: var(--card-radius);
+      background: var(--color-media-panel);
+      color: var(--color-on-media-panel);
+      box-shadow: 0 0.5rem 1.5rem color-mix(in srgb, var(--color-heading), transparent 78%);
     }
 
-    .track-panel {
-      padding-block-end: calc(4rem + env(safe-area-inset-bottom, 0px));
+    .mobile-player__copy {
+      display: grid;
+      min-width: 0;
+      gap: 0.05rem;
+    }
+
+    .mobile-player__copy strong,
+    .mobile-player__copy span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .mobile-player__copy strong {
+      font-size: var(--text-sm);
+    }
+
+    .mobile-player__copy span {
+      font-size: var(--text-xs);
+      opacity: 0.82;
+    }
+
+    .mobile-player__actions {
+      display: grid;
+      grid-template-columns: repeat(3, 2.75rem);
+      gap: 0.375rem;
+    }
+
+    .mobile-player__actions button {
+      width: 2.75rem;
+      min-height: 2.75rem;
+      padding: 0.25rem;
+      overflow: hidden;
+      font-size: var(--text-xs);
     }
 
     :global(html.music-player-active) {
-      scroll-padding-block-end: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+      scroll-padding-block-end: calc(5.5rem + env(safe-area-inset-bottom, 0px));
     }
 
     :global(html.music-player-active body .site-shell) {
-      padding-block-end: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+      padding-block-end: calc(5.5rem + env(safe-area-inset-bottom, 0px));
     }
   }
 
   @media (max-width: 32rem) {
     .track-panel__head {
-      align-items: start;
       flex-direction: column;
+      gap: 0.5rem;
     }
 
     .track-panel__head p:last-child {
       white-space: normal;
     }
 
-    .track-row__control {
-      grid-template-columns: 2.25rem minmax(0, 1fr);
-      min-height: 4.75rem;
-      padding-inline: 0.75rem;
-    }
+  }
 
-    .track-row__state {
-      grid-column: 2;
+  @media (prefers-reduced-motion: reduce) {
+    .full-playlist__mark {
+      transition: none;
     }
   }
 </style>
