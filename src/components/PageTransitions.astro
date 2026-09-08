@@ -5,6 +5,10 @@ import { ClientRouter } from 'astro:transitions'
 <ClientRouter fallback="animate" />
 
 <script>
+  import { installNavigationFeedback } from '../lib/navigation-feedback.mjs'
+
+  installNavigationFeedback(document)
+
   // The router swaps <html> attributes too. Set the destination's theme before
   // it is painted, including the controls captured in the transition snapshot.
   document.addEventListener('astro:before-swap', (event) => {

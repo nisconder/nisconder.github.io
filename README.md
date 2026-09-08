@@ -108,6 +108,22 @@ npm run preview
 
 Decap CMS 使用 GitHub OAuth，并直接向 `nisconder/nisconder.github.io` 的 `main` 分支提交内容。只有拥有仓库写入权限的 GitHub 账户可以发布。
 
+### GitHub 登录与授权服务
+
+授权服务固定使用 `https://netlify-cms-github-oauth-provider-khaki.vercel.app`。`source/admin/config.yml` 的 `backend.base_url` 必须使用这个生产域名，不要使用带部署哈希的 Vercel URL；旧部署不会因为生产环境变量更新而自动改变。
+
+以下三处需要保持一致：
+
+- 博客 `backend.base_url`：`https://netlify-cms-github-oauth-provider-khaki.vercel.app`
+- Vercel 授权项目的 `REDIRECT_URL`：`https://netlify-cms-github-oauth-provider-khaki.vercel.app/callback`
+- 对应 GitHub OAuth App 的 **Authorization callback URL**：同一个 `/callback` 地址。用 `OAUTH_CLIENT_ID` 对照应用的 Client ID，避免误改其他应用。
+
+Vercel 授权项目的 `ORIGINS` 至少要允许 `nisconder.pages.dev`。保留新旧博客时填写 `nisconder.pages.dev,nisconder-blog.netlify.app`，不要加协议、路径、空格或全域通配符。Secret 类型的变量不会回显旧值，空白编辑框不表示原值为空；覆盖前应确认此授权项目服务哪些网站。
+
+修改授权项目的环境变量后，重新部署该项目，让生产域名指向新部署；修改博客 `config.yml` 则需推送博客并等待 Pages 更新。两者不是同一次部署。GitHub 回调地址修改后，关闭旧登录弹窗，从刷新后的写作后台重新发起登录。
+
+若弹窗停在空白回调页，控制台出现 `Invalid origin: https://nisconder.pages.dev`，检查实际回调部署里的 `ORIGINS`；若回调地址仍带旧部署哈希，先核对以上三处。不要通过关闭来源校验解决登录问题。
+
 新文章文件名由 `source/admin/config.yml` 按以下规则生成：
 
 ```text
@@ -125,6 +141,10 @@ YYYY-MM-DD-blogHHMMSS.md
 ## Waline 留言
 
 前端使用 Waline 3.7.1。服务端独立部署在 Vercel，数据存储在外部 PostgreSQL 数据库，不进入本仓库。
+
+Waline 管理后台位于 `my-waline-pink.vercel.app`，评论前台位于 `nisconder.pages.dev`，浏览器不会直接共享两个域名的本地登录状态。管理员先登录 `/admin/comments/` 后，仍需在前台评论区点击一次“登录”，由 Waline 弹窗安全回传会话。同一浏览器中，后台勾选“记住我”且会话有效时，弹窗可复用已有登录；否则需在弹窗内登录一次。Netlify 旧域名的前台会话也不会自动迁移到 Pages。
+
+这是 Waline 自带的弹窗会话交换流程，不要手动复制令牌，也不要关闭跨域来源校验。GitHub 写作后台的登录与 Waline 账户仍然独立。
 
 - 公开留言由各页面末尾的留言区加载。
 - `/admin/comments/` 会转到 Waline 管理界面。
@@ -163,3 +183,13 @@ Cloudflare Pages 连接 `nisconder/nisconder.github.io`，生产分支为 `main`
 RSS 正文从 Markdown 渲染结果生成，不包含网页目录或阅读进度控件。`src/lib/feed-identity.ts` 保留迁移前两篇文章的原 GUID，仅文章链接切到新域名；新文章使用不依赖域名的标识。请勿为了清除旧域名文字而改写历史 GUID。
 
 `netlify.toml` 暂时保留，旧 Netlify 入口与先前创建的 Pages 项目未自动删除或停用。确认新站后，应在各平台关闭不再使用项目的自动部署，避免重复构建。旧 RSS 地址和旧站跳转仍需在原托管平台可部署时另行处理。
+
+### 导航加载
+
+Astro 已默认在悬停链接时预取。顶部四个主导航入口进一步使用可见时预取，让小体积 HTML 提前进入浏览器缓存；其余链接不做全站批量预加载。Astro 在省流量或慢速连接下会限制预取。
+
+页面请求超过 150ms 时，页头青紫分隔线显示等待反馈，加载完成、失败或取消后清除；这不是虚构的百分比，也不阻止继续点击。原有页面切换动画保留。
+
+音乐页的 APlayer 样式和脚本由播放器异步加载，不让外部 CDN 等待阻塞整页切换。播放器独立显示加载/失败状态，版本保持 1.10.1。
+
+回归检查：`node --test scripts/tests/*.test.mjs`，之后运行 `npm run build`。这些修改减少可避免的资源阻塞，但不能保证消除访客到 Pages/Vercel/CDN 的网络延迟。

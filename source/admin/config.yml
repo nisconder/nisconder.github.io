@@ -2,7 +2,8 @@ backend:
   name: github
   repo: nisconder/nisconder.github.io
   branch: main
-  base_url: https://netlify-cms-github-oauth-provider-qt36928cs-nisconders-projects.vercel.app
+  # Use the production domain, not an immutable Vercel deployment URL.
+  base_url: https://netlify-cms-github-oauth-provider-khaki.vercel.app
   auth_endpoint: /auth
   commit_messages:
     create: 'Create {{collection}} "{{slug}}"'

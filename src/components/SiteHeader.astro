@@ -26,7 +26,7 @@ const isCurrent = (href: string) =>
 
     <nav class="site-nav" aria-label="主要导航">
       {navItems.map((item) => (
-        <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+        <a href={item.href} data-astro-prefetch="viewport" aria-current={isCurrent(item.href) ? 'page' : undefined}>
           {item.label}
         </a>
       ))}
@@ -45,6 +45,7 @@ const isCurrent = (href: string) =>
     </nav>
   </div>
   <div class="site-header__signal" aria-hidden="true"><span></span><span></span></div>
+  <span class="site-header__loading-message" data-navigation-status role="status" aria-live="polite"></span>
 </header>
 
 <style>
@@ -221,9 +222,38 @@ const isCurrent = (href: string) =>
   }
 
   .site-header__signal {
+    position: relative;
     display: grid;
     height: 2px;
     grid-template-columns: minmax(2rem, 38%) 1fr;
+    overflow: hidden;
+  }
+
+  .site-header__signal::after {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, var(--color-primary), var(--color-secondary), transparent);
+    opacity: 0;
+    content: '';
+  }
+
+  :global(html[data-navigation-loading]) .site-header__signal::after {
+    opacity: 1;
+    animation: navigation-pending 1.1s ease-in-out infinite;
+  }
+
+  @keyframes navigation-pending {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(100%); }
+  }
+
+  .site-header__loading-message {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .site-header__signal span:first-child {
@@ -309,6 +339,10 @@ const isCurrent = (href: string) =>
   }
 
   @media (prefers-reduced-motion: reduce) {
+    :global(html[data-navigation-loading]) .site-header__signal::after {
+      animation: none;
+    }
+
     .site-search-mark > span {
       transition: none;
     }

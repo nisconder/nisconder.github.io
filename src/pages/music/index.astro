@@ -43,15 +43,6 @@ const interestPoints = await getInterestJourney('music')
   commentsDescription='可以推荐最近在听的曲目，也可以写下你为什么喜欢它。'
   interestPoints={interestPoints}
 >
-  <Fragment slot='head'>
-    <link
-      rel='stylesheet'
-      href='https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.css'
-      crossorigin='anonymous'
-      referrerpolicy='no-referrer'
-    />
-  </Fragment>
-
   <section class='music-studio' aria-labelledby='music-title' data-music-studio>
     <header class='music-studio__sleeve'>
       <div class='music-studio__mark' aria-hidden='true'><span></span><span></span></div>
@@ -166,6 +157,54 @@ const interestPoints = await getInterestJourney('music')
 
 <script is:inline data-astro-rerun>
   (() => {
+    // Load player assets after the page swap. A stylesheet in the destination's
+    // head would make Astro wait for the CDN before displaying the music page.
+    const loadAPlayerStyles = () => {
+      const href = 'https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.css'
+      const existing = document.querySelector(`link[rel="stylesheet"][href="${href}"]`)
+      if (existing?.sheet) return { promise: Promise.resolve(), cancel: () => {} }
+
+      const link = existing || document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = href
+      link.crossOrigin = 'anonymous'
+      link.referrerPolicy = 'no-referrer'
+      let finish
+      let settled = false
+      let timeout
+      const promise = new Promise((resolve, reject) => {
+        finish = (error) => {
+          if (settled) return
+          settled = true
+          window.clearTimeout(timeout)
+          link.removeEventListener('load', onLoad)
+          link.removeEventListener('error', onError)
+          if (error) {
+            link.remove()
+            reject(error)
+          } else {
+            resolve()
+          }
+        }
+        function onLoad() { finish() }
+        function onError() { finish(new Error('APlayer stylesheet failed to load')) }
+        link.addEventListener('load', onLoad, { once: true })
+        link.addEventListener('error', onError, { once: true })
+        timeout = window.setTimeout(() => finish(new Error('APlayer stylesheet loading timed out')), 15000)
+      })
+
+      if (!existing) {
+        // Keep site/theme overrides later in the cascade, even though the
+        // player's base stylesheet is inserted asynchronously.
+        const firstStyle = document.head.querySelector('style, link[rel="stylesheet"]')
+        document.head.insertBefore(link, firstStyle)
+      }
+      return {
+        promise,
+        cancel: () => finish(new DOMException('Music page was left', 'AbortError')),
+      }
+    }
+
     const loadAPlayer = () => {
       if (typeof window.APlayer === 'function') {
         return { promise: Promise.resolve(window.APlayer), cancel: () => {} }
@@ -233,6 +272,9 @@ const interestPoints = await getInterestJourney('music')
       const lifecycle = new AbortController()
       let disposed = false
       let libraryRequest
+      let stylesheetRequest
+      let resourcesLoading = false
+      let resourceRevision = 0
       let trackFrame
       let statusAnimation
       let mountAnimation
@@ -408,14 +450,22 @@ const interestPoints = await getInterestJourney('music')
         }
       }, { signal: lifecycle.signal })
 
-      const failLibraryLoad = () => {
+      const failLibraryLoad = (allowRetry = true) => {
         if (!active()) return
         shell?.setAttribute('aria-busy', 'false')
         mount.replaceChildren()
         const fallback = document.createElement('p')
         fallback.className = 'music-player__fallback'
-        fallback.textContent = 'APlayer 资源未能载入，请在网易云打开歌单。'
+        fallback.textContent = 'APlayer 资源未能载入；可以重试，或在网易云打开歌单。'
         mount.append(fallback)
+        if (allowRetry) {
+          const retry = document.createElement('button')
+          retry.type = 'button'
+          retry.className = 'button secondary music-player__retry'
+          retry.textContent = '重新加载播放器'
+          retry.addEventListener('click', loadPlayerResources, { once: true, signal: lifecycle.signal })
+          mount.append(retry)
+        }
         setStatus('播放器资源载入失败；外部歌曲链接仍可使用。', 'error')
       }
 
@@ -423,7 +473,7 @@ const interestPoints = await getInterestJourney('music')
         if (!active() || player) return true
         if (typeof window.APlayer !== 'function') return false
         if (tracks.length === 0) {
-          failLibraryLoad()
+          failLibraryLoad(false)
           setStatus('当前歌单没有可用的站内音频；请在网易云打开完整歌单。', 'error')
           return true
         }
@@ -530,6 +580,32 @@ const interestPoints = await getInterestJourney('music')
         return true
       }
 
+      const loadPlayerResources = () => {
+        if (!active() || resourcesLoading || player) return
+        resourcesLoading = true
+        const revision = ++resourceRevision
+        shell?.setAttribute('aria-busy', 'true')
+        mount.replaceChildren()
+        const placeholder = document.createElement('p')
+        placeholder.className = 'music-player__fallback'
+        placeholder.textContent = '正在载入 APlayer…'
+        mount.append(placeholder)
+        setStatus('正在载入 APlayer 1.10.1…')
+        stylesheetRequest = loadAPlayerStyles()
+        libraryRequest = loadAPlayer()
+        Promise.all([stylesheetRequest.promise, libraryRequest.promise]).then(() => {
+          if (!active() || revision !== resourceRevision) return
+          resourcesLoading = false
+          createPlayer()
+        }).catch((error) => {
+          if (!active() || revision !== resourceRevision) return
+          resourcesLoading = false
+          stylesheetRequest?.cancel()
+          libraryRequest?.cancel()
+          if (error?.name !== 'AbortError') failLibraryLoad()
+        })
+      }
+
       document.addEventListener('astro:before-swap', () => {
         player?.audio?.pause()
       }, { signal: lifecycle.signal })
@@ -537,8 +613,10 @@ const interestPoints = await getInterestJourney('music')
       document.addEventListener('astro:after-swap', () => {
         if (mount.isConnected) return
         disposed = true
+        resourceRevision += 1
         lifecycle.abort()
         libraryRequest?.cancel()
+        stylesheetRequest?.cancel()
         cancelAnimationFrame(trackFrame)
         statusAnimation?.cancel()
         mountAnimation?.cancel()
@@ -554,12 +632,7 @@ const interestPoints = await getInterestJourney('music')
       }, { signal: lifecycle.signal })
 
       setListState(false)
-      libraryRequest = loadAPlayer()
-      libraryRequest.promise.then(() => {
-        if (active()) createPlayer()
-      }).catch((error) => {
-        if (active() && error?.name !== 'AbortError') failLibraryLoad()
-      })
+      loadPlayerResources()
     }
 
     initialise()
@@ -778,7 +851,13 @@ const interestPoints = await getInterestJourney('music')
     min-height: 7.35rem;
   }
 
-  .music-player__fallback {
+  .music-player :global(.music-player__retry) {
+    display: flex;
+    min-height: 2.75rem;
+    margin: 0 auto 0.9rem;
+  }
+
+  .music-player :global(.music-player__fallback) {
     display: grid;
     min-height: 7.35rem;
     place-items: center;
@@ -1241,7 +1320,7 @@ const interestPoints = await getInterestJourney('music')
     }
 
     .music-player,
-    .music-player__fallback {
+    .music-player :global(.music-player__fallback) {
       min-height: 6rem;
     }
 
