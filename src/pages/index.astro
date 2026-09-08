@@ -25,6 +25,13 @@ const musicianCount = new Set(
 const latestPost = posts[0]
 const featuredPost = await getPinnedPost(posts)
 const pinnedPost = featuredPost?.id !== latestPost?.id ? featuredPost : undefined
+const latestIsPinned = Boolean(latestPost && featuredPost?.id === latestPost.id)
+// Recency and editorial selection are separate entry points, never nested.
+// When one article fills both roles, show it once with both labels.
+const homeArticles = [
+  ...(latestPost ? [{ post: latestPost, kind: 'latest', label: latestIsPinned ? '最新文章 · 置顶' : '最新文章' }] : []),
+  ...(pinnedPost ? [{ post: pinnedPost, kind: 'pinned', label: '置顶推荐' }] : []),
+]
 
 const topicCounts = new Map<string, number>()
 for (const post of posts) {
@@ -80,63 +87,50 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
         <a href="mailto:72447244.wnm@gmail.com">邮箱</a>
       </nav>
     </section>
+  </header>
 
+  <section class="home-articles" aria-label="文章入口">
     {
-      latestPost ? (
-        <article class="latest-panel register-panel">
-          <span class="registration-mark" aria-hidden="true"><i></i><i></i></span>
-          <header class="latest-panel__meta">
-            <span>最新文章</span>
+      homeArticles.length > 0 ? homeArticles.map(({ post, kind, label }) => (
+        <article class:list={['article-panel', `article-panel--${kind}`, 'register-panel']} aria-labelledby={`home-${kind}-title`}>
+          <header class="article-panel__meta">
+            <span>{label}</span>
             <div>
-              <time datetime={getPostDateTime(latestPost.data.date)}>
-                {formatPostDate(latestPost.data.date)}
+              <time datetime={getPostDateTime(post.data.date)}>
+                {formatPostDate(post.data.date)}
               </time>
-              <span>约 {getPostReadingMinutes(latestPost)} 分钟</span>
-              {getPostCategory(latestPost) && (
-                <a href={categoryHref(getPostCategory(latestPost)!)}>{getPostCategory(latestPost)}</a>
+              <span>约 {getPostReadingMinutes(post)} 分钟</span>
+              {getPostCategory(post) && (
+                <a href={categoryHref(getPostCategory(post)!)}>{getPostCategory(post)}</a>
               )}
             </div>
           </header>
 
-          <div class="latest-panel__body">
-            <h2><a href={getPostUrl(latestPost)}>{latestPost.data.title}</a></h2>
-            <p>{getPostDescription(latestPost)}</p>
+          <div class="article-panel__body">
+            <h2 id={`home-${kind}-title`}><a href={getPostUrl(post)}>{post.data.title}</a></h2>
+            <p>{getPostDescription(post)}</p>
 
-            {getPostTags(latestPost).length > 0 && (
-              <nav class="latest-panel__tags" aria-label="最新文章标签">
-                {getPostTags(latestPost).slice(0, 4).map((tag) => (
-                  <a href={searchHref(tag)}>#{tag}</a>
-                ))}
-              </nav>
-            )}
-
-            {pinnedPost && (
-              <aside class="latest-panel__pinned" aria-label="置顶推荐">
-                <span>置顶</span>
-                <a href={getPostUrl(pinnedPost)}>{pinnedPost.data.title}</a>
-                <time datetime={getPostDateTime(pinnedPost.data.date)}>
-                  {formatPostDate(pinnedPost.data.date)}
-                </time>
-              </aside>
-            )}
-
-            <div class="latest-panel__actions">
-              <a class="primary-link" href={getPostUrl(latestPost)}>
+            <div class="article-panel__actions">
+              <a class="primary-link" href={getPostUrl(post)} aria-label={`阅读：${post.data.title}`}>
                 阅读文章 <span aria-hidden="true">→</span>
               </a>
-              <a class="quiet-link" href="/articles/">全部 {posts.length} 篇</a>
             </div>
           </div>
         </article>
-      ) : (
-        <section class="latest-panel latest-panel--empty register-panel">
+      )) : (
+        <section class="article-panel article-panel--empty register-panel">
           <p class="eyebrow">最新文章</p>
           <h2>文章正在整理</h2>
           <a class="primary-link" href="/articles/">查看文章页 →</a>
         </section>
       )
     }
-  </header>
+    {posts.length > 0 && (
+      <nav class="home-articles__archive" aria-label="全部文章">
+        <a class="quiet-link" href="/articles/">全部 {posts.length} 篇文章 →</a>
+      </nav>
+    )}
+  </section>
 
   <section class="home-secondary" aria-label="项目与音乐">
     <a class="project-panel register-panel" href={`/software/#${featuredSoftware.slug}`}>
@@ -274,21 +268,16 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   }
 
   .home-dashboard {
-    display: grid;
-    grid-template-columns: minmax(17.5rem, 0.72fr) minmax(0, 1.28fr);
-    gap: 1rem;
     margin-block-end: 1rem;
   }
 
-  .identity-panel,
-  .latest-panel {
-    min-height: 28rem;
-    padding: clamp(1.5rem, 3vw, 2.25rem);
-  }
-
   .identity-panel {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(15rem, 0.8fr);
+    grid-template-areas: "profile stats" "bio links";
+    align-items: center;
+    gap: 0.75rem clamp(1.5rem, 4vw, 3rem);
+    padding: clamp(1.5rem, 3vw, 2rem);
     background: var(--color-secondary-soft);
   }
 
@@ -303,10 +292,15 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   }
 
   .identity-panel__profile {
+    grid-area: profile;
     display: flex;
     align-items: center;
     gap: 1rem;
     padding-inline-end: 2.25rem;
+  }
+
+  .identity-panel__profile > div {
+    min-width: 0;
   }
 
   .identity-panel__profile img {
@@ -329,14 +323,15 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   }
 
   .identity-panel__bio {
-    max-width: 24ch;
-    margin: 2rem 0;
+    grid-area: bio;
+    margin: 0;
     color: var(--color-muted);
     font-size: 1rem;
     line-height: 1.7;
   }
 
   .identity-panel__stats {
+    grid-area: stats;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     margin: 0;
@@ -369,11 +364,11 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   }
 
   .identity-panel__links {
+    grid-area: links;
     display: flex;
     flex-wrap: wrap;
     gap: 0 1rem;
-    margin-block-start: auto;
-    padding-block-start: 1.25rem;
+    margin: 0;
   }
 
   .identity-panel__links a {
@@ -385,19 +380,36 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
     font-weight: 750;
   }
 
-  .latest-panel {
+  .home-articles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 1rem;
+    margin-block-end: 1rem;
+  }
+
+  .home-articles > .article-panel:only-of-type {
+    grid-column: 1 / -1;
+  }
+
+  .home-articles__archive {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+
+  .article-panel {
     display: flex;
     flex-direction: column;
     padding: 0;
   }
 
-  .latest-panel__meta {
+  .article-panel__meta {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
     min-height: 4.2rem;
-    padding: 1rem 4rem 1rem clamp(1.5rem, 3vw, 2.25rem);
+    padding: 1rem clamp(1.25rem, 2.5vw, 1.75rem);
     border-block-end: 1px solid var(--color-line-strong);
     background: var(--color-primary-soft);
     color: var(--color-primary);
@@ -407,7 +419,20 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
     letter-spacing: 0.06em;
   }
 
-  .latest-panel__meta > div {
+  .article-panel--pinned::before {
+    background: var(--color-secondary);
+  }
+
+  .article-panel--pinned::after {
+    background: var(--color-primary);
+  }
+
+  .article-panel--pinned .article-panel__meta {
+    background: var(--color-secondary-soft);
+    color: var(--color-secondary);
+  }
+
+  .article-panel__meta > div {
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
@@ -417,97 +442,50 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
     letter-spacing: 0;
   }
 
-  .latest-panel__meta a {
+  .article-panel__meta a {
     color: var(--color-secondary);
   }
 
-  .latest-panel__body {
+  .article-panel__body {
     display: flex;
     flex: 1;
     flex-direction: column;
-    padding: clamp(1.5rem, 4vw, 2.6rem);
+    padding: clamp(1.25rem, 2.5vw, 1.75rem);
   }
 
-  .latest-panel h2 {
-    max-width: 18ch;
+  .article-panel h2 {
     margin: 0 0 1rem;
     font-family: var(--font-editorial);
-    font-size: clamp(2rem, 4.2vw, 3.35rem);
+    font-size: clamp(1.75rem, 3vw, 2.35rem);
     font-weight: 650;
-    line-height: 1.17;
-    letter-spacing: -0.035em;
+    line-height: 1.3;
+    letter-spacing: -0.025em;
+    overflow-wrap: anywhere;
   }
 
-  .latest-panel h2 a {
+  .article-panel h2 a {
     color: var(--color-heading);
     text-decoration: none;
   }
 
-  .latest-panel h2 a:hover {
+  .article-panel h2 a:hover {
     color: var(--color-primary);
   }
 
-  .latest-panel__body > p {
+  .article-panel__body > p {
     max-width: 52ch;
     margin: 0;
     color: var(--color-muted);
     line-height: 1.75;
   }
 
-  .latest-panel__tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0 0.8rem;
-    margin-block-start: 1rem;
-  }
-
-  .latest-panel__tags a {
-    display: inline-flex;
-    min-height: 2.75rem;
-    align-items: center;
-    color: var(--color-secondary);
-    font-size: 0.8rem;
-    font-weight: 700;
-  }
-
-  .latest-panel__pinned {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 0.75rem;
-    margin-block-start: auto;
-    padding: 0.85rem 0;
-    border-block: 1px solid var(--color-line);
-    font-size: 0.82rem;
-  }
-
-  .latest-panel__pinned > span {
-    color: var(--color-secondary);
-    font-family: var(--font-utility);
-    font-weight: 800;
-  }
-
-  .latest-panel__pinned a {
-    min-width: 0;
-    overflow: hidden;
-    color: var(--color-text);
-    font-weight: 700;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .latest-panel__pinned time {
-    color: var(--color-muted);
-    font-family: var(--font-utility);
-    font-size: var(--text-xs);
-  }
-
-  .latest-panel__actions {
+  .article-panel__actions {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    margin-block-start: 1rem;
+    margin-block-start: auto;
+    padding-block-start: 1.25rem;
   }
 
   .primary-link,
@@ -538,8 +516,9 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
     color: var(--color-secondary);
   }
 
-  .latest-panel--empty {
+  .article-panel--empty {
     justify-content: center;
+    padding: clamp(1.25rem, 2.5vw, 1.75rem);
   }
 
   .home-search {
@@ -760,20 +739,20 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   }
 
   @media (max-width: 52rem) {
-    .home-dashboard,
+    .home-articles,
     .home-secondary {
       grid-template-columns: minmax(0, 1fr);
     }
 
-    .identity-panel,
-    .latest-panel,
     .project-panel,
     .music-panel {
       min-height: 0;
     }
 
-    .identity-panel__bio {
-      max-width: none;
+    .identity-panel {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: "profile" "bio" "stats" "links";
+      gap: 1rem;
     }
 
     .home-search {
@@ -783,13 +762,13 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   }
 
   @media (max-width: 40rem) {
-    .home-dashboard,
+    .home-articles,
     .home-secondary {
       gap: 0.75rem;
     }
 
     .identity-panel,
-    .latest-panel__body,
+    .article-panel__body,
     .home-search,
     .project-panel,
     .music-panel {
@@ -805,26 +784,19 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
       height: 4.6rem;
     }
 
-    .latest-panel__meta {
+    .article-panel__meta {
       align-items: flex-start;
       flex-direction: column;
-      padding: 1rem 3.5rem 1rem 1.25rem;
+      gap: 0.5rem;
+      padding: 1rem 1.25rem;
     }
 
-    .latest-panel__meta > div {
+    .article-panel__meta > div {
       justify-content: flex-start;
     }
 
-    .latest-panel h2 {
+    .article-panel h2 {
       font-size: clamp(1.75rem, 8.5vw, 2.35rem);
-    }
-
-    .latest-panel__pinned {
-      grid-template-columns: auto minmax(0, 1fr);
-    }
-
-    .latest-panel__pinned time {
-      display: none;
     }
 
     .home-search__controls {
@@ -838,19 +810,19 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   }
 
   @media (max-width: 26rem) {
-    .identity-panel__profile {
-      align-items: flex-start;
-      flex-direction: column;
+    .identity-panel__profile img {
+      width: 3.75rem;
+      height: 3.75rem;
+    }
+
+    .identity-panel h1 {
+      font-size: 1.75rem;
     }
 
     .identity-panel__stats dd {
       font-size: 0.95rem;
     }
 
-    .latest-panel__actions {
-      align-items: flex-start;
-      flex-direction: column;
-    }
   }
 
   @media (prefers-reduced-motion: reduce) {

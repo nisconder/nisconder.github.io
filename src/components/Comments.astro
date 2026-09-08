@@ -43,6 +43,7 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
       滚动到这里时自动载入留言。
     </p>
     <div data-waline-root data-waline-path={commentPath}></div>
+    <p class="site-comments__status" data-waline-login-status role="status" hidden></p>
     <noscript>留言区需要启用 JavaScript；其他内容不受影响。</noscript>
   </div>
 </section>
@@ -223,6 +224,25 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
     }
   }
 </style>
+
+<script>
+  import { bindWalineLoginFeedback } from '../lib/waline-login-feedback.mjs'
+
+  const bindLoginFeedback = () => {
+    document.querySelectorAll<HTMLElement>('[data-site-comments]').forEach((section) => {
+      if (section.dataset.loginFeedbackBound) return
+      const root = section.querySelector<HTMLElement>('[data-waline-root]')
+      const status = section.querySelector<HTMLElement>('[data-waline-login-status]')
+      if (!root || !status) return
+      section.dataset.loginFeedbackBound = 'true'
+      const dispose = bindWalineLoginFeedback(root, status, 'https://my-waline-pink.vercel.app')
+      document.addEventListener('astro:before-swap', dispose, { once: true })
+    })
+  }
+
+  bindLoginFeedback()
+  document.addEventListener('astro:page-load', bindLoginFeedback)
+</script>
 
 <script is:inline data-astro-rerun>
   (() => {

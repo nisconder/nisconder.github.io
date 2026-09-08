@@ -138,6 +138,14 @@
   };
 
   var findFieldWrapper = function (label) {
+    // Prefer the field's label/control relationship over generated class names;
+    // custom checkbox labels inside the widget are not separate fields.
+    var fieldId = label.getAttribute('for');
+    var fieldControl = fieldId && document.getElementById(fieldId);
+    if (fieldControl) {
+      var common = lowestCommonAncestor([label, fieldControl]);
+      if (common && common.id !== 'nc-root') return common;
+    }
     var wrapper = label.closest('[class*="ControlContainer"]');
     if (wrapper) return wrapper;
 
@@ -414,6 +422,12 @@
       var wrapper = findFieldWrapper(label);
       if (!wrapper) return;
       wrapper.dataset.adminField = definition.name;
+      label.dataset.adminFieldLabel = 'true';
+      var topbar = directChildWithin(wrapper, label);
+      if (topbar && topbar !== label) topbar.dataset.adminFieldTopbar = 'true';
+      Array.prototype.slice.call(wrapper.children).forEach(function (child) {
+        if (child.tagName === 'P' && child !== topbar) child.dataset.adminFieldHint = 'true';
+      });
       fields.push({ name: definition.name, wrapper: wrapper });
     });
 
@@ -432,14 +446,42 @@
     if (usedSlots.length < 4) return;
     form.dataset.adminForm = 'post';
 
+    var dateField = root.querySelector('[data-admin-field="date"]');
+    if (dateField) {
+      var dateInput = dateField.querySelector('input');
+      var dateNow = dateField.querySelector('[data-testid="now-button"]');
+      var dateClear = dateField.querySelector('[data-testid="clear-button"]');
+      if (dateNow) dateNow.dataset.adminAction = 'set-current-date';
+      if (dateClear) dateClear.dataset.adminAction = 'clear-date';
+      var dateRow = lowestCommonAncestor([dateInput, dateNow, dateClear]);
+      if (dateRow && dateRow !== dateField) {
+        dateRow.dataset.adminDateRow = 'true';
+        var dateInputSlot = directChildWithin(dateRow, dateInput);
+        if (dateInputSlot) dateInputSlot.dataset.adminDateInput = 'true';
+        var dateActionSlot = directChildWithin(dateRow, dateNow || dateClear);
+        if (dateActionSlot && dateActionSlot !== dateInputSlot) dateActionSlot.dataset.adminDateActions = 'true';
+      }
+    }
+
     var bodyField = root.querySelector('[data-admin-field="body"]');
     if (bodyField) {
-      var toolbars = Array.prototype.slice.call(bodyField.querySelectorAll('[role="toolbar"], [class*="Toolbar"]')).filter(function (candidate) {
-        return candidate.querySelectorAll('button, [role="button"]').length >= 2;
-      }).sort(function (left, right) {
-        return elementDepth(right) - elementDepth(left);
+      // ToolbarDropdownWrapper contains a role=button around a real button.
+      // Counting both picked the H dropdown as the *entire* toolbar.
+      bodyField.querySelectorAll('[data-admin-section="editor-toolbar"]').forEach(function (element) {
+        delete element.dataset.adminSection;
       });
-      if (toolbars[0]) toolbars[0].dataset.adminSection = 'editor-toolbar';
+      var toolbar = bodyField.querySelector('[class*="ToolbarContainer"]');
+      if (!toolbar) {
+        toolbar = Array.prototype.slice.call(bodyField.querySelectorAll('[role="toolbar"]')).filter(function (candidate) {
+          return candidate.querySelectorAll('button[title]').length >= 2;
+        })[0] || null;
+      }
+      if (toolbar) {
+        toolbar.dataset.adminSection = 'editor-toolbar';
+        Array.prototype.slice.call(toolbar.children).forEach(function (group) {
+          if (group.querySelector('button[title]')) group.dataset.adminToolbarGroup = 'true';
+        });
+      }
     }
 
     var editorBackLink = null;
