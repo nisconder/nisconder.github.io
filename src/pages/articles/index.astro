@@ -1,11 +1,14 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import PostRow from '../../components/PostRow.astro'
+import { getInterestJourney } from '../../lib/interests'
 import {
   formatPostDate,
+  getPostCalendarParts,
   getPostCategory,
   getPostDateTime,
   getPostDescription,
+  getPostReadingMinutes,
   getPostTags,
   getPostUrl,
   getPublishedPosts,
@@ -13,29 +16,55 @@ import {
 
 const posts = await getPublishedPosts()
 const categoryCounts = new Map<string, number>()
+const topicCounts = new Map<string, number>()
+const postsByYear = new Map<string, typeof posts>()
+
 for (const post of posts) {
   const category = getPostCategory(post)
   if (category) categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1)
+
+  for (const tag of getPostTags(post)) {
+    topicCounts.set(tag, (topicCounts.get(tag) ?? 0) + 1)
+  }
+
+  const { year } = getPostCalendarParts(post.data.date)
+  const yearPosts = postsByYear.get(year)
+  if (yearPosts) yearPosts.push(post)
+  else postsByYear.set(year, [post])
 }
+
 const categories = [...categoryCounts].sort(
   (left, right) => right[1] - left[1] || left[0].localeCompare(right[0], 'zh-CN'),
 )
+const categoryNames = new Set(categoryCounts.keys())
+const topics = [...topicCounts]
+  .filter(([topic]) => !categoryNames.has(topic))
+  .sort(
+    (left, right) => right[1] - left[1] || left[0].localeCompare(right[0], 'zh-CN'),
+  )
+const yearGroups = [...postsByYear].sort(
+  (left, right) => Number(right[0]) - Number(left[0]),
+)
 const categoryHref = (category: string) => `/search/?category=${encodeURIComponent(category)}`
+const topicHref = (topic: string) =>
+  `/search/?type=article&q=${encodeURIComponent(topic)}`
+const interestPoints = await getInterestJourney('articles')
 ---
 
 <BaseLayout
   title="文章"
-  description="按时间阅读 Nisconder 的技术、生活与思考。"
+  description="按正式发布日期阅读 Nisconder 的技术、生活与思考。"
   canonical="/articles/"
   comments
-  commentsTitle="聊聊这些文字"
-  commentsDescription="不必针对某一篇文章。想讨论写作、选题，或者推荐一个值得继续展开的问题，都可以留言。"
+  commentsTitle="文章区留言"
+  commentsDescription="可以讨论写作、选题，或推荐一个值得继续展开的问题。"
+  interestPoints={interestPoints}
 >
   <header class="article-header articles-intro">
     <div class="articles-intro__copy">
       <p class="article-kicker">Articles</p>
       <h1>文章</h1>
-      <p>公开写作按时间排列。可以直接搜索，也可以按分类缩小范围。</p>
+      <p>公开文章按正式发布日期倒序排列；置顶只用于推荐，不改变归档顺序。</p>
     </div>
 
     <div class="articles-discovery">
@@ -58,8 +87,17 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
         </div>
       </form>
 
+      {(categories.length > 0 || topics.length > 0 || yearGroups.length > 0) && (
+        <nav class="articles-jump-nav" aria-label="文章页内导航">
+          <span>页内浏览</span>
+          {categories.length > 0 && <a href="#categories">分类</a>}
+          {topics.length > 0 && <a href="#topics">主题</a>}
+          {yearGroups.length > 0 && <a href="#archive">年份</a>}
+        </nav>
+      )}
+
       {categories.length > 0 && (
-        <nav class="category-index" aria-label="按分类浏览文章">
+        <nav id="categories" class="category-index" aria-label="按分类浏览文章">
           <span>按分类浏览</span>
           <a class="is-current" href="/articles/" aria-current="page">
             全部 <small>{posts.length}</small>
@@ -74,38 +112,96 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
     </div>
   </header>
 
-  <section class="axis-section" data-note="按时间">
-    <div class="section-heading">
-      <div>
-        <p class="article-kicker">Archive</p>
-        <h2>全部文章</h2>
-      </div>
-      <p>{posts.length} 篇</p>
-    </div>
-
-    {
-      posts.length > 0 ? (
-        <div class="post-list">
-          {posts.map((post) => (
-            <PostRow
-              href={getPostUrl(post)}
-              title={post.data.title}
-              description={getPostDescription(post)}
-              date={formatPostDate(post.data.date)}
-              datetime={getPostDateTime(post.data.date)}
-              category={getPostCategory(post)}
-              tags={getPostTags(post)}
-            />
-          ))}
+  {(topics.length > 0 || yearGroups.length > 0) && (
+    <section class="axis-section article-index" data-note="索引">
+      <div class="section-heading article-index__heading">
+        <div>
+          <p class="article-kicker">Knowledge / Archive</p>
+          <h2>主题与年份</h2>
         </div>
-      ) : (
+        <p>主题关联相近内容；年份跳转到对应归档。</p>
+      </div>
+
+      <div class="article-index__grid">
+        {topics.length > 0 && (
+          <div id="topics" class="article-index__panel article-index__panel--topics">
+            <div class="article-index__panel-heading">
+              <h3>主题索引</h3>
+              <span>{topics.length} 个主题</span>
+            </div>
+            <nav class="topic-index" aria-label="按主题浏览文章">
+              {topics.map(([topic, count]) => (
+                <a href={topicHref(topic)}>
+                  <span>{topic}</span>
+                  <small>{count} 篇</small>
+                </a>
+              ))}
+            </nav>
+          </div>
+        )}
+
+        {yearGroups.length > 0 && (
+          <div id="archive" class="article-index__panel article-index__panel--years">
+            <div class="article-index__panel-heading">
+              <h3>年份归档</h3>
+              <span>{yearGroups.length} 年</span>
+            </div>
+            <nav class="year-index" aria-label="按年份跳转">
+              {yearGroups.map(([year, yearPosts]) => (
+                <a href={`#year-${year}`}>
+                  <strong>{year}</strong>
+                  <small>{yearPosts.length} 篇</small>
+                </a>
+              ))}
+            </nav>
+          </div>
+        )}
+      </div>
+    </section>
+  )}
+
+  {
+    posts.length > 0 ? (
+      yearGroups.map(([year, yearPosts]) => (
+        <section
+          id={`year-${year}`}
+          class="axis-section year-archive"
+          data-note={year}
+          aria-labelledby={`year-${year}-title`}
+        >
+          <div class="section-heading year-archive__heading">
+            <div>
+              <p class="article-kicker">Archive / Year</p>
+              <h2 id={`year-${year}-title`}>{year} 年</h2>
+            </div>
+            <p>{yearPosts.length} 篇</p>
+          </div>
+
+          <div class="post-list">
+            {yearPosts.map((post) => (
+              <PostRow
+                href={getPostUrl(post)}
+                title={post.data.title}
+                description={getPostDescription(post)}
+                date={formatPostDate(post.data.date)}
+                datetime={getPostDateTime(post.data.date)}
+                readingMinutes={getPostReadingMinutes(post)}
+                category={getPostCategory(post)}
+                tags={getPostTags(post)}
+              />
+            ))}
+          </div>
+        </section>
+      ))
+    ) : (
+      <section class="axis-section" data-note="按时间">
         <div class="empty-state">
           <h2>还没有公开文章</h2>
           <p>新文章发布后会按时间出现在这里。</p>
         </div>
-      )
-    }
-  </section>
+      </section>
+    )
+  }
 </BaseLayout>
 
 <style>
@@ -136,6 +232,46 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   .articles-discovery {
     display: grid;
     gap: 1rem;
+  }
+
+  #categories,
+  #topics,
+  #archive,
+  .year-archive {
+    scroll-margin-block-start: 1rem;
+  }
+
+  .articles-jump-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    padding-block: 0.35rem;
+    border-block: 1px solid var(--color-line);
+  }
+
+  .articles-jump-nav > span {
+    margin-inline-end: 0.35rem;
+    color: var(--color-muted);
+    font-family: var(--font-utility);
+    font-size: var(--text-xs);
+    letter-spacing: 0.04em;
+  }
+
+  .articles-jump-nav a {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    padding-inline: 0.65rem;
+    color: var(--color-primary);
+    font-size: 0.8125rem;
+    font-weight: 750;
+    text-decoration-color: var(--color-secondary);
+    text-underline-offset: 0.25em;
+  }
+
+  .articles-jump-nav a:hover {
+    color: var(--color-secondary);
   }
 
   .articles-search label {
@@ -250,10 +386,133 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
     font-weight: 700;
   }
 
+  .article-index__heading,
+  .year-archive__heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+  }
+
+  .article-index__heading > p,
+  .year-archive__heading > p {
+    max-width: 30rem;
+    margin: 0;
+    color: var(--color-muted);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    text-align: end;
+  }
+
+  .article-index__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(12rem, 0.55fr);
+    gap: 1rem;
+  }
+
+  .article-index__panel {
+    min-width: 0;
+    padding: clamp(1rem, 3vw, 1.5rem);
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--card-radius);
+    background: var(--color-card);
+  }
+
+  .article-index__panel--topics {
+    border-inline-start: 0.4rem solid var(--color-primary);
+  }
+
+  .article-index__panel--years {
+    border-inline-end: 0.4rem solid var(--color-secondary);
+  }
+
+  .article-index__panel-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-block-end: 1rem;
+  }
+
+  .article-index__panel-heading h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.05rem, 2vw, 1.25rem);
+    letter-spacing: -0.015em;
+  }
+
+  .article-index__panel-heading span {
+    flex: 0 0 auto;
+    color: var(--color-muted);
+    font-family: var(--font-utility);
+    font-size: var(--text-xs);
+  }
+
+  .topic-index,
+  .year-index {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .topic-index {
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  }
+
+  .year-index {
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  }
+
+  .topic-index a,
+  .year-index a {
+    display: flex;
+    min-width: 0;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--card-radius);
+    background: var(--color-field);
+    color: var(--color-primary);
+    font-size: 0.875rem;
+    font-weight: 750;
+    text-decoration: none;
+  }
+
+  .year-index a {
+    color: var(--color-secondary);
+  }
+
+  .topic-index a:hover,
+  .year-index a:hover {
+    border-color: var(--color-secondary);
+    background: var(--color-secondary-soft);
+  }
+
+  .topic-index a span,
+  .year-index a strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .topic-index small,
+  .year-index small {
+    flex: 0 0 auto;
+    color: var(--color-muted);
+    font-family: var(--font-utility);
+    font-size: var(--text-xs);
+    font-weight: 650;
+  }
+
   @media (max-width: 48rem) {
     .articles-intro {
       grid-template-columns: minmax(0, 1fr);
       align-items: start;
+    }
+
+    .article-index__grid {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 
@@ -270,8 +529,25 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
       border-radius: calc(var(--card-radius) - 0.2rem);
     }
 
+    .articles-jump-nav > span,
     .category-index > span {
       flex-basis: 100%;
+    }
+
+    .article-index__heading,
+    .year-archive__heading {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .article-index__heading > p,
+    .year-archive__heading > p {
+      text-align: start;
+    }
+
+    .article-index__panel {
+      padding: 1rem;
     }
   }
 </style>

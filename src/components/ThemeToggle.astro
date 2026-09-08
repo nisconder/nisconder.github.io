@@ -5,15 +5,23 @@
   aria-label="切换为深色模式"
   aria-pressed="false"
 >
-  <span class="theme-toggle__mark" aria-hidden="true"></span>
+  <span class="theme-toggle__polarity" aria-hidden="true">
+    <span></span>
+    <span></span>
+  </span>
   <span data-theme-label>深色</span>
 </button>
 
-<script is:inline>
+<script is:inline data-astro-rerun>
   (() => {
     const storageKey = 'nisconder-theme'
     const root = document.documentElement
     const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const controller = new AbortController()
+    const { signal } = controller
+    let themeTransition
+    let feedbackTimer
 
     const updateControls = (theme) => {
       document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
@@ -28,7 +36,7 @@
     const applyTheme = (theme) => {
       root.dataset.theme = theme
       root.style.colorScheme = theme
-      document.querySelector('#theme-color')?.setAttribute('content', theme === 'dark' ? '#0b1014' : '#e7edef')
+      document.querySelector('#theme-color')?.setAttribute('content', theme === 'dark' ? '#0b1114' : '#e8f0f2')
       updateControls(theme)
     }
 
@@ -38,14 +46,31 @@
       if (button.dataset.themeBound === 'true') return
       button.dataset.themeBound = 'true'
       button.addEventListener('click', () => {
+        button.dataset.themeSwitching = 'true'
         const nextTheme = root.dataset.theme === 'dark' ? 'light' : 'dark'
-        applyTheme(nextTheme)
+        themeTransition?.skipTransition()
+        if (!reducedMotion.matches && !root.hasAttribute('data-astro-transition') && typeof document.startViewTransition === 'function') {
+          root.dataset.themeTransition = ''
+          const transition = document.startViewTransition(() => applyTheme(nextTheme))
+          themeTransition = transition
+          transition.finished.catch(() => {}).finally(() => {
+            if (themeTransition !== transition) return
+            themeTransition = undefined
+            delete root.dataset.themeTransition
+          })
+        } else {
+          applyTheme(nextTheme)
+        }
+        window.clearTimeout(feedbackTimer)
+        feedbackTimer = window.setTimeout(() => {
+          delete button.dataset.themeSwitching
+        }, 190)
         try {
           localStorage.setItem(storageKey, nextTheme)
         } catch {
           // The selected theme still applies for this page when storage is unavailable.
         }
-      })
+      }, { signal })
     })
 
     systemTheme.addEventListener('change', (event) => {
@@ -55,54 +80,112 @@
         // Follow the system setting when storage cannot be read.
       }
       applyTheme(event.matches ? 'dark' : 'light')
-    })
+    }, { signal })
+
+    document.addEventListener('astro:before-preparation', () => {
+      themeTransition?.skipTransition()
+      delete root.dataset.themeTransition
+    }, { signal })
+
+    document.addEventListener('astro:before-swap', () => {
+      controller.abort()
+      window.clearTimeout(feedbackTimer)
+      themeTransition?.skipTransition()
+    }, { once: true })
   })()
 </script>
 
 <style>
   .theme-toggle {
     display: inline-flex;
-    min-width: 4.5rem;
+    min-width: 4.85rem;
     min-height: 2.75rem;
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
     padding: 0.4rem 0.65rem;
-    border: 1px solid var(--color-secondary);
-    border-inline-end: 0.25rem solid var(--color-primary);
+    border: 1px solid var(--color-line-strong);
     border-radius: var(--card-radius);
-    background: var(--color-surface-soft);
+    background: var(--color-surface);
     color: var(--color-text);
     cursor: pointer;
     font-size: 0.8125rem;
-    font-weight: 650;
+    font-weight: 700;
+    transition:
+      background-color var(--motion-feedback) ease,
+      border-color var(--motion-feedback) ease,
+      color var(--motion-feedback) ease;
   }
 
   .theme-toggle:hover {
-    border-color: var(--color-primary);
-    border-inline-end-color: var(--color-secondary);
-    background: var(--color-primary-soft);
-    color: var(--color-primary);
+    border-color: var(--color-secondary);
+    background: var(--color-surface);
+    color: var(--color-text);
   }
 
-  .theme-toggle__mark {
+  .theme-toggle__polarity {
     position: relative;
-    width: 1rem;
-    height: 0.75rem;
-    background: var(--color-primary);
+    display: block;
+    width: 1.25rem;
+    height: 1.25rem;
+    flex: 0 0 auto;
+    overflow: visible;
+    transform: rotate(0deg);
+    transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
-  .theme-toggle__mark::after {
+  .theme-toggle__polarity span {
     position: absolute;
-    width: 0.55rem;
-    height: 0.55rem;
-    inset-block-end: -0.15rem;
-    inset-inline-end: -0.15rem;
-    background: var(--color-secondary);
-    content: '';
+    inset: 0.21rem;
+    border: 1.5px solid currentColor;
+    border-radius: 0.14rem;
+    transition: transform 170ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
-  @media (max-width: 24rem) {
+  .theme-toggle__polarity span:first-child {
+    background: color-mix(in srgb, var(--color-primary-soft), transparent 24%);
+    color: var(--color-primary);
+    transform: translate(-1px, -1px) rotate(45deg);
+  }
+
+  .theme-toggle__polarity span:last-child {
+    background: color-mix(in srgb, var(--color-secondary-soft), transparent 45%);
+    color: var(--color-secondary);
+    transform: translate(1.5px, 1.5px) rotate(45deg);
+  }
+
+  .theme-toggle[aria-pressed='true'] .theme-toggle__polarity {
+    transform: rotate(45deg);
+  }
+
+  .theme-toggle[aria-pressed='true'] .theme-toggle__polarity span {
+    border-radius: 50%;
+  }
+
+  .theme-toggle:hover .theme-toggle__polarity span:first-child {
+    transform: translate(-2.5px, -2.5px) rotate(45deg);
+  }
+
+  .theme-toggle:hover .theme-toggle__polarity span:last-child {
+    transform: translate(3px, 3px) rotate(45deg);
+  }
+
+  .theme-toggle[data-theme-switching='true'] .theme-toggle__polarity span:first-child,
+  .theme-toggle[data-theme-switching='true'] .theme-toggle__polarity span:last-child {
+    transform: translate(0, 0) rotate(45deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .theme-toggle__polarity {
+      transition: none;
+    }
+
+    .theme-toggle__polarity span {
+      transition: none;
+    }
+  }
+
+  @media (max-width: 44rem) {
     .theme-toggle {
       min-width: 2.75rem;
       padding-inline: 0.45rem;

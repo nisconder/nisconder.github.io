@@ -2,12 +2,14 @@
 import { render } from 'astro:content'
 import type { GetStaticPaths } from 'astro'
 import BaseLayout from '../../../../layouts/BaseLayout.astro'
+import { getInterestJourney } from '../../../../lib/interests'
 import {
   formatPostDate,
   getPostCalendarParts,
   getPostCategory,
   getPostDateTime,
   getPostDescription,
+  getPostReadingMinutes,
   getPostSlug,
   getPostTags,
   getPostUrl,
@@ -42,10 +44,14 @@ const { Content, headings } = await render(post)
 const category = getPostCategory(post)
 const tags = getPostTags(post)
 const description = getPostDescription(post)
+const readingMinutes = getPostReadingMinutes(post)
 const tableOfContents = headings.filter(({ depth }) => depth >= 2 && depth <= 3)
 const canonical = getPostUrl(post)
+const publishedTime = getPostDateTime(post.data.date)
+const modifiedTime = getPostDateTime(post.data.updated ?? post.data.date)
 const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(value)}`
+const interestPoints = await getInterestJourney('article', post)
 ---
 
 <BaseLayout
@@ -53,11 +59,18 @@ const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(
   description={description}
   canonical={canonical}
   image={post.data.image ?? post.data.cover}
+  imageAlt={post.data.imageAlt}
   ogType="article"
+  publishedTime={publishedTime}
+  modifiedTime={modifiedTime}
+  category={category}
+  tags={tags}
+  readingMinutes={readingMinutes}
   comments
   commentsTitle="讨论这篇文章"
   commentsDescription={`关于《${post.data.title}》的补充、不同意见或延伸话题，都可以留在这里。`}
   commentsPath={canonical}
+  interestPoints={interestPoints}
 >
   <div class="reading-progress-line" aria-hidden="true">
     <span data-reading-progress-bar></span>
@@ -111,7 +124,7 @@ const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(
           </p>
           <h1>{post.data.title}</h1>
           <div class="article-meta">
-            <time datetime={getPostDateTime(post.data.date)}>
+            <time datetime={publishedTime}>
               {formatPostDate(post.data.date)}
             </time>
             {post.data.updated && (
@@ -121,6 +134,7 @@ const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(
                 </time>
               </span>
             )}
+            <span>约 {readingMinutes} 分钟</span>
           </div>
           {tags.length > 0 && (
             <nav class="article-tags" aria-label="文章标签">
@@ -129,70 +143,63 @@ const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(
           )}
         </header>
 
-        {
-          tableOfContents.length > 0 ? (
-            <details class="reading-guide reading-guide--mobile" data-mobile-toc>
-              <summary>
-                <span class="reading-guide__mobile-label">目录</span>
-                <span class="reading-guide__current" data-current-heading>正文开始</span>
+        <aside
+          class="reading-guide-mobile-shell"
+          aria-label="文章阅读导航"
+          data-reader-exclude
+          data-nosnippet
+        >
+          {
+            tableOfContents.length > 0 ? (
+              <details class="reading-guide reading-guide--mobile" data-mobile-toc>
+                <summary>
+                  <span class="reading-guide__mobile-label">目录</span>
+                  <span class="reading-guide__current" data-current-heading>正文开始</span>
+                  <output data-reading-output>0%</output>
+                </summary>
+                <nav aria-label="本文目录">
+                  <ol>
+                    {tableOfContents.map((heading) => (
+                      <li data-depth={heading.depth}>
+                        <a data-toc-link href={`#${heading.slug}`}>{heading.text}</a>
+                      </li>
+                    ))}
+                  </ol>
+                </nav>
+              </details>
+            ) : (
+              <div class="reading-guide reading-guide--mobile reading-guide--status">
+                <span>阅读进度</span>
                 <output data-reading-output>0%</output>
-              </summary>
-              <nav aria-label="本文目录">
-                <ol>
-                  {tableOfContents.map((heading) => (
-                    <li data-depth={heading.depth}>
-                      <a data-toc-link href={`#${heading.slug}`}>{heading.text}</a>
-                    </li>
-                  ))}
-                </ol>
-              </nav>
-            </details>
-          ) : (
-            <div class="reading-guide reading-guide--mobile reading-guide--status">
-              <span>阅读进度</span>
-              <output data-reading-output>0%</output>
-            </div>
-          )
-        }
+              </div>
+            )
+          }
+        </aside>
 
         <div class="prose" data-reading-body>
           <Content />
         </div>
 
         <footer class="article-footer">
-          <nav class="article-pagination" aria-label="上一篇和下一篇文章">
-            {
-              previousPost ? (
+          {(previousPost || nextPost) && (
+            <nav class="article-pagination" aria-label="上一篇和下一篇文章">
+              {previousPost && (
                 <a class="article-pagination__item article-pagination__item--previous" href={getPostUrl(previousPost)}>
                   <span class="article-pagination__direction"><span aria-hidden="true">←</span> 上一篇</span>
                   <strong>{previousPost.data.title}</strong>
                   <small>较早 · {formatPostDate(previousPost.data.date)}</small>
                 </a>
-              ) : (
-                <div class="article-pagination__item article-pagination__item--previous is-disabled">
-                  <span class="article-pagination__direction"><span aria-hidden="true">←</span> 上一篇</span>
-                  <strong>已经是最早一篇</strong>
-                  <small>向前没有更多文章</small>
-                </div>
-              )
-            }
-            {
-              nextPost ? (
+              )}
+              {nextPost && (
                 <a class="article-pagination__item article-pagination__item--next" href={getPostUrl(nextPost)}>
                   <span class="article-pagination__direction">下一篇 <span aria-hidden="true">→</span></span>
                   <strong>{nextPost.data.title}</strong>
                   <small>较新 · {formatPostDate(nextPost.data.date)}</small>
                 </a>
-              ) : (
-                <div class="article-pagination__item article-pagination__item--next is-disabled">
-                  <span class="article-pagination__direction">下一篇 <span aria-hidden="true">→</span></span>
-                  <strong>已经是最新一篇</strong>
-                  <small>新文章会从这里继续</small>
-                </div>
-              )
-            }
-          </nav>
-          <a class="button secondary article-footer__archive" href="/articles/">返回全部文章</a>
+              )}
+            </nav>
+          )}
+          <a class="article-footer__archive" href="/articles/">全部文章索引 <span aria-hidden="true">→</span></a>
         </footer>
       </article>
 
@@ -207,7 +214,7 @@ const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(
 
   .article-pagination {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
     gap: 1rem;
     margin-block-end: 1.5rem;
   }
@@ -271,18 +278,19 @@ const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(
     line-height: 1.45;
   }
 
-  .article-pagination__item.is-disabled {
-    border-color: var(--color-line);
-    background: var(--color-surface-soft);
-    color: var(--color-muted);
-  }
-
-  .article-pagination__item.is-disabled .article-pagination__direction {
-    color: var(--color-muted);
-  }
-
   .article-footer__archive {
+    display: inline-flex;
     min-height: 2.75rem;
+    align-items: center;
+    gap: 0.8rem;
+    color: var(--color-primary);
+    font-size: var(--text-sm);
+    font-weight: 750;
+    text-underline-offset: 0.25em;
+  }
+
+  .article-footer__archive span {
+    color: var(--color-secondary);
   }
 
   .reading-progress-line {
@@ -411,6 +419,7 @@ const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(
     align-items: center;
     padding: 0.5rem 0.55rem;
     border-inline-start: 0.25rem solid transparent;
+    border-radius: calc(var(--card-radius) - 0.3rem);
     color: var(--color-text);
     font-size: 0.78rem;
     line-height: 1.45;
@@ -419,12 +428,20 @@ const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(
   }
 
   .reading-toc a:hover,
+  .reading-guide--mobile nav a:hover {
+    border-inline-start-color: var(--color-primary);
+    background: var(--color-card);
+    color: var(--color-primary);
+  }
+
   .reading-toc a[aria-current='location'],
-  .reading-guide--mobile nav a:hover,
   .reading-guide--mobile nav a[aria-current='location'] {
     border-inline-start-color: var(--color-primary);
-    background: var(--color-reading-panel);
-    color: var(--color-on-reading-panel);
+    border-radius: calc(var(--card-radius) - 0.15rem);
+    background: var(--color-secondary-soft);
+    color: var(--color-text);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-secondary), transparent 58%);
+    font-weight: 750;
   }
 
   .reading-guide__back {
@@ -530,11 +547,24 @@ const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(
 
 </style>
 
-<script is:inline>
+<script is:inline data-astro-rerun>
   (() => {
     const root = document.querySelector('[data-reading-root]')
     const body = root?.querySelector('[data-reading-body]')
     if (!(root instanceof HTMLElement) || !(body instanceof HTMLElement)) return
+    if (root.dataset.readingBound === 'true') return
+    root.dataset.readingBound = 'true'
+    const lifecycle = new AbortController()
+    const { signal } = lifecycle
+    let updateFrame = 0
+    let resizeObserver
+
+    document.addEventListener('astro:before-swap', () => {
+      lifecycle.abort()
+      resizeObserver?.disconnect()
+      cancelAnimationFrame(updateFrame)
+      delete root.dataset.readingBound
+    }, { once: true })
 
     const progressBars = [...document.querySelectorAll('[data-reading-progress-bar]')]
     const outputs = [...root.querySelectorAll('[data-reading-output]')]
@@ -577,6 +607,7 @@ const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(
 
     const update = () => {
       queued = false
+      if (signal.aborted || !root.isConnected) return
       const readingLine = window.scrollY + window.innerHeight * 0.32
       const ratio = (readingLine - bodyStart) / Math.max(bodyEnd - bodyStart, 1)
       setProgress(Math.round(Math.min(1, Math.max(0, ratio)) * 100))
@@ -590,12 +621,13 @@ const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(
     }
 
     const queueUpdate = () => {
-      if (queued) return
+      if (queued || signal.aborted) return
       queued = true
-      window.requestAnimationFrame(update)
+      updateFrame = window.requestAnimationFrame(update)
     }
 
     const measure = () => {
+      if (signal.aborted || !root.isConnected) return
       const rect = body.getBoundingClientRect()
       bodyStart = rect.top + window.scrollY
       bodyEnd = bodyStart + body.scrollHeight
@@ -606,9 +638,13 @@ const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(
       queueUpdate()
     }
 
-    window.addEventListener('scroll', queueUpdate, { passive: true })
-    window.addEventListener('resize', measure, { passive: true })
-    if ('ResizeObserver' in window) new ResizeObserver(measure).observe(body)
+    window.addEventListener('scroll', queueUpdate, { passive: true, signal })
+    window.addEventListener('resize', measure, { passive: true, signal })
+    document.addEventListener('astro:page-load', measure, { signal })
+    if ('ResizeObserver' in window) {
+      resizeObserver = new ResizeObserver(measure)
+      resizeObserver.observe(body)
+    }
     document.fonts?.ready.then(measure)
     measure()
 
@@ -617,13 +653,13 @@ const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(
         if (event.target instanceof Element && event.target.closest('a')) {
           mobileToc.open = false
         }
-      })
+      }, { signal })
       mobileToc.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
           mobileToc.open = false
           mobileToc.querySelector('summary')?.focus()
         }
-      })
+      }, { signal })
     }
   })()
 </script>

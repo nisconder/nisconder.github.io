@@ -1,19 +1,23 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro"
+import { getInterestJourney } from "../../lib/interests"
+
+const interestPoints = await getInterestJourney('about')
 ---
 
 <BaseLayout
   title="关于"
   description="关于 Nisconder、这个博客，以及我在这里持续记录的内容。"
   comments
-  commentsTitle="认识之后，留句话吧"
-  commentsDescription="这里不限定话题。你可以介绍自己、提出问题，或者告诉我你从哪里来到这个站。"
+  commentsTitle="关于页留言"
+  commentsDescription="可以介绍自己、提出问题，或留下对本站的反馈。"
+  interestPoints={interestPoints}
 >
   <header class="page-intro">
     <p class="eyebrow">ABOUT / NISCONDER</p>
-    <h1>把值得记住的东西，<br />写得清楚一点。</h1>
+    <h1>关于 Nisconder</h1>
     <p class="lede">
-      Nisconder，在这里记录代码、阅读、音乐与生活观察。写给未来的自己，也写给偶然路过的你。
+      我在这里记录代码、阅读、音乐与生活观察，也公开自己持续维护的项目。
     </p>
     <nav class="about-compass" aria-label="关于页章节">
       <a href="#writing">正在写什么</a>
@@ -23,7 +27,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
   </header>
 
   <section id="writing" class="axis-section about-copy" data-note="我在写什么">
-    <h2>四类没有严格边界的记录</h2>
+    <h2>我记录的内容</h2>
     <dl class="about-list">
       <div>
         <dt>技术笔记</dt>
@@ -45,9 +49,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
   </section>
 
   <section id="site" class="axis-section about-copy about-copy--offset" data-note="关于本站">
-    <h2>一处尽量安静的个人空间</h2>
+    <h2>这个网站</h2>
     <p>
-      站点由 Astro 生成静态页面并部署在 Netlify。文章保存在仓库中，页面尽量少依赖客户端脚本，让阅读本身保持直接、稳定。
+      站点由 Astro 生成静态页面并部署在 Cloudflare Pages。文章保存在仓库中，页面尽量少依赖客户端脚本，让阅读本身保持直接、稳定。
     </p>
     <p>
       这里不会追求高频更新。比起填满时间线，我更在意一篇文字过一段时间再看，仍然说得通。

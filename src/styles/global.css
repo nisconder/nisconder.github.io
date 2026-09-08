@@ -1,34 +1,34 @@
 :root {
   color-scheme: light;
-  --color-bg: #e7edef;
-  --color-canvas: #e7edef;
-  --color-surface: #ffffff;
-  --color-surface-soft: #dbe4e7;
+  --color-bg: #e8f0f2;
+  --color-canvas: #e8f0f2;
+  --color-surface: #f7fafb;
+  --color-surface-soft: #d7e3e6;
   --color-card: #ffffff;
   --color-field: #ffffff;
-  --color-heading: #142126;
-  --color-text: #142126;
-  --color-muted: #506168;
-  --color-line: #b9c7cc;
-  --color-line-strong: #82959d;
-  --color-control-border: #82959d;
-  --color-primary: #1e626b;
-  --color-secondary: #655170;
+  --color-heading: #122126;
+  --color-text: #122126;
+  --color-muted: #506269;
+  --color-line: #b7c6cb;
+  --color-line-strong: #7f949b;
+  --color-control-border: #7f949b;
+  --color-primary: #246d75;
+  --color-secondary: #6d5879;
   --color-primary-soft: #cfe3e6;
-  --color-secondary-soft: #e2d7e8;
+  --color-secondary-soft: #e1d7e7;
   --color-on-primary: #ffffff;
   --color-on-secondary: #ffffff;
-  --color-reading: #1e626b;
+  --color-reading: #246d75;
   --color-reading-soft: #cfe3e6;
   --color-on-reading: #ffffff;
-  --color-reading-panel: #1e626b;
+  --color-reading-panel: #246d75;
   --color-on-reading-panel: #ffffff;
-  --color-media: #655170;
-  --color-media-soft: #e2d7e8;
+  --color-media: #6d5879;
+  --color-media-soft: #e1d7e7;
   --color-on-media: #ffffff;
-  --color-media-panel: #655170;
+  --color-media-panel: #6d5879;
   --color-on-media-panel: #ffffff;
-  --card-radius: 0.75rem;
+  --card-radius: 0.85rem;
   --site-gutter: clamp(1rem, 4vw, 3rem);
   --content-width: 42rem;
   --discussion-width: 62rem;
@@ -41,38 +41,134 @@
   --title-card: clamp(1.25rem, 2.5vw, 1.65rem);
   --title-section: clamp(1.7rem, 3.4vw, 2.25rem);
   --title-page: clamp(2.25rem, 5vw, 3.5rem);
+  --motion-exit: 220ms;
+  --motion-enter: 420ms;
+  --page-enter-scale: 0.88;
+  --page-exit-scale: 0.92;
+  --page-motion-blur: 8px;
+  --ease-page: cubic-bezier(0.16, 0.84, 0.28, 1);
+  --motion-feedback: 160ms;
+  --ease-settle: cubic-bezier(0.2, 0.8, 0.2, 1);
   --font-display: "Segoe UI Variable Display", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   --font-editorial: ui-serif, Georgia, "Songti SC", "STSong", "Noto Serif CJK SC", serif;
   --font-body: "Segoe UI Variable Text", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-utility: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
 }
 
+/* Snapshot the viewport, not the full height of a long article. The header
+   has its own transition name, so only the reading surface zooms and fades. */
+html::view-transition-old(root) {
+  animation: page-depart var(--motion-exit) ease-in both;
+  mix-blend-mode: normal;
+}
+
+html::view-transition-new(root) {
+  animation: page-arrive var(--motion-enter) var(--ease-page) both;
+  mix-blend-mode: normal;
+}
+
+html::view-transition-group(site-header) {
+  animation: none;
+  z-index: 1;
+}
+
+html::view-transition {
+  pointer-events: none;
+}
+
+@keyframes page-depart {
+  to {
+    opacity: 0;
+    transform: scale(var(--page-exit-scale));
+    filter: blur(var(--page-motion-blur));
+  }
+}
+
+@keyframes page-arrive {
+  from {
+    opacity: 0;
+    transform: scale(var(--page-enter-scale));
+    filter: blur(var(--page-motion-blur));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* Astro applies these states when native view transitions are unavailable. */
+html[data-astro-transition-fallback] .site-main {
+  transform-origin: 50% var(--page-motion-origin, 30vh);
+}
+
+html[data-astro-transition-fallback='old'] .site-main {
+  animation: page-depart var(--motion-exit) ease-in both;
+}
+
+html[data-astro-transition-fallback='new'] .site-main {
+  animation: page-arrive var(--motion-enter) var(--ease-page) both;
+}
+
+/* A colour-scheme change stays spatially still and includes the header. */
+:root[data-theme-transition] .site-header {
+  view-transition-name: none;
+}
+
+html[data-theme-transition]::view-transition-old(root) {
+  animation: site-fade-out 180ms ease-in both;
+}
+
+html[data-theme-transition]::view-transition-new(root) {
+  animation: site-fade-in 260ms var(--ease-settle) both;
+}
+
+@media (max-width: 44rem) {
+  :root {
+    --page-enter-scale: 0.94;
+    --page-exit-scale: 0.96;
+    --page-motion-blur: 4px;
+  }
+}
+
+@keyframes site-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes site-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --color-bg: #0b1014;
-  --color-canvas: #0b1014;
-  --color-surface: #151d23;
-  --color-surface-soft: #1b252c;
-  --color-card: #202a31;
-  --color-field: #11181e;
+  --color-bg: #0b1114;
+  --color-canvas: #0b1114;
+  --color-surface: #11191e;
+  --color-surface-soft: #182329;
+  --color-card: #182329;
+  --color-field: #0f171b;
   --color-heading: #edf2f2;
   --color-text: #d5dee0;
   --color-muted: #95a3a8;
   --color-line: #334047;
   --color-line-strong: #52616a;
   --color-control-border: #647780;
-  --color-primary: #79a5a8;
-  --color-secondary: #9c89a6;
+  --color-primary: #73c0c4;
+  --color-secondary: #b39ac2;
   --color-primary-soft: #193236;
   --color-secondary-soft: #2b2431;
   --color-on-primary: #0b1014;
   --color-on-secondary: #0b1014;
-  --color-reading: #79a5a8;
+  --color-reading: #73c0c4;
   --color-reading-soft: #193236;
   --color-on-reading: #0b1014;
   --color-reading-panel: #243b40;
   --color-on-reading-panel: #dce9e9;
-  --color-media: #9c89a6;
+  --color-media: #b39ac2;
   --color-media-soft: #2b2431;
   --color-on-media: #0b1014;
   --color-media-panel: #393040;
@@ -247,7 +343,7 @@ a:hover {
 
 .site-main {
   width: 100%;
-  padding: clamp(2rem, 5vw, 4.5rem) var(--site-gutter) clamp(4rem, 8vw, 7rem);
+  padding: clamp(1.5rem, 4vw, 3.25rem) var(--site-gutter) clamp(3.5rem, 7vw, 5.5rem);
   background: var(--color-canvas);
 }
 
@@ -260,7 +356,7 @@ a:hover {
 .axis-section {
   position: relative;
   min-width: 0;
-  padding-block: clamp(2.5rem, 5vw, 4.5rem);
+  padding-block: clamp(2.25rem, 4vw, 3.5rem);
 }
 
 .axis-section:first-child {
@@ -376,6 +472,11 @@ a:hover {
   line-height: 1.2;
   text-align: center;
   text-decoration: none;
+  transition:
+    background-color var(--motion-feedback) ease,
+    border-color var(--motion-feedback) ease,
+    color var(--motion-feedback) ease,
+    opacity var(--motion-feedback) ease;
 }
 
 .button:hover {
@@ -648,6 +749,44 @@ a:hover {
   font-family: var(--font-body) !important;
 }
 
+[data-waline-root] .wl-header {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 0.75rem !important;
+  padding: 0.85rem 0.85rem 0.75rem !important;
+  border-block-end: 1px solid var(--color-line) !important;
+}
+
+[data-waline-root] .wl-header-item {
+  display: grid !important;
+  width: auto !important;
+  min-width: 0;
+  flex: none !important;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.35rem;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+[data-waline-root] .wl-header-item label {
+  display: block;
+  min-width: 0 !important;
+  padding: 0 0.1rem !important;
+  color: var(--color-muted) !important;
+  font-family: var(--font-utility) !important;
+  font-size: var(--text-xs) !important;
+  font-weight: 750 !important;
+  line-height: 1.25 !important;
+}
+
+[data-waline-root] .wl-header-item .wl-input {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: 2.75rem !important;
+  min-height: 2.75rem !important;
+  padding: 0.55rem 0.75rem !important;
+}
+
 [data-waline-root] .wl-editor,
 [data-waline-root] .wl-input {
   border-color: var(--color-control-border) !important;
@@ -660,10 +799,25 @@ a:hover {
 }
 
 [data-waline-root] .wl-editor {
-  height: 7rem !important;
-  min-height: 7rem !important;
-  max-height: 14rem !important;
+  box-sizing: border-box !important;
+  width: calc(100% - 1.5rem) !important;
+  height: 6.25rem !important;
+  min-height: 6.25rem !important;
+  max-height: 12rem !important;
+  margin: 0.75rem !important;
+  padding: 0.75rem 0.9rem !important;
   resize: none !important;
+}
+
+[data-waline-root] .wl-footer {
+  align-items: center !important;
+  gap: 0.5rem !important;
+  padding: 0 0.75rem 0.75rem !important;
+}
+
+[data-waline-root] .wl-footer .wl-btn {
+  min-height: 2.75rem !important;
+  padding: 0.55rem 1rem !important;
 }
 
 [data-waline-root] .wl-btn {
@@ -835,10 +989,21 @@ html[data-theme='dark'] .astro-code span {
     width: 100% !important;
   }
 
+  [data-waline-root] .wl-header {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0.65rem !important;
+    padding: 0.75rem !important;
+  }
+
+  [data-waline-root] .wl-header-item {
+    width: 100% !important;
+  }
+
   [data-waline-root] .wl-editor {
-    height: 6.5rem !important;
-    min-height: 6.5rem !important;
-    max-height: 10rem !important;
+    width: calc(100% - 1.5rem) !important;
+    height: 6rem !important;
+    min-height: 6rem !important;
+    max-height: 9rem !important;
   }
 
   [data-waline-root] .wl-actions {
@@ -922,8 +1087,19 @@ html[data-theme='dark'] .astro-code span {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+
+  html[data-astro-transition-fallback] .site-main {
+    animation: none !important;
   }
 }

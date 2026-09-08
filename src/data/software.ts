@@ -17,6 +17,24 @@ export const softwareStatusLabels: Record<SoftwareStatus, string> = {
   maintenance: '维护中',
 }
 
+export const softwareKindOrder: SoftwareKind[] = [
+  'tool',
+  'integration',
+  'game',
+  'site',
+  'service',
+  'data',
+]
+
+export const softwareStatusOrder: SoftwareStatus[] = [
+  'active',
+  'stable',
+  'experimental',
+  'maintenance',
+]
+
+export type SoftwareSort = 'priority' | 'updated' | 'name'
+
 export interface SoftwareProject {
   slug: string
   name: string
@@ -32,9 +50,26 @@ export interface SoftwareProject {
   projectUrl?: string
   actionLabel?: string
   featured?: boolean
+  fork?: boolean
+  archived?: boolean
 }
 
-export const softwareProjects: SoftwareProject[] = [
+const softwareCatalog: SoftwareProject[] = [
+  {
+    slug: 'paste-xray',
+    name: 'Paste X-Ray',
+    label: 'PX',
+    summary: '在浏览器本地检查零宽字符、Bidi 控制符、异常空白、隐藏 HTML 与换行差异，文本不会上传。',
+    kind: 'tool',
+    status: 'active',
+    tags: ['Unicode', '剪贴板', '隐私', '文本分析'],
+    language: 'JavaScript',
+    stars: 3,
+    updatedAt: '2026-08-29',
+    sourceUrl: 'https://github.com/nisconder/paste-xray',
+    projectUrl: 'https://nisconder.github.io/paste-xray/',
+    actionLabel: '在线使用',
+  },
   {
     slug: 'npm-safe',
     name: 'npm-safe',
@@ -45,7 +80,7 @@ export const softwareProjects: SoftwareProject[] = [
     tags: ['供应链安全', 'TypeScript', 'SQLite', 'CLI'],
     language: 'TypeScript',
     stars: 5,
-    updatedAt: '2026-08-22',
+    updatedAt: '2026-08-29',
     sourceUrl: 'https://github.com/nisconder/npm-safe',
     projectUrl: 'https://github.com/nisconder/npm-safe/releases',
     actionLabel: '下载版本',
@@ -61,7 +96,7 @@ export const softwareProjects: SoftwareProject[] = [
     tags: ['Git', 'Python', '自动同步', '跨平台'],
     language: 'Python',
     stars: 4,
-    updatedAt: '2026-08-03',
+    updatedAt: '2026-08-01',
     sourceUrl: 'https://github.com/nisconder/git-auto-updater',
   },
   {
@@ -74,7 +109,7 @@ export const softwareProjects: SoftwareProject[] = [
     tags: ['Java', 'CLI', '文件工具', '代码生成'],
     language: 'Java',
     stars: 3,
-    updatedAt: '2026-08-03',
+    updatedAt: '2026-08-01',
     sourceUrl: 'https://github.com/nisconder/jcli-toolkit',
   },
   {
@@ -87,7 +122,7 @@ export const softwareProjects: SoftwareProject[] = [
     tags: ['Next.js', 'TypeScript', 'AI 游戏', 'OpenAI API'],
     language: 'TypeScript',
     stars: 4,
-    updatedAt: '2026-08-03',
+    updatedAt: '2026-07-02',
     sourceUrl: 'https://github.com/nisconder/ai-draw-guess',
   },
   {
@@ -99,40 +134,71 @@ export const softwareProjects: SoftwareProject[] = [
     status: 'active',
     tags: ['DeepSeek Harness', 'Agent Tools', 'TypeScript', '安全'],
     language: 'TypeScript',
-    stars: 4,
-    updatedAt: '2026-08-26',
+    stars: 5,
+    updatedAt: '2026-08-29',
     sourceUrl: 'https://github.com/nisconder/npm-safe-forDSH',
   },
   {
     slug: 'nisconder-blog',
     name: 'Nisconder Blog',
     label: 'NB',
-    summary: '这个持续重写的个人站本身：文章、音乐、搜索、软件园和主要页面末尾的讨论区。',
+    summary: '这个持续重写的个人站本身：文章、音乐、搜索、项目索引和主要页面末尾的讨论区。',
     kind: 'site',
     status: 'active',
-    tags: ['Astro', 'Netlify', '静态站点', 'Waline'],
+    tags: ['Astro', 'Cloudflare Pages', '静态站点', 'Waline'],
     language: 'JavaScript',
     stars: 3,
-    updatedAt: '2026-08-26',
+    updatedAt: '2026-08-27',
     sourceUrl: 'https://github.com/nisconder/nisconder.github.io',
     projectUrl: '/',
     actionLabel: '访问本站',
   },
-  {
-    slug: 'my-waline',
-    name: 'My Waline',
-    label: 'WL',
-    summary: '为本站评论与留言提供后端能力的 Waline 服务实例，独立部署在 Vercel。',
-    kind: 'service',
-    status: 'stable',
-    tags: ['Waline', 'Vercel', 'Node.js', '评论服务'],
-    language: 'JavaScript',
-    stars: 0,
-    updatedAt: '2026-08-06',
-    projectUrl: 'https://my-waline-pink.vercel.app',
-    actionLabel: '服务地址',
-  },
 ]
 
+const nameCollator = new Intl.Collator(['zh-CN', 'en'], {
+  numeric: true,
+  sensitivity: 'base',
+})
+
+const compareFeatured = (left: SoftwareProject, right: SoftwareProject) =>
+  Number(Boolean(right.featured)) - Number(Boolean(left.featured))
+
+const compareUpdated = (left: SoftwareProject, right: SoftwareProject) =>
+  right.updatedAt.localeCompare(left.updatedAt)
+
+const compareName = (left: SoftwareProject, right: SoftwareProject) =>
+  nameCollator.compare(left.name, right.name)
+
+const compareSlug = (left: SoftwareProject, right: SoftwareProject) =>
+  left.slug.localeCompare(right.slug)
+
+export const softwareProjects = softwareCatalog.filter(
+  (project) => project.fork !== true && project.archived !== true,
+)
+
+export function sortSoftwareProjects(
+  projects: readonly SoftwareProject[],
+  order: SoftwareSort = 'priority',
+) {
+  return [...projects].sort((left, right) => {
+    if (order === 'name') {
+      return compareName(left, right) || compareSlug(left, right)
+    }
+
+    if (order === 'updated') {
+      return compareUpdated(left, right)
+        || compareName(left, right)
+        || compareSlug(left, right)
+    }
+
+    return compareFeatured(left, right)
+      || compareUpdated(left, right)
+      || compareName(left, right)
+      || compareSlug(left, right)
+  })
+}
+
+export const sortedSoftwareProjects = sortSoftwareProjects(softwareProjects, 'priority')
+
 export const featuredSoftware =
-  softwareProjects.find((project) => project.featured) ?? softwareProjects[0]
+  sortedSoftwareProjects.find((project) => project.featured) ?? sortedSoftwareProjects[0]

@@ -10,6 +10,23 @@ export interface PlaylistTrack {
   audio: string
 }
 
+type PlaylistTrackInput = Omit<PlaylistTrack, 'audio'> & { audio?: string }
+
+export const getNeteaseTrackUrl = (track: Pick<PlaylistTrack, 'id'>) =>
+  `https://music.163.com/#/song?id=${track.id}`
+
+export const getNeteaseAudioUrl = (track: Pick<PlaylistTrack, 'id'>) =>
+  `https://music.163.com/song/media/outer/url?id=${track.id}.mp3`
+
+// 网易云 fee=0 为免费曲目，fee=8 可通过公开外链播放；其他权限类型只外链展示。
+export const isPlayableTrack = (track: Pick<PlaylistTrack, 'fee'>) =>
+  track.fee === 0 || track.fee === 8
+
+const attachAudioSource = (track: PlaylistTrackInput): PlaylistTrack => ({
+  ...track,
+  audio: track.audio || getNeteaseAudioUrl(track),
+})
+
 interface PlaylistDetailResponse {
   playlist?: {
     trackIds?: Array<{ id?: number }>
@@ -66,19 +83,18 @@ const loadPlaylist = async (): Promise<PlaylistTrack[]> => {
     const tracks = ids.flatMap((id) => {
       const song = songsById.get(id)
       if (!song?.name) return []
-      return [{
+      return [attachAudioSource({
         id,
         title: song.name,
         author: song.artists?.map(({ name }) => name).filter(Boolean).join(' / ') || '未知音乐人',
         fee: Number.isFinite(song.fee) ? Number(song.fee) : 1,
-        audio: `https://music.163.com/song/media/outer/url?id=${id}.mp3`,
-      }]
+      })]
     })
 
     if (tracks.length !== ids.length) throw new Error('Song details are incomplete')
     return tracks
   } catch {
-    return fallbackPlaylist as PlaylistTrack[]
+    return (fallbackPlaylist as PlaylistTrackInput[]).map(attachAudioSource)
   }
 }
 

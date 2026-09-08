@@ -1,52 +1,35 @@
 ---
-import type { PlaylistTrack } from "../lib/playlist"
+import { getNeteaseTrackUrl, isPlayableTrack, type PlaylistTrack } from '../lib/playlist'
 
 interface Props {
   tracks: PlaylistTrack[]
   startIndex?: number
   indexes?: number[]
+  playerIndexes?: number[]
   label: string
 }
 
-const { tracks, startIndex = 0, indexes, label } = Astro.props
-const isRestricted = (fee: number) => fee !== 0 && fee !== 8
+const { tracks, startIndex = 0, indexes, playerIndexes, label } = Astro.props
 ---
 
 <ol class="track-list" start={startIndex + 1} aria-label={label}>
   {
     tracks.map((track, localIndex) => {
       const index = indexes?.[localIndex] ?? startIndex + localIndex
-      const restricted = isRestricted(track.fee)
+      const playerIndex = playerIndexes?.[localIndex] ?? localIndex
+      const playable = isPlayableTrack(track)
       const number = (index + 1).toString().padStart(2, "0")
-      const neteaseUrl = `https://music.163.com/#/song?id=${track.id}`
+      const neteaseUrl = getNeteaseTrackUrl(track)
 
       return (
-        <li class:list={{ "track-row": true, "track-row--restricted": restricted }}>
+        <li class:list={{ "track-row": true, "track-row--external": !playable }}>
           {
-            restricted ? (
-              <a
-                class="track-row__control"
-                href={neteaseUrl}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={`${track.title}，${track.author}，需在网易云播放`}
-              >
-                <span class="track-row__number" aria-hidden="true">{number}</span>
-                <span class="track-row__copy">
-                  <strong title={track.title}>{track.title}</strong>
-                  <small>{track.author}</small>
-                </span>
-                <span class="track-row__state" aria-hidden="true">打开 ↗</span>
-              </a>
-            ) : (
+            playable ? (
               <button
                 class="track-row__control"
                 type="button"
-                data-track-index={index}
-                data-track-title={track.title}
-                data-track-author={track.author}
-                data-track-audio={track.audio}
-                data-track-external={neteaseUrl}
+                data-track-control
+                data-track-index={playerIndex}
                 aria-label={`播放 ${track.title}，${track.author}`}
               >
                 <span class="track-row__number" aria-hidden="true">{number}</span>
@@ -54,8 +37,23 @@ const isRestricted = (fee: number) => fee !== 0 && fee !== 8
                   <strong title={track.title}>{track.title}</strong>
                   <small>{track.author}</small>
                 </span>
-                <span class="track-row__state" data-track-state aria-hidden="true">播放</span>
+                <span class="track-row__state" data-track-state aria-hidden="true">站内播放</span>
               </button>
+            ) : (
+              <a
+                class="track-row__control"
+                href={neteaseUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`${track.title}，${track.author}，在网易云打开`}
+              >
+                <span class="track-row__number" aria-hidden="true">{number}</span>
+                <span class="track-row__copy">
+                  <strong title={track.title}>{track.title}</strong>
+                  <small>{track.author}</small>
+                </span>
+                <span class="track-row__state" aria-hidden="true">网易云 ↗</span>
+              </a>
             )
           }
         </li>
@@ -80,7 +78,7 @@ const isRestricted = (fee: number) => fee !== 0 && fee !== 8
     width: 100%;
     min-width: 0;
     min-height: 4rem;
-    grid-template-columns: 2.25rem minmax(0, 1fr) 4.25rem;
+    grid-template-columns: 2.25rem minmax(0, 1fr) 5.25rem;
     align-items: center;
     gap: 0.75rem;
     padding: 0.65rem 1rem;
@@ -109,6 +107,14 @@ const isRestricted = (fee: number) => fee !== 0 && fee !== 8
     color: var(--color-on-reading-panel);
   }
 
+  .track-row__control[data-track-error='true'] {
+    background: var(--color-secondary-soft);
+  }
+
+  .track-row__control[data-track-error='true'] .track-row__state {
+    color: var(--color-secondary);
+  }
+
   .track-row__number,
   .track-row__state {
     font-family: var(--font-utility);
@@ -131,6 +137,10 @@ const isRestricted = (fee: number) => fee !== 0 && fee !== 8
   .track-row__control[aria-current='true'] .track-row__state,
   .track-row__control[aria-current='true'] .track-row__copy small {
     color: inherit;
+  }
+
+  .track-row--external .track-row__state {
+    color: var(--color-secondary);
   }
 
   .track-row__copy {
@@ -162,14 +172,10 @@ const isRestricted = (fee: number) => fee !== 0 && fee !== 8
     white-space: nowrap;
   }
 
-  .track-row--restricted .track-row__state {
-    color: var(--color-secondary);
-  }
-
   @media (max-width: 32rem) {
     .track-row__control {
       min-height: 4.25rem;
-      grid-template-columns: 1.75rem minmax(0, 1fr) 3.5rem;
+      grid-template-columns: 1.75rem minmax(0, 1fr) 4.75rem;
       gap: 0.5rem;
       padding-inline: 0.75rem;
     }

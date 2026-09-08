@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  window.__ADMIN_UI_V6__ = true;
+  window.__ADMIN_UI_V7__ = true;
 
   var loading = document.getElementById('admin-loading');
   var decorationFrame = 0;
@@ -82,25 +82,32 @@
 
   var createSearchIcon = function () {
     var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     svg.setAttribute('viewBox', '0 0 24 24');
     svg.setAttribute('width', '18');
     svg.setAttribute('height', '18');
     svg.setAttribute('aria-hidden', 'true');
-    circle.setAttribute('cx', '11');
-    circle.setAttribute('cy', '11');
-    circle.setAttribute('r', '6.5');
-    circle.setAttribute('fill', 'none');
-    circle.setAttribute('stroke', 'currentColor');
-    circle.setAttribute('stroke-width', '2');
-    path.setAttribute('d', 'm16 16 4 4');
-    path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', 'currentColor');
-    path.setAttribute('stroke-width', '2');
-    path.setAttribute('stroke-linecap', 'round');
-    svg.appendChild(circle);
-    svg.appendChild(path);
+    svg.setAttribute('data-admin-mark', 'overprint-search');
+
+    [
+      { color: '#1e626b', offset: '-0.8 -0.8' },
+      { color: '#655170', offset: '0.8 0.8' }
+    ].forEach(function (ink) {
+      var layer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      layer.setAttribute('transform', 'translate(' + ink.offset + ')');
+      layer.setAttribute('fill', 'none');
+      layer.setAttribute('stroke', ink.color);
+      layer.setAttribute('stroke-width', '1.65');
+      circle.setAttribute('cx', '10');
+      circle.setAttribute('cy', '10');
+      circle.setAttribute('r', '5.75');
+      path.setAttribute('d', 'm14.2 14.2 5 5');
+      path.setAttribute('stroke-linecap', 'square');
+      layer.appendChild(circle);
+      layer.appendChild(path);
+      svg.appendChild(layer);
+    });
     return svg;
   };
 
@@ -174,8 +181,8 @@
     if (navGroup && !navGroup.querySelector('[data-admin-destination="home"]')) {
       var homeLink = document.createElement('a');
       homeLink.href = adminHomePath;
-      homeLink.textContent = '\u603b\u89c8';
-      homeLink.title = '\u8fd4\u56de\u7ba1\u7406\u540e\u53f0';
+      homeLink.textContent = '\u7ba1\u7406\u9996\u9875';
+      homeLink.title = '\u8fd4\u56de\u7edf\u4e00\u7ba1\u7406\u5165\u53e3';
       homeLink.dataset.adminNav = 'top';
       homeLink.dataset.adminDestination = 'home';
       homeLink.dataset.adminActive = 'false';
@@ -185,8 +192,8 @@
     if (navGroup && !navGroup.querySelector('[data-admin-destination="comments"]')) {
       var commentsLink = document.createElement('a');
       commentsLink.href = commentsAdminPath;
-      commentsLink.textContent = '\u7559\u8a00';
-      commentsLink.title = '\u6253\u5f00\u7559\u8a00\u7ba1\u7406';
+      commentsLink.textContent = 'Waline';
+      commentsLink.title = '\u6253\u5f00 Waline \u7ba1\u7406';
       commentsLink.dataset.adminNav = 'top';
       commentsLink.dataset.adminDestination = 'comments';
       commentsLink.dataset.adminActive = 'false';

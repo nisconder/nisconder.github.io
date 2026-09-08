@@ -18,28 +18,42 @@ const stickyWeight = (post: PostEntry) => {
   return sticky === true ? 1 : 0
 }
 
-const sortPosts = (posts: PostEntry[]) =>
-  posts.sort((left, right) => {
-    const dateDifference = right.data.date.getTime() - left.data.date.getTime()
-    if (dateDifference !== 0) return dateDifference
+export function comparePostsByPublishedDate(left: PostEntry, right: PostEntry): number {
+  const dateDifference = right.data.date.getTime() - left.data.date.getTime()
+  if (dateDifference !== 0) return dateDifference
 
-    return right.id.localeCompare(left.id, 'zh-CN')
-  })
+  return right.id.localeCompare(left.id, 'zh-CN')
+}
+
+export function sortPostsByPublishedDate(posts: readonly PostEntry[]): PostEntry[] {
+  return [...posts].sort(comparePostsByPublishedDate)
+}
 
 export async function getPublishedPosts(): Promise<PostEntry[]> {
   const posts = await getCollection('posts', ({ data }) => data.draft !== true)
-  return sortPosts(posts)
+  return sortPostsByPublishedDate(posts)
+}
+
+export function getPinnedPosts(posts: readonly PostEntry[]): PostEntry[] {
+  return posts
+    .filter((post) => stickyWeight(post) > 0)
+    .sort((left, right) =>
+      stickyWeight(right) - stickyWeight(left)
+      || comparePostsByPublishedDate(left, right),
+    )
+}
+
+export async function getPinnedPost(
+  posts?: readonly PostEntry[],
+): Promise<PostEntry | undefined> {
+  const candidates = posts ?? await getPublishedPosts()
+  return getPinnedPosts(candidates)[0]
 }
 
 export async function getFeaturedPost(
-  posts?: PostEntry[],
+  posts?: readonly PostEntry[],
 ): Promise<PostEntry | undefined> {
-  const candidates = posts ? sortPosts([...posts]) : await getPublishedPosts()
-  const pinned = candidates
-    .filter((post) => stickyWeight(post) > 0)
-    .sort((left, right) => stickyWeight(right) - stickyWeight(left))
-
-  return pinned[0] ?? candidates[0]
+  return getPinnedPost(posts)
 }
 
 export function getPostCalendarParts(dateValue: Date | string) {
@@ -100,7 +114,7 @@ export function getPostInstant(dateValue: Date | string): Date {
   )
 }
 
-export function getPostPlainText(post: PostEntry, limit = 12_000): string {
+export function getPostPlainText(post: PostEntry, limit?: number): string {
   const text = (post.body ?? '')
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/gm, ' ')
@@ -113,13 +127,30 @@ export function getPostPlainText(post: PostEntry, limit = 12_000): string {
     .replace(/\s+/g, ' ')
     .trim()
 
-  return Array.from(text).slice(0, limit).join('')
+  if (limit === undefined || !Number.isFinite(limit)) return text
+  return Array.from(text).slice(0, Math.max(0, Math.floor(limit))).join('')
 }
 
 export function getPostDescription(post: PostEntry, limit = 160): string {
-  const description = post.data.description?.trim() || getPostPlainText(post, limit + 1)
+  const description = (post.data.description?.trim() || getPostPlainText(post, limit + 1))
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/[\*_~]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
   const characters = Array.from(description)
   return characters.length > limit
     ? `${characters.slice(0, limit).join('').trimEnd()}…`
     : description
+}
+
+export function getPostReadingMinutes(post: PostEntry): number {
+  const text = getPostPlainText(post)
+  const cjkCharacters = text.match(/[\u3400-\u9fff\uf900-\ufaff]/g)?.length ?? 0
+  const latinWords = text
+    .replace(/[\u3400-\u9fff\uf900-\ufaff]/g, ' ')
+    .match(/[A-Za-z0-9]+(?:['’\-][A-Za-z0-9]+)*/g)?.length ?? 0
+
+  return Math.max(1, Math.ceil(cjkCharacters / 400 + latinWords / 200))
 }

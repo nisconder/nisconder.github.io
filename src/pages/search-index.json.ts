@@ -25,7 +25,7 @@ export const GET: APIRoute = async () => {
     url: getPostUrl(post),
   }))
   const softwareIndex = softwareProjects.map((project) => ({
-    kind: '软件',
+    kind: '项目',
     title: project.name,
     description: project.summary,
     content: [
@@ -34,6 +34,7 @@ export const GET: APIRoute = async () => {
       project.language,
       ...project.tags,
     ].filter(Boolean).join(' '),
+    date: project.updatedAt,
     category: softwareKindLabels[project.kind],
     tags: project.tags,
     url: `/software/#${project.slug}`,

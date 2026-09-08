@@ -30,6 +30,7 @@ const posts = defineCollection({
     tags: z.array(z.string()).optional(),
     cover: optionalString,
     image: optionalString,
+    imageAlt: optionalString,
   }),
 })
 

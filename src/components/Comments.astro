@@ -34,7 +34,8 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
       data-comments-toggle
       hidden
     >
-      展开留言
+      <span data-comments-toggle-label>展开留言</span>
+      <span class="site-comments__toggle-mark" aria-hidden="true"></span>
     </button>
   </header>
   <div id="site-comments-body" class="site-comments__body" data-comments-body>
@@ -95,9 +96,13 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
   }
 
   .site-comments__toggle {
-    min-width: 7rem;
+    display: inline-grid;
+    min-width: 7.75rem;
     min-height: 2.75rem;
     flex: 0 0 auto;
+    grid-template-columns: auto 1.4rem;
+    align-items: center;
+    gap: 0.55rem;
     padding-inline: 1rem;
     border: 1px solid var(--color-primary);
     border-inline-end: 0.3rem solid var(--color-secondary);
@@ -107,10 +112,63 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
     cursor: pointer;
     font-size: 0.875rem;
     font-weight: 750;
+    transition:
+      background-color var(--motion-feedback) ease,
+      border-color var(--motion-feedback) ease,
+      color var(--motion-feedback) ease;
+  }
+
+  .site-comments__toggle-mark {
+    position: relative;
+    display: block;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .site-comments__toggle-mark::before,
+  .site-comments__toggle-mark::after {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 50%;
+    width: 0.9rem;
+    height: 0.1rem;
+    border-radius: 999px;
+    background: currentColor;
+    content: '';
+    transition: transform 220ms ease;
+  }
+
+  .site-comments__toggle-mark::before {
+    transform: translate(-50%, -50%);
+  }
+
+  .site-comments__toggle-mark::after {
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+
+  .site-comments__toggle[aria-expanded='true'] .site-comments__toggle-mark::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  .site-comments__toggle[aria-expanded='true'] .site-comments__toggle-mark::after {
+    transform: translate(-50%, -50%) rotate(135deg);
   }
 
   .site-comments__body {
     min-width: 0;
+  }
+
+  .site-comments :global(.wl-editor) {
+    height: 7.25rem !important;
+    min-height: 7.25rem !important;
+    max-height: 18rem !important;
+    resize: vertical !important;
+  }
+
+  .site-comments :global(.wl-actions a[href*='markdown' i]),
+  .site-comments :global(.wl-actions [aria-label*='markdown' i]),
+  .site-comments :global(.wl-actions [title*='markdown' i]) {
+    display: none !important;
   }
 
   @media (max-width: 44rem) {
@@ -142,13 +200,31 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
       margin-block-start: 1rem;
     }
 
+    .site-comments :global(.wl-header) {
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 0.6rem !important;
+    }
+
+    .site-comments :global(.wl-editor) {
+      height: 6.75rem !important;
+      min-height: 6.75rem !important;
+      max-height: 14rem !important;
+    }
+
     .site-comments:not([data-comments-bound]) .site-comments__body {
       display: none;
     }
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-comments__toggle-mark::before,
+    .site-comments__toggle-mark::after {
+      transition: none;
+    }
+  }
 </style>
 
-<script is:inline>
+<script is:inline data-astro-rerun>
   (() => {
     const sections = [...document.querySelectorAll('[data-site-comments]:not([data-comments-bound])')]
     if (sections.length === 0) return
@@ -156,7 +232,11 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
     const styleHref = 'https://cdn.jsdelivr.net/npm/@waline/client@3.7.1/dist/waline.css'
     const scriptHref = 'https://cdn.jsdelivr.net/npm/@waline/client@3.7.1/dist/waline.js'
 
-    const loadStyles = () => new Promise((resolve, reject) => {
+    const loadStyles = (signal) => new Promise((resolve, reject) => {
+      if (signal.aborted) {
+        reject(new DOMException('Comments page was left', 'AbortError'))
+        return
+      }
       let link = document.querySelector(`link[href="${styleHref}"]`)
       if (link instanceof HTMLLinkElement && link.sheet) return resolve()
 
@@ -172,53 +252,117 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
         return
       }
 
-      link.addEventListener('load', resolve, { once: true })
-      link.addEventListener('error', () => {
+      const cleanup = () => {
+        link.removeEventListener('load', onLoad)
+        link.removeEventListener('error', onError)
+        signal.removeEventListener('abort', onAbort)
+      }
+      const onLoad = () => {
+        cleanup()
+        resolve()
+      }
+      const onError = () => {
+        cleanup()
         link.remove()
         reject(new Error('Waline stylesheet failed to load'))
-      }, { once: true })
+      }
+      const onAbort = () => {
+        cleanup()
+        if (shouldAppend) link.remove()
+        reject(new DOMException('Comments page was left', 'AbortError'))
+      }
+      link.addEventListener('load', onLoad, { once: true })
+      link.addEventListener('error', onError, { once: true })
+      signal.addEventListener('abort', onAbort, { once: true })
 
       if (shouldAppend) document.head.append(link)
     })
 
-    const loadAssets = () => {
-      if (window.__nisconderWalineAssets) return window.__nisconderWalineAssets
-      const assets = Promise.all([loadStyles(), import(scriptHref)])
-      window.__nisconderWalineAssets = assets
-      assets.catch(() => {
-        if (window.__nisconderWalineAssets === assets) {
-          delete window.__nisconderWalineAssets
+    const loadModule = () => {
+      if (window.__nisconderWalineModule) return window.__nisconderWalineModule
+      const module = import(scriptHref)
+      window.__nisconderWalineModule = module
+      module.catch(() => {
+        if (window.__nisconderWalineModule === module) {
+          delete window.__nisconderWalineModule
         }
       })
-      return assets
+      return module
     }
 
     const bindSection = (section) => {
       if (!(section instanceof HTMLElement)) return
-      section.dataset.commentsBound = 'true'
       const root = section.querySelector('[data-waline-root]')
       const status = section.querySelector('[data-waline-status]')
       const body = section.querySelector('[data-comments-body]')
       const toggle = section.querySelector('[data-comments-toggle]')
+      const toggleLabel = section.querySelector('[data-comments-toggle-label]')
       if (
         !(root instanceof HTMLElement)
         || !(status instanceof HTMLElement)
         || !(body instanceof HTMLElement)
         || !(toggle instanceof HTMLButtonElement)
       ) return
+      section.dataset.commentsBound = 'true'
 
+      const lifecycle = new AbortController()
       const mobileQuery = window.matchMedia('(max-width: 44rem)')
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+      let disposed = false
       let observer
+      let bodyAnimation
+      let rootAnimation
+      let bodyHideTimer
+      let scrollFrame
+      let disclosureRevision = 0
+      const active = () => !disposed && section.isConnected && root.isConnected
 
-      const setExpanded = (expanded) => {
-        body.hidden = !expanded
+      const setExpanded = (expanded, animate = false) => {
+        if (!active()) return
+        const revision = ++disclosureRevision
+        window.clearTimeout(bodyHideTimer)
+        bodyAnimation?.cancel()
         toggle.hidden = !mobileQuery.matches
         toggle.setAttribute('aria-expanded', String(expanded))
-        toggle.textContent = expanded ? '收起留言' : '展开留言'
+        if (toggleLabel) toggleLabel.textContent = expanded ? '收起留言' : '展开留言'
         section.dataset.commentsExpanded = String(expanded)
+
+        if (!animate || reducedMotion.matches) {
+          body.hidden = !expanded
+          body.inert = !expanded
+          body.setAttribute('aria-hidden', String(!expanded))
+          return
+        }
+
+        if (expanded) {
+          body.hidden = false
+          body.inert = false
+          body.setAttribute('aria-hidden', 'false')
+          bodyAnimation = body.animate(
+            [{ opacity: 0 }, { opacity: 1 }],
+            { duration: 220, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
+          )
+          return
+        }
+
+        if (body.contains(document.activeElement)) toggle.focus()
+        body.inert = true
+        body.setAttribute('aria-hidden', 'true')
+        bodyAnimation = body.animate(
+          [{ opacity: 1 }, { opacity: 0 }],
+          { duration: 120, easing: 'ease-in', fill: 'forwards' },
+        )
+        const finishCollapse = () => {
+          if (active() && revision === disclosureRevision && section.dataset.commentsExpanded === 'false') {
+            body.hidden = true
+          }
+        }
+        bodyAnimation.finished.catch(() => undefined).then(finishCollapse)
+        bodyHideTimer = window.setTimeout(finishCollapse, 160)
       }
 
       const showRetry = () => {
+        if (!active()) return
         status.replaceChildren('留言加载失败。 ')
         const retry = document.createElement('button')
         retry.type = 'button'
@@ -231,18 +375,19 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
           root.dataset.walineState = 'idle'
           retry.remove()
           loadComments()
-        }, { once: true })
+        }, { once: true, signal: lifecycle.signal })
         status.append(retry)
       }
 
       const loadComments = async () => {
+        if (!active()) return
         if (root.dataset.walineState === 'loading' || root.dataset.walineState === 'ready') return
         root.dataset.walineState = 'loading'
         status.textContent = '正在加载留言…'
 
         try {
-          const [, module] = await loadAssets()
-          if (!root.isConnected) return
+          const [, module] = await Promise.all([loadStyles(lifecycle.signal), loadModule()])
+          if (!active()) return
           root.replaceChildren()
           root.__walineInstance = module.init({
             el: root,
@@ -254,7 +399,14 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
           })
           root.dataset.walineState = 'ready'
           status.remove()
+          if (!reducedMotion.matches) {
+            rootAnimation = root.animate(
+              [{ opacity: 0 }, { opacity: 1 }],
+              { duration: 180, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
+            )
+          }
         } catch {
+          if (!active()) return
           root.__walineInstance?.destroy?.()
           delete root.__walineInstance
           root.replaceChildren()
@@ -264,19 +416,45 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
       }
 
       const observeComments = () => {
-        if (body.hidden || root.dataset.walineState === 'ready') return
+        if (!active() || body.hidden || root.dataset.walineState === 'ready') return
         if ('IntersectionObserver' in window) {
           observer?.disconnect()
           observer = new IntersectionObserver((entries) => {
-            if (!entries.some((entry) => entry.isIntersecting)) return
+            if (!active() || !entries.some((entry) => entry.isIntersecting)) return
             observer.disconnect()
             loadComments()
-          }, { rootMargin: '600px 0px' })
+          }, { rootMargin: '150px 0px' })
           observer.observe(section)
         } else {
           loadComments()
         }
       }
+
+      const dispose = () => {
+        if (disposed) return
+        disposed = true
+        disclosureRevision += 1
+        lifecycle.abort()
+        observer?.disconnect()
+        window.clearTimeout(bodyHideTimer)
+        cancelAnimationFrame(scrollFrame)
+        bodyAnimation?.cancel()
+        rootAnimation?.cancel()
+        try {
+          root.__walineInstance?.destroy?.()
+        } finally {
+          delete root.__walineInstance
+        }
+      }
+
+      document.addEventListener('astro:before-swap', (event) => {
+        const swap = event.swap
+        // Keep Waline intact through the exit animation, then unmount while its head styles still exist.
+        event.swap = () => {
+          dispose()
+          swap.call(event)
+        }
+      }, { signal: lifecycle.signal })
 
       if (mobileQuery.matches) {
         setExpanded(false)
@@ -287,14 +465,17 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
 
       toggle.addEventListener('click', () => {
         const expanded = toggle.getAttribute('aria-expanded') !== 'true'
-        setExpanded(expanded)
+        setExpanded(expanded, true)
         if (expanded) {
           loadComments()
-          requestAnimationFrame(() => body.scrollIntoView({ block: 'nearest' }))
+          cancelAnimationFrame(scrollFrame)
+          scrollFrame = requestAnimationFrame(() => {
+            if (active()) body.scrollIntoView({ block: 'nearest' })
+          })
         } else {
           observer?.disconnect()
         }
-      })
+      }, { signal: lifecycle.signal })
 
       mobileQuery.addEventListener?.('change', (event) => {
         if (event.matches) {
@@ -304,16 +485,10 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
           setExpanded(true)
           observeComments()
         }
-      })
+      }, { signal: lifecycle.signal })
     }
 
     sections.forEach(bindSection)
 
-    document.addEventListener('astro:before-swap', () => {
-      sections.forEach((section) => {
-        const root = section.querySelector('[data-waline-root]')
-        root?.__walineInstance?.destroy?.()
-      })
-    }, { once: true })
   })()
 </script>

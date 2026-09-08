@@ -1,0 +1,36 @@
+---
+import { ClientRouter } from 'astro:transitions'
+---
+
+<ClientRouter fallback="animate" />
+
+<script>
+  // The router swaps <html> attributes too. Set the destination's theme before
+  // it is painted, including the controls captured in the transition snapshot.
+  document.addEventListener('astro:before-swap', (event) => {
+    const theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
+    const nextRoot = event.newDocument.documentElement
+    nextRoot.dataset.theme = theme
+    nextRoot.style.colorScheme = theme
+    event.newDocument.querySelector('#theme-color')?.setAttribute(
+      'content', theme === 'dark' ? '#0b1114' : '#e8f0f2',
+    )
+    event.newDocument.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+      button.setAttribute('aria-pressed', String(theme === 'dark'))
+      button.setAttribute('aria-label', theme === 'dark' ? '切换为浅色模式' : '切换为深色模式')
+      const label = button.querySelector('[data-theme-label]')
+      if (label) label.textContent = theme === 'dark' ? '浅色' : '深色'
+    })
+  })
+
+  // Keep the fallback's zoom centred on the visible portion of long articles.
+  document.addEventListener('astro:before-preparation', () => {
+    const main = document.querySelector<HTMLElement>('.site-main')
+    if (main) main.style.setProperty('--page-motion-origin', `${innerHeight / 2 - main.getBoundingClientRect().top}px`)
+  })
+
+  document.addEventListener('astro:after-swap', () => {
+    const main = document.querySelector<HTMLElement>('.site-main')
+    if (main) main.style.setProperty('--page-motion-origin', `${innerHeight / 2 - main.getBoundingClientRect().top}px`)
+  })
+</script>

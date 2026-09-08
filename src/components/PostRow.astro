@@ -6,11 +6,22 @@ interface Props {
   excerpt?: string
   date: string
   datetime?: string
+  readingMinutes?: number
   category?: string
   tags?: string[]
 }
 
-const { href, title, description, excerpt, date, datetime, category, tags = [] } = Astro.props
+const {
+  href,
+  title,
+  description,
+  excerpt,
+  date,
+  datetime,
+  readingMinutes,
+  category,
+  tags = [],
+} = Astro.props
 const summary = description ?? excerpt
 const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(value)}`
@@ -19,6 +30,11 @@ const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(
 <article class="post-row">
   <div class="post-row__meta">
     <time datetime={datetime ?? date}>{date}</time>
+    {
+      readingMinutes && (
+        <span class="post-row__reading-time">约 {readingMinutes} 分钟</span>
+      )
+    }
     {
       category && (
         <a
@@ -92,6 +108,12 @@ const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(
   .post-row__meta time {
     letter-spacing: 0.025em;
     font-variant-numeric: tabular-nums;
+  }
+
+  .post-row__reading-time {
+    color: var(--color-primary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
 
   .post-row__category {

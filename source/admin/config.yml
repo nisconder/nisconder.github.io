@@ -14,8 +14,8 @@ locale: zh_Hans
 logo:
   src: /img/nisconder-avatar.png
   show_in_header: true
-site_url: https://nisconder-blog.netlify.app
-display_url: https://nisconder-blog.netlify.app
+site_url: https://nisconder.pages.dev
+display_url: https://nisconder.pages.dev
 show_preview_links: true
 media_folder: source/images/uploads
 public_folder: /images/uploads

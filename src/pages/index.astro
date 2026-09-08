@@ -1,14 +1,14 @@
 ---
-import PostRow from '../components/PostRow.astro'
 import { featuredSoftware, softwareProjects, softwareStatusLabels } from '../data/software'
 import BaseLayout from '../layouts/BaseLayout.astro'
-import { getPlaylistTracks } from '../lib/playlist'
+import { getPlaylistTracks, isPlayableTrack } from '../lib/playlist'
 import {
   formatPostDate,
-  getFeaturedPost,
+  getPinnedPost,
   getPostCategory,
   getPostDateTime,
   getPostDescription,
+  getPostReadingMinutes,
   getPostTags,
   getPostUrl,
   getPublishedPosts,
@@ -16,1362 +16,848 @@ import {
 
 const posts = await getPublishedPosts()
 const playlist = await getPlaylistTracks()
-const playablePlaylist = playlist.filter((track) => track.fee === 0 || track.fee === 8)
-const playlistPreview = playablePlaylist.slice(0, 3)
+const playableTracks = playlist.filter(isPlayableTrack)
+const playlistPreview = (playableTracks.length > 0 ? playableTracks : playlist).slice(0, 3)
 const musicianCount = new Set(
   playlist.flatMap((track) => track.author.split('/').map((artist) => artist.trim()).filter(Boolean)),
 ).size
+
 const latestPost = posts[0]
-const featuredPost = await getFeaturedPost(posts)
+const featuredPost = await getPinnedPost(posts)
 const pinnedPost = featuredPost?.id !== latestPost?.id ? featuredPost : undefined
-const recentPosts = posts
-  .filter((post) => post.id !== latestPost?.id)
-  .slice(0, 4)
 
 const topicCounts = new Map<string, number>()
-const categoryCounts = new Map<string, number>()
 for (const post of posts) {
-  const category = getPostCategory(post)
-  if (category) categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1)
   for (const tag of getPostTags(post)) {
     topicCounts.set(tag, (topicCounts.get(tag) ?? 0) + 1)
   }
 }
 
-const categories = [...categoryCounts]
+const querySeeds = [...topicCounts]
   .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0], 'zh-CN'))
-const topics = [...topicCounts]
-  .filter(([, count]) => count >= 2)
-  .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0], 'zh-CN'))
-  .slice(0, 8)
-const querySeeds = [...topicCounts.keys()].slice(0, 5)
+  .slice(0, 3)
+  .map(([name]) => name)
 
 const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 const categoryHref = (category: string) => `/search/?category=${encodeURIComponent(category)}`
 ---
 
 <BaseLayout
-  title="不知名博客"
-  description="Nisconder 的个人博客，记录技术、社会观察、音乐与生活。"
+  title="Nisconder"
+  description="Nisconder 的个人站：技术文章、个人项目、阅读与音乐记录。"
   comments
-  commentsTitle="在首页碰个面"
-  commentsDescription="第一次来、想打个招呼，或只是想留下此刻想到的一句话，都可以写在这里。"
+  commentsTitle="在首页留言"
+  commentsDescription="站点建议、想讨论的话题，或简单打个招呼，都可以写在这里。"
 >
-  <header class="home-intro" aria-labelledby="home-title">
-    <div class="home-intro__identity">
-      <div class="home-intro__profile">
+  <header class="home-dashboard" aria-labelledby="home-title">
+    <section class="identity-panel register-panel">
+      <span class="registration-mark" aria-hidden="true"><i></i><i></i></span>
+      <div class="identity-panel__profile">
         <img
           src="/img/nisconder-avatar.png"
-          width="100"
-          height="100"
+          width="104"
+          height="104"
           alt="Nisconder 的头像"
           decoding="async"
         />
         <div>
-          <p class="eyebrow">PERSONAL SITE</p>
-          <p class="home-intro__name">Nisconder</p>
+          <p class="eyebrow"><span lang="zh-Hant">個人索引</span> / PERSONAL INDEX</p>
+          <h1 id="home-title">Nisconder</h1>
         </div>
       </div>
-      <p class="home-intro__bio">代码、阅读、音乐与生活观察。<br />认真写字，长期主义。</p>
-      <dl class="home-intro__stats" aria-label="站点内容统计">
+
+      <p class="identity-panel__bio">技术文章、个人项目、阅读与音乐记录。</p>
+
+      <dl class="identity-panel__stats" aria-label="站点内容统计">
         <div><dt>文章</dt><dd>{posts.length.toString().padStart(2, '0')}</dd></div>
         <div><dt>项目</dt><dd>{softwareProjects.length.toString().padStart(2, '0')}</dd></div>
-        <div><dt>歌单</dt><dd>{playlist.length.toString().padStart(2, '0')}</dd></div>
+        <div><dt>歌曲</dt><dd>{playlist.length.toString().padStart(2, '0')}</dd></div>
       </dl>
-      <nav class="home-intro__links" aria-label="Nisconder 的个人链接">
+
+      <nav class="identity-panel__links" aria-label="Nisconder 的个人链接">
         <a href="/about/">关于我</a>
         <a href="https://github.com/nisconder" rel="me noreferrer">GitHub</a>
         <a href="mailto:72447244.wnm@gmail.com">邮箱</a>
       </nav>
-    </div>
-    <div class="home-intro__copy">
-      <p class="eyebrow">OPEN NOTES / BY NISCONDER</p>
-      <h1 id="home-title">我写代码，也拆解那些<br />被说得太理所当然的事情。</h1>
-      <p class="lede">
-        这是 Nisconder 的个人站。这里写技术，也写社会、音乐和生活里那些不太容易被一句话说完的部分。
-      </p>
-    </div>
+    </section>
+
+    {
+      latestPost ? (
+        <article class="latest-panel register-panel">
+          <span class="registration-mark" aria-hidden="true"><i></i><i></i></span>
+          <header class="latest-panel__meta">
+            <span>最新文章</span>
+            <div>
+              <time datetime={getPostDateTime(latestPost.data.date)}>
+                {formatPostDate(latestPost.data.date)}
+              </time>
+              <span>约 {getPostReadingMinutes(latestPost)} 分钟</span>
+              {getPostCategory(latestPost) && (
+                <a href={categoryHref(getPostCategory(latestPost)!)}>{getPostCategory(latestPost)}</a>
+              )}
+            </div>
+          </header>
+
+          <div class="latest-panel__body">
+            <h2><a href={getPostUrl(latestPost)}>{latestPost.data.title}</a></h2>
+            <p>{getPostDescription(latestPost)}</p>
+
+            {getPostTags(latestPost).length > 0 && (
+              <nav class="latest-panel__tags" aria-label="最新文章标签">
+                {getPostTags(latestPost).slice(0, 4).map((tag) => (
+                  <a href={searchHref(tag)}>#{tag}</a>
+                ))}
+              </nav>
+            )}
+
+            {pinnedPost && (
+              <aside class="latest-panel__pinned" aria-label="置顶推荐">
+                <span>置顶</span>
+                <a href={getPostUrl(pinnedPost)}>{pinnedPost.data.title}</a>
+                <time datetime={getPostDateTime(pinnedPost.data.date)}>
+                  {formatPostDate(pinnedPost.data.date)}
+                </time>
+              </aside>
+            )}
+
+            <div class="latest-panel__actions">
+              <a class="primary-link" href={getPostUrl(latestPost)}>
+                阅读文章 <span aria-hidden="true">→</span>
+              </a>
+              <a class="quiet-link" href="/articles/">全部 {posts.length} 篇</a>
+            </div>
+          </div>
+        </article>
+      ) : (
+        <section class="latest-panel latest-panel--empty register-panel">
+          <p class="eyebrow">最新文章</p>
+          <h2>文章正在整理</h2>
+          <a class="primary-link" href="/articles/">查看文章页 →</a>
+        </section>
+      )
+    }
   </header>
 
-  <section class="home-feature" id="latest" aria-labelledby="home-feature-title">
-    <header class="home-feature__head">
-      <div>
-        <p class="eyebrow">SITE / INDEX</p>
-        <h2 id="home-feature-title">站内一览</h2>
+  <section class="home-secondary" aria-label="项目与音乐">
+    <a class="project-panel register-panel" href={`/software/#${featuredSoftware.slug}`}>
+      <div class="project-panel__topline">
+        <p class="eyebrow">项目 / PROJECTS</p>
+        <span>{softwareStatusLabels[featuredSoftware.status]}</span>
       </div>
-      <p>{posts.length} 篇文章 · {softwareProjects.length} 个项目 · {playlist.length} 首歌</p>
-    </header>
-
-    <div class="home-card-grid">
-      {
-        latestPost ? (
-          <article class="home-card lead-story">
-            <header class="lead-story__band">
-              <span>LATEST / ARTICLE</span>
-              <div class="lead-story__meta">
-                <time datetime={getPostDateTime(latestPost.data.date)}>
-                  {formatPostDate(latestPost.data.date)}
-                </time>
-                {getPostCategory(latestPost) && (
-                  <a href={categoryHref(getPostCategory(latestPost)!)}>
-                    {getPostCategory(latestPost)}
-                  </a>
-                )}
-              </div>
-            </header>
-            <div class="lead-story__body">
-              <h3><a href={getPostUrl(latestPost)}>{latestPost.data.title}</a></h3>
-              <p class="lead-story__summary">{getPostDescription(latestPost)}</p>
-              {getPostTags(latestPost).length > 0 && (
-                <nav class="lead-story__tags" aria-label="文章标签">
-                  {getPostTags(latestPost).slice(0, 3).map((tag) => (
-                    <a href={searchHref(tag)}>#{tag}</a>
-                  ))}
-                </nav>
-              )}
-              {pinnedPost && (
-                <aside class="lead-story__pinned" aria-label="置顶推荐">
-                  <div class="lead-story__pinned-label">
-                    <span>置顶推荐</span>
-                    <time datetime={getPostDateTime(pinnedPost.data.date)}>
-                      {formatPostDate(pinnedPost.data.date)}
-                    </time>
-                  </div>
-                  <a href={getPostUrl(pinnedPost)}>
-                    <strong>{pinnedPost.data.title}</strong>
-                    <span aria-hidden="true">→</span>
-                  </a>
-                </aside>
-              )}
-              <div class="lead-story__actions">
-                <a class="lead-story__read" href={getPostUrl(latestPost)}>
-                  阅读全文 <span aria-hidden="true">→</span>
-                </a>
-                <a class="lead-story__archive" href="/articles/">全部 {posts.length} 篇</a>
-              </div>
-            </div>
-          </article>
-        ) : (
-          <div class="home-card lead-story lead-story--empty">
-            <p class="card-kicker">WRITING</p>
-            <h3>文章正在整理。</h3>
-            <a class="lead-story__read" href="/articles/">查看文章页 →</a>
-          </div>
-        )
-      }
-
-      <a class="home-card music-card" href="/music/" aria-labelledby="music-card-title">
-          <p class="card-kicker">MUSIC / PLAYLIST</p>
-          <h3 id="music-card-title">最近反复播放</h3>
-          <p class="music-card__summary">{playlist.length} 首 · {musicianCount} 位音乐人</p>
-          <ol class="music-card__tracks" aria-label="歌单中的前三首曲目">
-            {playlistPreview.map((track, index) => (
-              <li>
-                <span>{(index + 1).toString().padStart(2, '0')}</span>
-                <span class="music-card__track-copy">
-                  <strong>{track.title}</strong>
-                  <small>{track.author}</small>
-                </span>
-              </li>
-            ))}
-          </ol>
-          <span class="home-card__action">打开 {playlist.length} 首歌 <span aria-hidden="true">→</span></span>
-      </a>
-
-      <form class="home-card search-card" action="/search/" method="get" role="search">
-        <p class="card-kicker">SEARCH</p>
-        <h3>站内搜索</h3>
-        <label for="home-search">文章、项目、分类或标签</label>
-        <div class="search-card__controls">
-          <input id="home-search" name="q" type="search" autocomplete="off" placeholder="输入文章、项目、分类或标签…" />
-          <button type="submit">搜索站内</button>
-        </div>
-        {querySeeds.length > 0 && (
-          <nav class="search-card__seeds" aria-label="常用搜索标签">
-            {querySeeds.map((seed) => <a href={searchHref(seed)}>#{seed}</a>)}
-          </nav>
-        )}
-      </form>
-
-      <a class="home-card software-card" href="/software/" aria-labelledby="software-card-title">
-        <p class="card-kicker">SOFTWARE / GARDEN</p>
-        <div class="software-card__lead">
-          <span aria-hidden="true">{featuredSoftware.label}</span>
-          <div>
-            <small>{softwareStatusLabels[featuredSoftware.status]}</small>
-            <strong>{featuredSoftware.name}</strong>
-          </div>
-        </div>
-        <h3 id="software-card-title">我做的软件</h3>
-        <p>{featuredSoftware.summary}</p>
-        <span class="home-card__action">查看 {softwareProjects.length} 个项目 <span aria-hidden="true">→</span></span>
-      </a>
-    </div>
-  </section>
-
-  {categories.length > 0 && (
-    <section class="axis-section home-category-section" data-note="分类">
-      <div class="section-head section-head--split">
+      <div class="project-panel__featured">
+        <span aria-hidden="true">{featuredSoftware.label}</span>
         <div>
-          <p class="eyebrow">BROWSE / CATEGORY</p>
-          <h2>按分类进入</h2>
+          <small>最近维护</small>
+          <strong>{featuredSoftware.name}</strong>
         </div>
-        <p class="section-aside">先选择一条明确的路径，再继续搜索或阅读。</p>
       </div>
+      <h2>项目与工具</h2>
+      <p>{featuredSoftware.summary}</p>
+      <span class="panel-action">从 {featuredSoftware.name} 进入项目页 <i aria-hidden="true">→</i></span>
+    </a>
 
-      <nav class="home-category-field" aria-label="文章分类">
-        {categories.map(([category, count], index) => (
-          <a href={categoryHref(category)} data-tone={index % 2 === 0 ? 'reading' : 'media'}>
-            <span>
-              <strong>{category}</strong>
-              <small>{count} 篇文章</small>
-            </span>
-            <span aria-hidden="true">→</span>
-          </a>
-        ))}
-      </nav>
-    </section>
-  )}
-
-  {topics.length >= 3 && (
-    <section class="axis-section topic-section" data-note="词语">
-      <div class="section-head section-head--split">
-        <div>
-          <p class="eyebrow">INDEX</p>
-          <h2>反复出现的词</h2>
-        </div>
-        <p class="section-aside">它们会在不同文章里重逢。</p>
+    <a class="music-panel register-panel" href="/music/">
+      <div class="music-panel__topline">
+        <p class="eyebrow">音乐 / PLAYLIST</p>
+        <span>{playableTracks.length} 首可试听</span>
       </div>
-
-      <ul class="topic-field" aria-label="文章主题">
-        {topics.map(([topic, count]) => (
+      <h2>最近反复播放</h2>
+      <p>{playlist.length} 首 · {musicianCount} 位音乐人</p>
+      <ol aria-label="歌单预览">
+        {playlistPreview.map((track, index) => (
           <li>
-            <a href={searchHref(topic)}>
-              <span>{topic}</span>
-              <small>{count} 篇</small>
-            </a>
+            <span>{(index + 1).toString().padStart(2, '0')}</span>
+            <span>
+              <strong>{track.title}</strong>
+              <small>{track.author}</small>
+            </span>
           </li>
         ))}
-      </ul>
-    </section>
-  )}
+      </ol>
+      <span class="panel-action">打开音乐页 <i aria-hidden="true">→</i></span>
+    </a>
+  </section>
 
-  {recentPosts.length > 0 && (
-    <section class="axis-section" data-note="更新">
-      <div class="section-head section-head--split">
-        <div>
-          <p class="eyebrow">LATEST</p>
-          <h2>最近更新</h2>
-        </div>
-        <a class="text-link" href="/articles/">全部文章 →</a>
+  <section class="home-search register-panel" aria-labelledby="home-search-title">
+    <div class="home-search__intro">
+      <p class="eyebrow">查找 / SEARCH</p>
+      <h2 id="home-search-title">搜索本站</h2>
+      <p>直接检索文章正文、项目、分类与标签。</p>
+    </div>
+    <form class="home-search__form" action="/search/" method="get" role="search">
+      <label for="home-search-input">搜索本站</label>
+      <div class="home-search__controls">
+        <input
+          id="home-search-input"
+          name="q"
+          type="search"
+          autocomplete="off"
+          placeholder="例如：npm-safe、社会学、TypeScript"
+        />
+        <button type="submit">搜索</button>
       </div>
-
-      <div class="post-list">
-        {recentPosts.map((post) => (
-          <PostRow
-            href={getPostUrl(post)}
-            title={post.data.title}
-            description={getPostDescription(post)}
-            date={formatPostDate(post.data.date)}
-            datetime={getPostDateTime(post.data.date)}
-            category={getPostCategory(post)}
-            tags={getPostTags(post)}
-          />
-        ))}
-      </div>
-    </section>
-  )}
+      {querySeeds.length > 0 && (
+        <nav class="home-search__seeds" aria-label="常用搜索标签">
+          {querySeeds.map((seed) => <a href={searchHref(seed)}>#{seed}</a>)}
+        </nav>
+      )}
+    </form>
+  </section>
 </BaseLayout>
 
 <style>
-  .home-intro {
-    display: grid;
-    grid-template-columns: minmax(16rem, 0.58fr) minmax(0, 1.42fr);
+  .register-panel {
+    position: relative;
+    min-width: 0;
     overflow: hidden;
-    margin-block-end: clamp(2.5rem, 5vw, 3.75rem);
     border: 1px solid var(--color-line-strong);
     border-radius: var(--card-radius);
+    background: var(--color-card);
   }
 
-  .home-intro__identity,
-  .home-intro__copy {
-    min-width: 0;
-    padding: clamp(1.5rem, 3.5vw, 2.5rem);
+  .register-panel::before,
+  .register-panel::after {
+    position: absolute;
+    z-index: 1;
+    content: '';
+    pointer-events: none;
   }
 
-  .home-intro__identity {
+  .register-panel::before {
+    inset: 0 auto auto 0;
+    width: 42%;
+    height: 0.32rem;
+    background: var(--color-primary);
+  }
+
+  .register-panel::after {
+    inset: 0 0 auto auto;
+    width: 24%;
+    height: 0.32rem;
+    background: var(--color-secondary);
+  }
+
+  .registration-mark {
+    position: absolute;
+    z-index: 2;
+    inset-block-start: 1.25rem;
+    inset-inline-end: 1.25rem;
+    width: 1.8rem;
+    height: 1.65rem;
+    pointer-events: none;
+  }
+
+  .registration-mark i {
+    position: absolute;
+    display: block;
+    width: 1.05rem;
+    height: 1.05rem;
+    transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .registration-mark i:first-child {
+    inset: 0 auto auto 0;
+    background: var(--color-primary);
+  }
+
+  .registration-mark i:last-child {
+    inset: auto 0 0 auto;
+    background: var(--color-secondary);
+  }
+
+  .register-panel:hover .registration-mark i:first-child {
+    transform: translate(-2px, -2px);
+  }
+
+  .register-panel:hover .registration-mark i:last-child {
+    transform: translate(2px, 2px);
+  }
+
+  .home-dashboard {
+    display: grid;
+    grid-template-columns: minmax(17.5rem, 0.72fr) minmax(0, 1.28fr);
+    gap: 1rem;
+    margin-block-end: 1rem;
+  }
+
+  .identity-panel,
+  .latest-panel {
+    min-height: 28rem;
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+  }
+
+  .identity-panel {
     display: flex;
-    min-height: 100%;
     flex-direction: column;
-    gap: 1.5rem;
-    border-inline-end: 1px solid var(--color-line-strong);
-    background: var(--color-media-soft);
+    background: var(--color-secondary-soft);
   }
 
-  .home-intro__profile {
+  .identity-panel::before {
+    width: 28%;
+    background: var(--color-secondary);
+  }
+
+  .identity-panel::after {
+    width: 48%;
+    background: var(--color-primary);
+  }
+
+  .identity-panel__profile {
     display: flex;
     align-items: center;
     gap: 1rem;
+    padding-inline-end: 2.25rem;
   }
 
-  .home-intro__profile img {
-    width: 5.25rem;
-    height: 5.25rem;
+  .identity-panel__profile img {
+    width: 5.5rem;
+    height: 5.5rem;
     flex: 0 0 auto;
     border: 1px solid var(--color-line-strong);
-    border-radius: var(--card-radius);
+    border-radius: calc(var(--card-radius) - 0.15rem);
     object-fit: cover;
   }
 
-  .home-intro__name {
-    margin: 0.2rem 0 0;
-    color: var(--color-text);
-    font-family: var(--font-display);
-    font-size: clamp(1.5rem, 3vw, 2rem);
-    font-weight: 750;
-    letter-spacing: -0.025em;
-  }
-
-  .home-intro__bio {
+  .identity-panel h1 {
     margin: 0;
-    color: var(--color-muted);
-    font-size: 0.9rem;
-    line-height: 1.75;
+    font-size: clamp(1.75rem, 3.2vw, 2.35rem);
+    letter-spacing: -0.035em;
   }
 
-  .home-intro__stats {
+  .identity-panel .eyebrow {
+    margin-block-end: 0.25rem;
+  }
+
+  .identity-panel__bio {
+    max-width: 24ch;
+    margin: 2rem 0;
+    color: var(--color-muted);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .identity-panel__stats {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     margin: 0;
     border-block: 1px solid var(--color-line-strong);
   }
 
-  .home-intro__stats > div {
+  .identity-panel__stats div {
     display: flex;
     min-width: 0;
     flex-direction: column-reverse;
-    padding-block: 0.75rem;
+    padding: 0.8rem 0;
   }
 
-  .home-intro__stats > div + div {
+  .identity-panel__stats div + div {
     padding-inline-start: 0.75rem;
     border-inline-start: 1px solid var(--color-line-strong);
   }
 
-  .home-intro__stats dt {
+  .identity-panel__stats dt {
     color: var(--color-muted);
     font-size: var(--text-xs);
   }
 
-  .home-intro__stats dd {
+  .identity-panel__stats dd {
     margin: 0;
-    color: var(--color-media);
+    color: var(--color-secondary);
     font-family: var(--font-utility);
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 800;
   }
 
-  .home-intro__links {
+  .identity-panel__links {
     display: flex;
     flex-wrap: wrap;
     gap: 0 1rem;
     margin-block-start: auto;
+    padding-block-start: 1.25rem;
   }
 
-  .home-intro__links a {
+  .identity-panel__links a {
     display: inline-flex;
     min-height: 2.75rem;
     align-items: center;
-    color: var(--color-reading);
-    font-size: 0.78rem;
+    color: var(--color-primary);
+    font-size: 0.82rem;
     font-weight: 750;
-    text-underline-offset: 0.24em;
   }
 
-  .home-intro__copy {
-    background: var(--color-card);
-  }
-
-  .home-intro h1 {
-    max-width: 18ch;
-    margin-block-start: clamp(1rem, 2vw, 1.75rem);
-    margin-block-end: 0;
-    font-family: var(--font-editorial);
-    font-size: var(--title-page);
-    line-height: 1.18;
-  }
-
-  .home-intro .lede {
-    max-width: 35rem;
-    margin-block-start: clamp(1.5rem, 3vw, 2.25rem);
-    margin-block-end: 0;
-  }
-
-  .home-feature {
-    margin-block-end: 0;
-  }
-
-  .section-head {
-    max-width: var(--content-width);
-  }
-
-  .text-link {
-    flex: none;
-    min-height: 2.75rem;
-    padding-block: 0.55rem;
-    font-size: 0.875rem;
-    font-weight: 700;
-  }
-
-  .lead-story {
-    border: 1px solid var(--color-line-strong);
-    background: var(--color-card);
-  }
-
-  .lead-story__band {
+  .latest-panel {
     display: flex;
-    min-height: 4.25rem;
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .latest-panel__meta {
+    display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem 1.5rem;
-    padding: 0.75rem clamp(1.25rem, 3vw, 2rem);
-    background: var(--color-reading-panel);
-    color: var(--color-on-reading-panel);
+    gap: 1rem;
+    min-height: 4.2rem;
+    padding: 1rem 4rem 1rem clamp(1.5rem, 3vw, 2.25rem);
+    border-block-end: 1px solid var(--color-line-strong);
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
     font-family: var(--font-utility);
     font-size: var(--text-xs);
-    font-weight: 700;
+    font-weight: 800;
     letter-spacing: 0.06em;
   }
 
-  .lead-story__body {
-    padding: clamp(1.75rem, 4vw, 3rem);
-  }
-
-  .lead-story__meta {
+  .latest-panel__meta > div {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 0.35rem 1rem;
+    justify-content: flex-end;
+    gap: 0.35rem 0.8rem;
+    color: var(--color-muted);
+    font-weight: 650;
+    letter-spacing: 0;
+  }
+
+  .latest-panel__meta a {
+    color: var(--color-secondary);
+  }
+
+  .latest-panel__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: clamp(1.5rem, 4vw, 2.6rem);
+  }
+
+  .latest-panel h2 {
+    max-width: 18ch;
+    margin: 0 0 1rem;
+    font-family: var(--font-editorial);
+    font-size: clamp(2rem, 4.2vw, 3.35rem);
+    font-weight: 650;
+    line-height: 1.17;
+    letter-spacing: -0.035em;
+  }
+
+  .latest-panel h2 a {
+    color: var(--color-heading);
+    text-decoration: none;
+  }
+
+  .latest-panel h2 a:hover {
+    color: var(--color-primary);
+  }
+
+  .latest-panel__body > p {
+    max-width: 52ch;
     margin: 0;
-  }
-
-  .lead-story__meta a {
-    display: inline-flex;
-    min-height: 2.75rem;
-    align-items: center;
-    color: inherit;
-  }
-
-  .lead-story__summary {
-    max-width: 34rem;
-    margin-block-end: 1rem;
-    font-size: 1rem;
+    color: var(--color-muted);
     line-height: 1.75;
   }
 
-  .lead-story__tags {
+  .latest-panel__tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 0 0.75rem;
+    gap: 0 0.8rem;
     margin-block-start: 1rem;
   }
 
-  .lead-story__tags a {
+  .latest-panel__tags a {
     display: inline-flex;
     min-height: 2.75rem;
     align-items: center;
     color: var(--color-secondary);
-    font-family: var(--font-utility);
-    font-size: var(--text-xs);
+    font-size: 0.8rem;
     font-weight: 700;
-    overflow-wrap: anywhere;
   }
 
-  .lead-story--empty {
-    padding: clamp(1.75rem, 4vw, 3rem);
-  }
-
-  .home-feature__head {
-    display: flex;
-    align-items: end;
-    justify-content: space-between;
-    gap: 1rem 2rem;
-    margin-block-end: clamp(1.25rem, 3vw, 2rem);
-  }
-
-  .home-feature__head h2 {
-    margin: 0.25rem 0 0;
-    font-size: var(--title-section);
-    letter-spacing: -0.025em;
-  }
-
-  .home-feature__head > p {
-    margin: 0;
-    color: var(--color-muted);
-    font-family: var(--font-utility);
-    font-size: 0.75rem;
-    text-align: end;
-  }
-
-  .home-card-grid {
-    position: relative;
+  .latest-panel__pinned {
     display: grid;
-    min-width: 0;
-    grid-template-columns: minmax(0, 1fr);
-    align-items: start;
-    isolation: isolate;
-    gap: clamp(1rem, 2.4vw, 1.75rem);
-  }
-
-  .home-card {
-    position: relative;
-    min-width: 0;
-    overflow: hidden;
-    border: 1px solid var(--color-line-strong);
-    border-radius: var(--card-radius);
-    background: var(--color-card);
-  }
-
-  a.home-card {
-    color: var(--color-text);
-    text-decoration: none;
-  }
-
-  a.home-card:hover,
-  a.home-card:focus-visible,
-  .home-card:focus-within {
-    border-color: var(--color-reading);
-  }
-
-  .home-card:focus-within {
-    z-index: 10;
-    outline: 3px solid var(--color-media);
-    outline-offset: 3px;
-  }
-
-  .card-kicker {
-    margin: 0 0 1.25rem;
-    color: var(--color-media);
-    font-family: var(--font-utility);
-    font-size: 0.75rem;
-    font-weight: 750;
-    letter-spacing: 0.07em;
-  }
-
-  .home-card h3 {
-    margin-block-end: 0.75rem;
-    font-size: var(--title-card);
-    letter-spacing: -0.025em;
-  }
-
-  .home-card__action {
-    display: flex;
-    min-height: 3rem;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+    gap: 0.75rem;
     margin-block-start: auto;
-    border-block-start: 1px solid currentColor;
-    font-size: 0.875rem;
-    font-weight: 750;
+    padding: 0.85rem 0;
+    border-block: 1px solid var(--color-line);
+    font-size: 0.82rem;
   }
 
-  .lead-story {
-    display: grid;
-    grid-column: 1;
-    grid-template-rows: auto minmax(0, 1fr);
-  }
-
-  .lead-story__band {
-    background: var(--color-reading-panel);
-    color: var(--color-on-reading-panel);
-  }
-
-  .lead-story__band a:focus-visible {
-    outline-color: var(--color-on-reading-panel);
-  }
-
-  .lead-story__body {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .lead-story h3 {
-    max-width: 19ch;
-    margin-block-end: 1.1rem;
-    font-family: var(--font-editorial);
-    font-size: clamp(1.8rem, 3.4vw, 2.35rem);
-    line-height: 1.22;
-    letter-spacing: -0.035em;
-    overflow-wrap: anywhere;
-  }
-
-  .lead-story h3 a {
-    color: var(--color-text);
-    text-decoration: none;
-  }
-
-  .lead-story h3 a:hover,
-  .lead-story h3 a:focus-visible {
-    color: var(--color-reading);
-    text-decoration: underline;
-    text-decoration-color: var(--color-media);
-    text-decoration-thickness: 2px;
-    text-underline-offset: 0.18em;
-  }
-
-  .lead-story__tags a {
-    color: var(--color-media);
-  }
-
-  .lead-story__pinned {
-    display: grid;
-    gap: 0.55rem;
-    margin-block-start: 1.35rem;
-    padding: 0.9rem 1rem;
-    border: 1px solid var(--color-line-strong);
-    border-inline-start: 0.35rem solid var(--color-secondary);
-    border-radius: var(--card-radius);
-    background: var(--color-secondary-soft);
-  }
-
-  .lead-story__pinned-label {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.35rem 1rem;
+  .latest-panel__pinned > span {
     color: var(--color-secondary);
     font-family: var(--font-utility);
-    font-size: var(--text-xs);
-    font-weight: 750;
-    letter-spacing: 0.05em;
-  }
-
-  .lead-story__pinned a {
-    display: grid;
-    min-height: 2.75rem;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 1rem;
-    color: var(--color-text);
-    text-decoration: none;
-  }
-
-  .lead-story__pinned strong {
-    font-family: var(--font-display);
-    font-size: 0.95rem;
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-  }
-
-  .lead-story__pinned a > span {
-    color: var(--color-secondary);
-    font-size: 1.1rem;
     font-weight: 800;
   }
 
-  .lead-story__pinned a:hover strong,
-  .lead-story__pinned a:focus-visible strong {
-    color: var(--color-primary);
-    text-decoration: underline;
-    text-decoration-color: var(--color-secondary);
-    text-decoration-thickness: 2px;
-    text-underline-offset: 0.22em;
+  .latest-panel__pinned a {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--color-text);
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .lead-story__actions {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+  .latest-panel__pinned time {
+    color: var(--color-muted);
+    font-family: var(--font-utility);
+    font-size: var(--text-xs);
+  }
+
+  .latest-panel__actions {
+    display: flex;
     align-items: center;
-    gap: 0.75rem 1.25rem;
-    margin-block-start: auto;
-    padding-block-start: clamp(1.5rem, 3vw, 2.25rem);
+    justify-content: space-between;
+    gap: 1rem;
+    margin-block-start: 1rem;
   }
 
-  .lead-story__read,
-  .lead-story__archive {
+  .primary-link,
+  .quiet-link {
     display: inline-flex;
-    min-height: 3rem;
+    min-height: 2.75rem;
     align-items: center;
-    color: var(--color-reading);
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     font-weight: 750;
   }
 
-  .lead-story__read {
-    justify-content: space-between;
+  .primary-link {
     gap: 1rem;
-    margin: 0;
-    border-block: 1px solid var(--color-line-strong);
+    color: var(--color-primary);
     text-decoration: none;
   }
 
-  .lead-story__archive {
+  .primary-link span {
+    color: var(--color-secondary);
+    transition: transform 180ms ease;
+  }
+
+  .primary-link:hover span {
+    transform: translateX(0.3rem);
+  }
+
+  .quiet-link {
+    color: var(--color-secondary);
+  }
+
+  .latest-panel--empty {
     justify-content: center;
-    padding-inline: 0.25rem;
-    color: var(--color-media);
-    text-underline-offset: 0.25em;
   }
 
-  .lead-story--empty {
+  .home-search {
+    display: grid;
+    grid-template-columns: minmax(14rem, 0.42fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(1.5rem, 5vw, 4rem);
+    margin-block-start: 1rem;
+    padding: clamp(1.25rem, 3vw, 2rem);
+    background: var(--color-primary-soft);
+  }
+
+  .home-search__intro h2,
+  .project-panel h2,
+  .music-panel h2 {
+    margin: 0;
+    font-size: clamp(1.5rem, 2.8vw, 2rem);
+    letter-spacing: -0.025em;
+  }
+
+  .home-search__intro > p:last-child,
+  .project-panel > p,
+  .music-panel > p {
+    margin: 0.45rem 0 0;
+    color: var(--color-muted);
+    font-size: 0.88rem;
+  }
+
+  .home-search__form label {
+    display: block;
+    margin-block-end: 0.45rem;
+  }
+
+  .home-search__controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.65rem;
+  }
+
+  .home-search__controls input,
+  .home-search__controls button {
+    min-height: 3.25rem;
+  }
+
+  .home-search__controls input {
+    padding-inline: 1rem;
+    background: var(--color-card);
+  }
+
+  .home-search__controls button {
+    min-width: 7rem;
+    padding-inline: 1.25rem;
+    border: 1px solid var(--color-primary);
+    border-inline-end: 0.28rem solid var(--color-secondary);
+    border-radius: var(--card-radius);
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    cursor: pointer;
+    font-weight: 800;
+  }
+
+  .home-search__controls button:hover {
+    border-color: var(--color-secondary);
+    background: var(--color-secondary);
+    color: var(--color-on-secondary);
+  }
+
+  .home-search__seeds {
     display: flex;
-    grid-column: 1;
-    flex-direction: column;
+    flex-wrap: wrap;
+    gap: 0 0.75rem;
+    margin-block-start: 0.55rem;
   }
 
-  a.music-card {
+  .home-search__seeds a {
+    display: inline-flex;
+    min-height: 2.25rem;
+    align-items: center;
+    color: var(--color-secondary);
+    font-size: var(--text-xs);
+    font-weight: 700;
+  }
+
+  .home-secondary {
+    display: grid;
+    grid-template-columns: minmax(0, 1.18fr) minmax(18rem, 0.82fr);
+    gap: 1rem;
+  }
+
+  .project-panel,
+  .music-panel {
     display: flex;
-    grid-column: 1;
+    min-height: 23rem;
     flex-direction: column;
-    padding: clamp(1.5rem, 3vw, 2rem);
-    border-color: var(--color-media-panel);
-    background: var(--color-media-panel);
-    color: var(--color-on-media-panel);
+    padding: clamp(1.5rem, 3.5vw, 2.25rem);
+    color: var(--color-text);
+    text-decoration: none;
   }
 
-  a.music-card:hover,
-  a.music-card:focus-visible {
-    border-color: var(--color-reading);
-    color: var(--color-on-media-panel);
+  .project-panel__topline,
+  .music-panel__topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-block-end: 1.6rem;
   }
 
-  .music-card .card-kicker,
-  .music-card h3 {
-    color: inherit;
+  .project-panel__topline .eyebrow,
+  .music-panel__topline .eyebrow {
+    margin: 0;
   }
 
-  .music-card__summary {
-    margin-block-end: 1rem;
-    color: inherit;
-    font-size: var(--text-sm);
+  .project-panel__topline > span,
+  .music-panel__topline > span {
+    color: var(--color-muted);
+    font-family: var(--font-utility);
+    font-size: var(--text-xs);
   }
 
-  .music-card__tracks {
+  .project-panel__featured {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-block-end: 1.8rem;
+  }
+
+  .project-panel__featured > span {
+    display: grid;
+    width: 3.6rem;
+    height: 3.6rem;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: calc(var(--card-radius) - 0.1rem);
+    background: var(--color-secondary);
+    color: var(--color-on-secondary);
+    font-family: var(--font-utility);
+    font-size: var(--text-xs);
+    font-weight: 900;
+  }
+
+  .project-panel__featured div {
+    display: grid;
+  }
+
+  .project-panel__featured small {
+    color: var(--color-muted);
+  }
+
+  .project-panel__featured strong {
+    font-size: 1.1rem;
+  }
+
+  .music-panel {
+    background: var(--color-secondary-soft);
+  }
+
+  .music-panel ol {
     padding: 0;
-    margin: 0 0 1.25rem;
+    margin: 1.5rem 0 0;
     list-style: none;
   }
 
-  .music-card__tracks li {
+  .music-panel li {
     display: grid;
-    min-height: 3.25rem;
     grid-template-columns: 2rem minmax(0, 1fr);
-    align-items: center;
-    gap: 0.65rem;
-    border-block-start: 1px solid color-mix(in srgb, currentColor, transparent 48%);
+    gap: 0.75rem;
+    padding: 0.65rem 0;
+    border-block-start: 1px solid var(--color-line-strong);
   }
 
-  .music-card__tracks > li > span:first-child {
+  .music-panel li > span:first-child {
+    color: var(--color-secondary);
     font-family: var(--font-utility);
     font-size: var(--text-xs);
-    font-weight: 750;
+    font-weight: 800;
   }
 
-  .music-card__track-copy {
+  .music-panel li > span:last-child {
     display: grid;
     min-width: 0;
-    gap: 0.1rem;
   }
 
-  .music-card__track-copy strong,
-  .music-card__track-copy small {
+  .music-panel li strong,
+  .music-panel li small {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .music-card__track-copy strong {
-    font-size: 0.84rem;
+  .music-panel li small {
+    color: var(--color-muted);
   }
 
-  .music-card__track-copy small {
-    color: inherit;
-    font-size: var(--text-xs);
-    opacity: 0.78;
-  }
-
-  .search-card {
+  .panel-action {
     display: flex;
-    grid-column: 1;
-    flex-direction: column;
-    padding: clamp(1.5rem, 3vw, 2rem);
-    border-block-start: 0.45rem solid var(--color-reading);
-    background: var(--color-reading-soft);
-  }
-
-  .search-card label {
-    margin-block: 0.5rem 0.4rem;
-  }
-
-  .search-card__controls {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.5rem;
-  }
-
-  .search-card__controls input,
-  .search-card__controls button {
-    min-height: 3rem;
-    border-radius: var(--card-radius);
-  }
-
-  .search-card__controls input {
-    border-color: var(--color-control-border);
-  }
-
-  .search-card__controls button {
-    padding-inline: 1rem;
-    border: 1px solid var(--color-reading-panel);
-    background: var(--color-reading-panel);
-    color: var(--color-on-reading-panel);
-    cursor: pointer;
-    font-size: var(--text-sm);
-    font-weight: 750;
-  }
-
-  .search-card__controls button:hover,
-  .search-card__controls button:focus-visible {
-    border-color: var(--color-media-panel);
-    background: var(--color-media-panel);
-    color: var(--color-on-media-panel);
-  }
-
-  .search-card__controls button:focus-visible {
-    outline-color: var(--color-text);
-    box-shadow: inset 0 0 0 2px var(--color-surface);
-  }
-
-  .search-card__seeds {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0 0.35rem;
-    margin-block-start: 0.75rem;
-  }
-
-  .search-card__seeds a {
-    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
     min-height: 2.75rem;
-    align-items: center;
-    padding-inline: 0.35rem;
-    color: var(--color-media);
-    font-family: var(--font-utility);
-    font-size: var(--text-xs);
-    font-weight: 750;
-    text-underline-offset: 0.23em;
-  }
-
-  a.software-card {
-    display: flex;
-    grid-column: 1;
-    flex-direction: column;
-    padding: clamp(1.5rem, 3vw, 2rem);
-    border-block-start: 0.45rem solid var(--color-media);
-    background: var(--color-card);
-  }
-
-  .software-card__lead {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
-    gap: 0.85rem;
-    margin-block-end: 1.25rem;
-  }
-
-  .software-card__lead > span {
-    display: grid;
-    width: 3.25rem;
-    height: 3.25rem;
-    place-items: center;
-    border-radius: var(--card-radius);
-    background: var(--color-media-panel);
-    color: var(--color-on-media-panel);
-    font-family: var(--font-utility);
-    font-size: 0.75rem;
-    font-weight: 800;
-  }
-
-  .software-card__lead div {
-    display: grid;
-    min-width: 0;
-  }
-
-  .software-card__lead small {
-    color: var(--color-muted);
-    font-family: var(--font-utility);
-    font-size: var(--text-xs);
-  }
-
-  .software-card__lead strong {
-    overflow-wrap: anywhere;
-    font-size: 1.05rem;
-  }
-
-  .software-card > p:not(.card-kicker) {
-    max-width: 34rem;
-    margin-block-end: 1.25rem;
-    color: var(--color-muted);
-    font-size: 1rem;
-    line-height: 1.75;
-  }
-
-  .section-aside {
-    max-width: 17rem;
-    margin: 0;
-    color: var(--color-muted);
-    font-size: var(--text-sm);
-    line-height: 1.65;
-  }
-
-  .home-category-field {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
-    gap: 0.75rem;
-  }
-
-  .home-category-field a {
-    display: flex;
-    min-width: 0;
-    min-height: 5rem;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 1rem 1.1rem;
-    border: 1px solid var(--color-line-strong);
-    border-inline-start: 0.4rem solid var(--color-primary);
-    border-radius: var(--card-radius);
-    background: var(--color-card);
-    color: var(--color-text);
-    text-decoration: none;
-  }
-
-  .home-category-field a[data-tone='media'] {
-    border-inline-start-color: var(--color-secondary);
-    background: var(--color-secondary-soft);
-  }
-
-  .home-category-field a:hover,
-  .home-category-field a:focus-visible {
-    border-color: var(--color-secondary);
-    background: var(--color-primary-soft);
-  }
-
-  .home-category-field a > span:first-child {
-    display: grid;
-    min-width: 0;
-    gap: 0.15rem;
-  }
-
-  .home-category-field strong {
-    font-family: var(--font-display);
-    font-size: 1rem;
-    overflow-wrap: anywhere;
-  }
-
-  .home-category-field small {
-    color: var(--color-muted);
-    font-family: var(--font-utility);
-    font-size: var(--text-xs);
-  }
-
-  .home-category-field a > span:last-child {
-    flex: 0 0 auto;
-    color: var(--color-secondary);
-    font-size: 1.1rem;
-    font-weight: 800;
-  }
-
-  .topic-field {
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: 0.75rem 1rem;
-    padding: 0;
-    margin: 0;
-    list-style: none;
-  }
-
-  .topic-field li {
-    grid-column: 1 / span 7;
-  }
-
-  .topic-field li:nth-child(2n) {
-    grid-column: 7 / span 6;
-  }
-
-  .topic-field li:nth-child(3n) {
-    grid-column: 3 / span 7;
-  }
-
-  .topic-field li:nth-child(4n) {
-    grid-column: 8 / span 5;
-  }
-
-  .topic-field a {
-    display: flex;
-    min-height: 4.5rem;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 1rem 0;
-    border-block-end: 1px solid var(--color-line-strong);
-    color: var(--color-text);
-    text-decoration: none;
-  }
-
-  .topic-field span {
-    overflow-wrap: anywhere;
-    font-family: var(--font-display);
-    font-size: clamp(1.25rem, 3.5vw, 1.8rem);
-  }
-
-  .topic-field small {
-    color: var(--color-muted);
-    font-size: var(--text-xs);
-    white-space: nowrap;
-  }
-
-  .topic-field a:hover span,
-  .topic-field a:focus-visible span {
+    margin-block-start: auto;
+    padding-block-start: 1rem;
+    border-block-start: 1px solid var(--color-line-strong);
     color: var(--color-primary);
-    text-decoration: underline;
-    text-decoration-color: var(--color-secondary);
-    text-decoration-thickness: 2px;
-    text-underline-offset: 0.2em;
+    font-size: 0.85rem;
+    font-weight: 800;
   }
 
-  @media (max-width: 42rem) {
-    .home-intro {
-      grid-template-columns: 1fr;
+  .panel-action i {
+    color: var(--color-secondary);
+    font-style: normal;
+    transition: transform 180ms ease;
+  }
+
+  .project-panel:hover .panel-action i,
+  .music-panel:hover .panel-action i {
+    transform: translateX(0.3rem);
+  }
+
+  @media (max-width: 52rem) {
+    .home-dashboard,
+    .home-secondary {
+      grid-template-columns: minmax(0, 1fr);
     }
 
-    .home-intro__identity {
-      min-height: auto;
+    .identity-panel,
+    .latest-panel,
+    .project-panel,
+    .music-panel {
+      min-height: 0;
+    }
+
+    .identity-panel__bio {
+      max-width: none;
+    }
+
+    .home-search {
+      grid-template-columns: minmax(0, 1fr);
       gap: 1.25rem;
-      border-block-end: 1px solid var(--color-line-strong);
-      border-inline-end: 0;
-    }
-
-    .home-intro h1 br {
-      display: none;
-    }
-
-    .section-head--split {
-      display: block;
-    }
-
-    .text-link,
-    .section-aside {
-      display: inline-block;
-      margin-block-start: 0.75rem;
-    }
-
-    .lead-story {
-      border-inline-end: 1px solid var(--color-line-strong);
-    }
-
-    .topic-field {
-      grid-template-columns: 1fr;
-    }
-
-    .topic-field li,
-    .topic-field li:nth-child(n) {
-      grid-column: 1;
     }
   }
 
-  @media (max-width: 28rem) {
-    .lead-story__band {
-      align-items: start;
-      flex-direction: column;
-    }
-
-    .topic-field a {
-      align-items: start;
-      flex-direction: column;
-    }
-
-    .topic-field small {
-      white-space: normal;
-    }
-  }
-
-  @media (min-width: 44.0625rem) {
-    .search-card {
-      display: grid;
-      grid-template-areas:
-        'kicker label'
-        'title controls'
-        '. seeds';
-      grid-template-columns: minmax(9rem, 0.52fr) minmax(0, 1.48fr);
-      align-items: end;
-      gap: 0.15rem clamp(1.5rem, 4vw, 3rem);
-      padding-block: clamp(1.25rem, 2.5vw, 1.75rem);
-    }
-
-    .search-card .card-kicker {
-      grid-area: kicker;
-      margin-block-end: 0.35rem;
-    }
-
-    .search-card h3 {
-      grid-area: title;
-      margin: 0;
-    }
-
-    .search-card label {
-      grid-area: label;
-      margin: 0 0 0.4rem;
-    }
-
-    .search-card__controls {
-      grid-area: controls;
-    }
-
-    .search-card__seeds {
-      grid-area: seeds;
-      margin-block-start: 0.45rem;
-    }
-
-    a.software-card {
-      display: grid;
-      grid-template-areas:
-        'kicker kicker'
-        'lead title'
-        'lead copy'
-        'lead action';
-      grid-template-columns: minmax(12rem, 0.72fr) minmax(0, 1.28fr);
-      align-items: start;
-      gap: 0 clamp(1.5rem, 3.5vw, 2.5rem);
-    }
-
-    .software-card .card-kicker {
-      grid-area: kicker;
-    }
-
-    .software-card__lead {
-      grid-area: lead;
-      margin-block-end: 0;
-    }
-
-    .software-card h3 {
-      grid-area: title;
-    }
-
-    .software-card > p:not(.card-kicker) {
-      grid-area: copy;
-    }
-
-    .software-card .home-card__action {
-      grid-area: action;
-      margin-block-start: 0.5rem;
-    }
-  }
-
-  @media (min-width: 64.0625rem) {
-    .home-card-grid {
-      grid-template-columns: repeat(12, minmax(0, 1fr));
-    }
-
-    .lead-story,
-    .lead-story--empty {
-      z-index: 4;
-      min-block-size: clamp(27rem, 36vw, 31rem);
-      grid-column: 1 / span 8;
-      grid-row: 1;
-    }
-
-    a.music-card {
-      z-index: 2;
-      min-block-size: clamp(21rem, 28vw, 24rem);
-      grid-column: 10 / -1;
-      grid-row: 1;
-      align-self: start;
-      margin-block-start: clamp(2rem, 4vw, 3.25rem);
-    }
-
-    .search-card {
-      z-index: 3;
-      grid-column: 1 / span 9;
-      grid-row: 2;
-    }
-
-    a.software-card {
-      z-index: 2;
-      grid-column: 5 / -1;
-      grid-row: 3;
-    }
-  }
-
-  @media (min-width: 44.0625rem) and (max-width: 64rem) {
-    .home-card-grid {
-      grid-template-columns: repeat(8, minmax(0, 1fr));
-    }
-
-    .lead-story,
-    .lead-story--empty {
-      min-block-size: 27rem;
-      grid-column: 1 / span 5;
-      grid-row: 1;
-    }
-
-    a.music-card {
-      grid-column: 6 / -1;
-      grid-row: 1;
-      align-self: start;
-      margin-block-start: 2rem;
-    }
-
-    .search-card {
-      grid-column: 1 / -1;
-      grid-row: 2;
-    }
-
-    a.software-card {
-      grid-column: 2 / -1;
-      grid-row: 3;
-    }
-  }
-
-  @media (max-width: 44rem) {
-    .home-intro {
-      margin-block-end: 2rem;
-    }
-
-    .home-intro__identity,
-    .home-intro__copy {
-      padding: 1.25rem;
-    }
-
-    .home-intro__identity {
-      gap: 1rem;
-    }
-
-    .home-intro__profile {
+  @media (max-width: 40rem) {
+    .home-dashboard,
+    .home-secondary {
       gap: 0.75rem;
     }
 
-    .home-intro__profile img {
-      width: 4.25rem;
-      height: 4.25rem;
-    }
-
-    .home-intro__name {
-      font-size: 1.5rem;
-    }
-
-    .home-intro__links {
-      margin-block-start: 0;
-    }
-
-    .home-intro h1 {
-      margin-block-start: 0.75rem;
-      font-size: clamp(2rem, 10vw, 2.65rem);
-      line-height: 1.16;
-    }
-
-    .home-intro .lede {
-      margin-block-start: 1rem;
-      font-size: 1rem;
-    }
-
-    .home-feature__head {
-      display: block;
-    }
-
-    .home-feature__head > p {
-      margin-block-start: 0.65rem;
-      text-align: start;
-    }
-
-    .home-card-grid {
-      grid-template-columns: minmax(0, 1fr);
-      grid-auto-rows: max-content;
-      align-items: start;
-      gap: 1rem;
-    }
-
-    .home-card,
-    .lead-story,
-    .lead-story--empty,
-    a.music-card,
-    .search-card,
-    a.software-card {
-      width: 100%;
-      min-block-size: 0 !important;
-      block-size: auto;
-      grid-row: auto !important;
-      align-self: start;
-    }
-
-    .lead-story,
-    .lead-story--empty,
-    .music-card,
-    .search-card,
-    .software-card {
-      grid-column: 1;
-    }
-
-    a.music-card {
-      justify-self: stretch;
+    .identity-panel,
+    .latest-panel__body,
+    .home-search,
+    .project-panel,
+    .music-panel {
       padding: 1.25rem;
     }
 
-    a.software-card {
-      justify-self: stretch;
+    .identity-panel__profile {
+      padding-inline-end: 1.5rem;
     }
 
-    .music-card__tracks {
-      margin-block-end: 0.75rem;
+    .identity-panel__profile img {
+      width: 4.6rem;
+      height: 4.6rem;
     }
 
-    .music-card .home-card__action {
-      margin-block-start: 0.25rem;
+    .latest-panel__meta {
+      align-items: flex-start;
+      flex-direction: column;
+      padding: 1rem 3.5rem 1rem 1.25rem;
     }
 
-    .lead-story__band {
-      flex-wrap: wrap;
+    .latest-panel__meta > div {
+      justify-content: flex-start;
     }
 
-  }
-
-  @media (max-width: 30rem) {
-    .lead-story__body,
-    .lead-story--empty,
-    .search-card,
-    a.software-card {
-      padding: 1.25rem;
+    .latest-panel h2 {
+      font-size: clamp(1.75rem, 8.5vw, 2.35rem);
     }
 
-    .lead-story h3 {
-      font-size: 1.65rem;
+    .latest-panel__pinned {
+      grid-template-columns: auto minmax(0, 1fr);
     }
 
-    .music-card__tracks li:nth-child(n + 3) {
+    .latest-panel__pinned time {
       display: none;
     }
 
-    .search-card__controls,
-    .lead-story__actions {
+    .home-search__controls {
       grid-template-columns: minmax(0, 1fr);
     }
 
-    .search-card__controls button,
-    .lead-story__archive {
+    .home-search__controls button {
       width: 100%;
+    }
+
+  }
+
+  @media (max-width: 26rem) {
+    .identity-panel__profile {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .identity-panel__stats dd {
+      font-size: 0.95rem;
+    }
+
+    .latest-panel__actions {
+      align-items: flex-start;
+      flex-direction: column;
     }
   }
 
-  @media (max-width: 22rem) {
-    .home-card-grid {
-      gap: 0.625rem;
-    }
-
-    .lead-story__body,
-    .lead-story--empty,
-    a.music-card,
-    .search-card,
-    a.software-card {
-      padding: 1.25rem;
+  @media (prefers-reduced-motion: reduce) {
+    .registration-mark i,
+    .primary-link span,
+    .panel-action i {
+      transition: none;
     }
   }
 </style>

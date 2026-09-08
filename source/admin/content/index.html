@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#245f64">
-  <meta name="application-name" content="不知名博客 — Nisconder">
-  <title>文章管理 — 不知名博客 — Nisconder</title>
+  <meta name="application-name" content="Nisconder">
+  <title>写作后台 — Nisconder</title>
   <link rel="icon" type="image/png" href="/img/nisconder-avatar.png">
   <link rel="manifest" href="/site.webmanifest">
   <link href="/admin/config.yml" type="text/yaml" rel="cms-config-url">
@@ -40,7 +40,7 @@
   </noscript>
 
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.15.1/dist/decap-cms.js"></script>
-  <script src="/admin/admin-ui.js?v=14"></script>
+  <script src="/admin/admin-ui.js?v=15"></script>
   <script>
     if (window.CMS) {
       CMS.registerPreviewStyle('/admin/editor-preview.css?v=7');
@@ -293,7 +293,7 @@
     }
 
     (function () {
-      if (window.__ADMIN_UI_V6__) return;
+      if (window.__ADMIN_UI_V7__) return;
       var loading = document.getElementById('admin-loading');
       var decorationFrame = 0;
 

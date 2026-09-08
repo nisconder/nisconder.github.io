@@ -1,0 +1,16 @@
+# Pages handles /admin and its directory indexes automatically.
+# Keep admin redirects out of this file to avoid HTML normalization loops.
+# Static redirects must precede wildcard redirects.
+/archives /articles/ 301
+/categories /articles/ 301
+/tags /articles/ 301
+/link /about/ 301
+/link/ /about/ 301
+/movies /music/ 301
+/movies/ /music/ 301
+/resources /software/ 301
+/resources/ /software/ 301
+
+/archives/* /articles/ 301
+/categories/* /articles/ 301
+/tags/* /articles/ 301

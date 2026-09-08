@@ -1,149 +1,165 @@
-# 不知名博客
+# Nisconder
 
-个人博客项目，基于 Hexo + Butterfly 主题。
+技术文章、个人项目、阅读与音乐记录。
 
-线上地址：
-https://nisconder-blog.netlify.app/
+- 线上站点：[nisconder.pages.dev](https://nisconder.pages.dev/)
+- 源码仓库：[nisconder/nisconder.github.io](https://github.com/nisconder/nisconder.github.io)
+- 管理入口：[站点后台](https://nisconder.pages.dev/admin/)
 
-## 技术栈
+## 当前实现
 
-- Hexo 8
-- hexo-theme-butterfly
-- hexo-tag-aplayer（含 meting 标签支持）
+本站已经从 Hexo + Butterfly 迁移为 Astro 静态站点。仓库中的 `themes/butterfly`、部分旧 `source` 页面与旧样式仅用于保留历史内容或兼容迁移，不是当前前端的运行主题。
+
+当前技术栈：
+
+- Astro 7 与 Astro Content Collections
+- TypeScript、原生 CSS 与少量原生 JavaScript
+- Markdown 文章，源文件位于 `source/_posts`
+- Decap CMS 写作后台
+- Waline 留言系统，服务端与数据库独立部署
+- Cloudflare Pages 静态托管
+
+## 站点功能
+
+- 首页展示真实的最新文章，并把置顶文章作为独立推荐，不让置顶状态干扰时间排序。
+- 文章页包含预计阅读时长、阅读进度、目录、上一篇与下一篇，以及独立文章留言。
+- 文章索引按真实年份归档，并提供分类与主题入口；站内搜索覆盖标题、正文、分类、标签和项目。
+- 项目页只展示 Nisconder 的原创公开项目，默认重点项目优先、同组按更新时间倒序；fork、归档项目与部署基础设施不进入项目目录。
+- 音乐页提供完整歌单、曲目切换与移动端触控操作。
+- 首页、文章、项目、音乐和关于页面均可留言；移动端留言区按需展开并延迟加载。
+- `/admin/` 是统一管理门户，可进入文章管理与 Waline 留言管理。
+- 支持青、紫、白拼色主题、深色模式和桌面／移动响应式布局。
+- 搜索索引只在访客准备搜索时预取，歌单与留言等第三方资源继续按需加载。
+
+## 页面切换与动效
+
+站内页面使用 Astro ClientRouter 切换：旧内容在 220ms 内淡出、轻微缩小并模糊，新内容在 420ms 内恢复到清晰的正常尺寸。页头单独保留为稳定的视觉参照；深浅主题切换只做淡入淡出，不叠加页面缩放。移动端使用更小的缩放和模糊幅度，系统开启“减少动态效果”时关闭这些动画。
+
+搜索、项目筛选、阅读目录、APlayer 和 Waline 都在页面进入时初始化、离开时清理，避免返回页面后失效或重复绑定。新增页面交互时也需要遵守这个生命周期；RSS 使用完整页面导航，不交给站内路由处理。
+
+## 原创项目目录
+
+项目页当前收录 7 个原创公开项目：
+
+- [npm-safe](https://github.com/nisconder/npm-safe)
+- [npm-safe for DSH](https://github.com/nisconder/npm-safe-forDSH)
+- [Paste X-Ray](https://github.com/nisconder/paste-xray)
+- [Nisconder Blog](https://github.com/nisconder/nisconder.github.io)
+- [Git Auto Updater](https://github.com/nisconder/git-auto-updater)
+- [JCLI Toolkit](https://github.com/nisconder/jcli-toolkit)
+- [生存竞速 / ai-draw-guess](https://github.com/nisconder/ai-draw-guess)
+
+项目展示数据维护在 `src/data/software.ts`。默认重点优先，同组按 `updatedAt` 倒序排列，也允许切换为单纯的最近更新或名称排序。
 
 ## 本地开发
 
-安装依赖：
+使用 Node.js 24，与 Cloudflare Pages 的 `NODE_VERSION=24` 和仓库 `.node-version` 保持一致。
+
+安装锁定版本的依赖：
 
 ```bash
-npm install
+npm ci
 ```
 
-启动本地服务：
+启动开发服务器：
 
 ```bash
-npm run server
+npm run dev
 ```
 
-生成静态文件：
+默认预览地址为 `http://127.0.0.1:4321/`。本地开发服务器已经处理 `/admin`、`/admin/content` 和 `/admin/comments` 的目录入口，不需要手动补 `index.html`。
+
+生成生产静态文件：
 
 ```bash
 npm run build
 ```
 
-清理缓存与产物：
+构建结果位于 `dist/`。本地检查生产构建：
 
 ```bash
-npm run clean
+npm run preview
 ```
 
-## 常用写作命令
+`dev` 与 `build` 运行前会自动执行 `scripts/prepare-static.mjs`，把后台和媒体资源复制到 `static/`。因此后台源文件应修改 `source/admin/`，不要直接编辑生成的 `static/admin/`。
 
-新建文章：
+## 内容与排序规则
 
-```bash
-hexo new "文章标题"
+文章源文件位于 `source/_posts/`，由 `src/content.config.ts` 载入。公开文章会排除 `draft: true`，其余文章按 `date` 从新到旧排序；日期相同时以文件 ID 作为稳定的次级排序依据。
+
+首页使用以下规则：
+
+1. 首篇主文章始终取时间排序后的第一篇。
+2. `sticky: true` 或数字权重的文章显示为独立置顶推荐。
+3. 首页不再另放重复的“最近更新”列表，完整的时间归档放在文章索引页。
+
+文章文件名同时作为稳定内容 ID 和公开 URL 的一部分。不要重命名已经发布的文章，否则原链接会改变。
+
+文章索引页会从公开内容自动生成分类、主题和年份导航，不需要手工维护。预计阅读时长根据正文中的中日韩字符与拉丁词数计算，仅作为快速判断篇幅的提示。
+
+## 写作后台
+
+统一入口：
+
+- `/admin/`：管理门户
+- `/admin/content/`：Decap CMS 文章与媒体管理
+- `/admin/content/#/collections/posts/new`：直接新建文章
+- `/admin/comments/`：Waline 留言管理
+
+Decap CMS 使用 GitHub OAuth，并直接向 `nisconder/nisconder.github.io` 的 `main` 分支提交内容。只有拥有仓库写入权限的 GitHub 账户可以发布。
+
+新文章文件名由 `source/admin/config.yml` 按以下规则生成：
+
+```text
+YYYY-MM-DD-blogHHMMSS.md
 ```
 
-常用内容目录：
+例如：
 
-- 文章：source/_posts
-- 标签页：source/tags/index.md
-- 分类页：source/categories/index.md
-- 音乐页：source/music/index.md
-- 自定义样式：source/css/personal-theme.css
-
-## 站点配置
-
-- Hexo 主配置：_config.yml
-- Butterfly 主题配置：_config.butterfly.yml
-
-当前站点 URL 已配置为：
-
-```yaml
-url: https://nisconder-blog.netlify.app/
+```text
+2026-08-26-blog230400.md
 ```
 
-## 发布说明
+日期字段固定为 `YYYY-MM-DD HH:mm:ss`，并使用作者所在时区的墙上时间，避免排序与旧文章永久链接发生偏移。写作时至少填写标题、摘要、日期、分类和正文；标签、草稿与首页置顶为可选项。
 
-本项目输出静态文件到 public 目录，可直接用于 Netlify 部署。
+## Waline 留言
 
-## Waline 评论部署
+前端使用 Waline 3.7.1。服务端独立部署在 Vercel，数据存储在外部 PostgreSQL 数据库，不进入本仓库。
 
-本博客使用 [Waline](https://waline.js.org/) 提供评论与浏览量服务。Waline 后端独立部署在 Vercel，评论数据存储在 Neon PostgreSQL 数据库，不放入本仓库。以下为一次性部署步骤（约 15 分钟）：
+- 公开留言由各页面末尾的留言区加载。
+- `/admin/comments/` 会转到 Waline 管理界面。
+- 管理员在 Waline 后台审核、编辑、置顶或删除留言。
+- Waline 服务地址维护在 `src/components/Comments.astro` 与后台跳转页中；更换后端时需要同步修改两处。
 
-### 1. 部署 Waline 服务端到 Vercel
+## 目录结构
 
-1. 打开 [Waline Vercel 部署页面](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fwalinejs%2Fwaline%2Ftree%2Fmain%2Fexample)，使用 GitHub 账户登录 Vercel。
-2. 输入一个喜欢的项目名称（如 `my-waline`），点击 `Create`。Vercel 会基于 Waline 模板自动创建并初始化仓库。
-3. 等待一两分钟，部署成功后点击 `Go to Dashboard` 进入控制台。
+```text
+src/
+  components/        通用页头、页脚、留言、文章行与音乐组件
+  data/              项目和歌单数据
+  layouts/           页面基础布局
+  lib/               文章读取、排序与 URL 工具
+  pages/             首页、文章、项目、音乐、搜索、关于与数据端点
+  styles/            全站样式与响应式规则
+source/
+  _posts/            Markdown 文章源文件
+  admin/             管理门户、Decap CMS 与留言管理入口
+  img/               站点图片
+static/               静态资源与构建前复制产物
+scripts/              构建前资源准备脚本
+static/_headers       Cloudflare Pages 安全头与缓存配置
+static/_redirects     Cloudflare Pages 历史页面跳转规则
+netlify.toml          保留给旧 Netlify 站点的兼容配置
+```
 
-### 2. 创建 Neon 数据库并建表
+## 部署
 
-1. 在 Vercel 控制台点击顶部 `Storage` → `Create Database`，在 `Marketplace Database Providers` 中选择 `Neon`，点击 `Continue`。
-2. 按提示创建 Neon 账号（选择 `Accept and Create`），地区和额度可保持默认，点击 `Continue`。
-3. 定义数据库名称（可保持默认），点击 `Continue`。
-4. 在 `Storage` 下点击刚创建的数据库，选择 `Open in Neon` 跳转到 Neon 控制台。
-5. 在 Neon 左侧选择 `SQL Editor`，将 [waline.pgsql](https://github.com/walinejs/waline/blob/main/assets/waline.pgsql) 中的建表 SQL 粘贴进编辑器，点击 `Run` 执行。等待提示创建成功。
+Cloudflare Pages 连接 `nisconder/nisconder.github.io`，生产分支为 `main`，框架预设为 Astro，构建命令为 `npm run build`，输出目录为 `dist`，根目录留空。环境变量设置 `NODE_VERSION=24`。
 
-### 3. 重新部署使数据库生效
+推送到 `main` 后自动构建部署。Pages 的目录索引处理 `/admin/` 等后台入口，`static/_redirects` 处理历史页面跳转；`static/_headers` 为 `/_astro/*` 设置长期不可变缓存，并为后台禁用缓存及搜索引擎索引。不要给 `/admin/` 添加指向自身的重定向。
 
-1. 回到 Vercel 控制台，点击顶部 `Deployments`，在最新一次部署右侧点击 `Redeploy`。
-2. 等待 `STATUS` 变为 `Ready`，点击 `Visit` 打开部署地址——此地址即为 Waline 服务端地址（形如 `https://your-waline-backend.vercel.app`）。
+站点的规范地址由 `astro.config.mjs` 的 `site` 决定。再次换域名时还需要同步 `static/robots.txt` 和 `source/admin/config.yml` 中的展示地址。OAuth 和 Waline 后端保持独立部署，新域名下的管理员登录仍需单独验证；如后端限制来源域名，应更新其白名单，而不是盲目替换 OAuth 回调。
 
-### 4. 注册管理员
+RSS 正文从 Markdown 渲染结果生成，不包含网页目录或阅读进度控件。`src/lib/feed-identity.ts` 保留迁移前两篇文章的原 GUID，仅文章链接切到新域名；新文章使用不依赖域名的标识。请勿为了清除旧域名文字而改写历史 GUID。
 
-1. 访问 `<服务端地址>/ui/register`，使用管理员邮箱注册。**首个注册的用户自动成为管理员**。
-2. 登录后即可在 `/ui` 管理面板中审核、编辑、标记或删除评论。
-
-### 5. 将真实地址填入博客配置
-
-1. 将 `_config.butterfly.yml` 中 `waline.serverURL` 的占位符 `https://your-waline-backend.vercel.app` 替换为上一步获得的真实 Vercel 地址。
-2. 提交并推送到 GitHub（`git push`），Netlify 会自动触发重建，评论区即可上线。
-
-> 参考文档：[Waline Vercel 部署](https://waline.js.org/guide/deploy/vercel.html) | [Waline 多数据库支持](https://waline.js.org/guide/database.html)
-
-## GitHub 登录认证设置（写作后台）
-
-Decap CMS 写作后台已切换为 GitHub OAuth 认证，使用免费的第三方 OAuth Provider 替代需要付费的 Netlify Identity。
-
-### 前置准备（已完成）
-
-1. **GitHub OAuth App** 已创建，Callback URL 设置为 `https://netlify-cms-github-oauth-provider-qt36928cs-nisconders-projects.vercel.app/callback`。
-2. **OAuth Provider** 已部署到 Vercel：`https://netlify-cms-github-oauth-provider-qt36928cs-nisconders-projects.vercel.app`，环境变量包含 `OAUTH_CLIENT_ID`、`OAUTH_CLIENT_SECRET`、`ORIGINS`、`REDIRECT_URL`。
-3. Vercel 项目部署保护已设为 Public（确保 `/auth` 端点可公开访问）。
-
-### 使用方式
-
-1. 浏览器访问 `https://nisconder-blog.netlify.app/admin/`，在管理门户选择「文章与媒体」；也可以直接打开 `https://nisconder-blog.netlify.app/admin/content/`。
-2. 点击 **"Login with GitHub"** 按钮，授权 GitHub OAuth。
-3. 授权完成后即可在线新建和编辑文章，所有操作直接提交到 GitHub 仓库。
-
-> 只有对 `nisconder/nisconder.github.io` 仓库有写入权限的 GitHub 账户才能保存内容，即仅管理员可操作。
-
-### 注意
-
-此方式完全替代了 Netlify Identity 邀请制方案。Netlify Identity 需要付费套餐才可使用，而 GitHub OAuth 方案免费且无需在 Netlify 后台进行额外配置。
-
-## Decap CMS 写作说明
-
-本博客集成了 [Decap CMS](https://decapcms.org/) 写作后台，管理员可通过浏览器在线新建和编辑文章，无需本地环境。
-
-### 访问写作后台
-
-1. 浏览器打开 `https://nisconder-blog.netlify.app/admin/`，选择「文章与媒体」。
-2. 在 `/admin/content/` 使用 GitHub 登录；留言管理位于 `/admin/comments/`。
-
-### 新建 / 编辑文章
-
-1. 登录后左侧菜单选择 `Posts`，点击 `New Post` 新建文章，或点击已有文章进行编辑。
-2. 填写标题、日期、分类、标签和正文。新文章文件名由 Decap CMS 按 `YYYY-MM-DD-blogHHMMSS.md` 自动生成，例如 `2026-08-26-blog230400.md`；日期与精确到秒的时间共同避免文件名冲突，也延续现有文章的日期 + `blog` 命名习惯。
-3. 日期格式固定为 `YYYY-MM-DD HH:mm:ss`，避免时区偏移导致文章排序错乱。
-4. 点击右上角 `Publish` → 选择 `Publish now`，Decap CMS 会自动提交一个 commit 到 GitHub `main` 分支。
-5. GitHub 收到 commit 后会触发托管平台构建；Netlify 只有在团队仍有可用运营积分、生产部署未暂停时才会发布到线上。
-
-### 注意事项
-
-- **不要重命名现有文章文件**：文章公开 URL 使用文件名作为 slug，改名会改变已经发布的链接。新的命名规则只应用于此后新建的文章，不会主动改动现有文件。
-- 图片上传功能（`media_folder`）已配置占位字段 `source/images/uploads`，如需启用图片上传请在 Decap CMS 配置中补充实际路径。
-- 所有写作操作通过 GitHub OAuth 直接提交到 GitHub，可在仓库的 commit 历史中查看。
+`netlify.toml` 暂时保留，旧 Netlify 入口与先前创建的 Pages 项目未自动删除或停用。确认新站后，应在各平台关闭不再使用项目的自动部署，避免重复构建。旧 RSS 地址和旧站跳转仍需在原托管平台可部署时另行处理。

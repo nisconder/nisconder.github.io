@@ -1,7 +1,10 @@
 ---
 import Comments from '../components/Comments.astro'
+import ContinuePath from '../components/ContinuePath.astro'
+import PageTransitions from '../components/PageTransitions.astro'
 import SiteFooter from '../components/SiteFooter.astro'
 import SiteHeader from '../components/SiteHeader.astro'
+import type { InterestPoint } from '../lib/interests'
 import '../styles/global.css'
 
 interface Props {
@@ -9,29 +12,47 @@ interface Props {
   description?: string
   canonical?: string | URL
   image?: string
+  imageAlt?: string
   noindex?: boolean
   ogType?: 'website' | 'article'
+  publishedTime?: string
+  modifiedTime?: string
+  category?: string
+  tags?: string[]
+  readingMinutes?: number
   comments?: boolean
   commentsTitle?: string
   commentsDescription?: string
   commentsPath?: string | URL
+  interestPoints?: InterestPoint[]
+  interestTitle?: string
+  interestDescription?: string
 }
 
 const {
   title,
-  description = '不知名博客是 Nisconder 的个人站，记录技术、阅读、音乐与生活思考。',
+  description = 'Nisconder 的个人站：技术文章、个人项目、阅读与音乐记录。',
   canonical,
   image,
+  imageAlt,
   noindex = false,
   ogType = 'website',
+  publishedTime,
+  modifiedTime,
+  category,
+  tags = [],
+  readingMinutes,
   comments = false,
   commentsTitle,
   commentsDescription,
   commentsPath,
+  interestPoints = [],
+  interestTitle,
+  interestDescription,
 } = Astro.props
 
 const authorName = 'Nisconder'
-const siteName = '不知名博客 — Nisconder'
+const siteName = 'Nisconder'
 const pageTitle =
   !title || title === '不知名博客' || title === siteName || title === authorName
     ? siteName
@@ -41,6 +62,37 @@ const canonicalUrl = canonical
   ? new URL(canonical.toString(), baseUrl)
   : new URL(Astro.url.pathname, baseUrl)
 const imageUrl = new URL(image ?? '/img/nisconder-avatar.png', baseUrl)
+const imageAltText = imageAlt?.trim()
+  || (image && title ? `《${title}》的分享图片` : 'Nisconder 的站点头像')
+const authorUrl = new URL('/about/', baseUrl)
+const articleStructuredData = ogType === 'article' && title && publishedTime
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: title,
+      description,
+      url: canonicalUrl.href,
+      mainEntityOfPage: {
+        '@type': 'WebPage',
+        '@id': canonicalUrl.href,
+      },
+      image: imageUrl.href,
+      datePublished: publishedTime,
+      dateModified: modifiedTime ?? publishedTime,
+      inLanguage: 'zh-CN',
+      author: {
+        '@type': 'Person',
+        name: authorName,
+        url: authorUrl.href,
+      },
+      articleSection: category,
+      keywords: tags.length > 0 ? tags.join(', ') : undefined,
+      timeRequired: readingMinutes ? `PT${readingMinutes}M` : undefined,
+    }
+  : undefined
+const articleStructuredDataJson = articleStructuredData
+  ? JSON.stringify(articleStructuredData).replace(/</g, '\\u003c')
+  : undefined
 ---
 
 <!doctype html>
@@ -53,8 +105,8 @@ const imageUrl = new URL(image ?? '/img/nisconder-avatar.png', baseUrl)
     <meta name="application-name" content={siteName} />
     <meta name="apple-mobile-web-app-title" content={siteName} />
     <meta name="description" content={description} />
-    <meta id="theme-color" name="theme-color" content="#e7edef" />
-    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <meta id="theme-color" name="theme-color" content="#e8f0f2" />
+    {noindex && <meta name="robots" content="noindex, follow" />}
 
     <link rel="canonical" href={canonicalUrl} />
     <link rel="icon" type="image/png" sizes="100x100" href="/img/nisconder-avatar.png" />
@@ -70,13 +122,28 @@ const imageUrl = new URL(image ?? '/img/nisconder-avatar.png', baseUrl)
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={imageUrl} />
-    <meta property="og:image:alt" content="Nisconder 的站点头像" />
+    <meta property="og:image:alt" content={imageAltText} />
+    {ogType === 'article' && publishedTime && (
+      <meta property="article:published_time" content={publishedTime} />
+    )}
+    {ogType === 'article' && (
+      <meta property="article:modified_time" content={modifiedTime ?? publishedTime} />
+    )}
+    {ogType === 'article' && <meta property="article:author" content={authorUrl} />}
+    {ogType === 'article' && category && <meta property="article:section" content={category} />}
+    {ogType === 'article' && tags.map((tag) => <meta property="article:tag" content={tag} />)}
     <meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={imageUrl} />
+    <meta name="twitter:image:alt" content={imageAltText} />
+
+    {articleStructuredDataJson && (
+      <script type="application/ld+json" set:html={articleStructuredDataJson} />
+    )}
 
     <title>{pageTitle}</title>
+    <PageTransitions />
     <slot name="head" />
 
     <script is:inline>
@@ -97,7 +164,7 @@ const imageUrl = new URL(image ?? '/img/nisconder-avatar.png', baseUrl)
 
         root.dataset.theme = theme
         root.style.colorScheme = theme
-        document.querySelector('#theme-color')?.setAttribute('content', theme === 'dark' ? '#0b1014' : '#e7edef')
+        document.querySelector('#theme-color')?.setAttribute('content', theme === 'dark' ? '#0b1114' : '#e8f0f2')
       })()
     </script>
   </head>
@@ -108,6 +175,14 @@ const imageUrl = new URL(image ?? '/img/nisconder-avatar.png', baseUrl)
       <main id="main-content" class="site-main" tabindex="-1">
         <div class="reading-frame">
           <slot />
+          {interestPoints.length > 0 && (
+            <ContinuePath
+              next={interestPoints[0]}
+              branch={interestPoints[1]}
+              title={interestTitle}
+              description={interestDescription}
+            />
+          )}
           {comments && (
             <Comments
               path={commentsPath ?? canonicalUrl.pathname}

@@ -1,13 +1,14 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro"
 import { softwareProjects } from "../../data/software"
+import { getInterestJourney } from "../../lib/interests"
 import { getPostCategory, getPostTags, getPublishedPosts } from "../../lib/posts"
 
 const posts = await getPublishedPosts()
 const querySeeds = Array.from(new Set([
   ...posts.flatMap((post) => getPostTags(post)),
   ...softwareProjects.flatMap((project) => project.tags),
-])).slice(0, 6)
+])).slice(0, 3)
 const categoryCounts = Array.from(
   posts.reduce((counts, post) => {
     const category = getPostCategory(post)
@@ -17,17 +18,20 @@ const categoryCounts = Array.from(
 ).sort(([leftCategory, leftCount], [rightCategory, rightCount]) =>
   rightCount - leftCount || leftCategory.localeCompare(rightCategory, "zh-CN"),
 )
+const interestPoints = await getInterestJourney('search')
 ---
 
 <BaseLayout
   title="搜索"
-  description="按标题、摘要、分类和标签搜索本站文章与软件项目。"
+  description="搜索本站文章正文全文、项目说明、分类和标签。"
+  noindex
+  interestPoints={interestPoints}
 >
   <header class="page-intro search-intro">
     <p class="eyebrow">SEARCH / ARCHIVE</p>
-    <h1>从写过的内容里，<br />找到一个词。</h1>
+    <h1>搜索文章与项目</h1>
     <p class="lede">
-      按标题、正文、项目、分类或标签搜索。
+      文章正文全文已纳入索引，也可以按项目、分类或标签查找。
     </p>
     <nav class="query-seeds" aria-label="常用搜索主题">
       <span>常见标签</span>
@@ -48,7 +52,7 @@ const categoryCounts = Array.from(
             id="site-search"
             type="search"
             name="q"
-            placeholder="例如：npm-safe、社会学、TypeScript…"
+            placeholder="输入标题、正文、项目或标签…"
             autocomplete="off"
             spellcheck="false"
             aria-describedby="search-hint search-status"
@@ -58,7 +62,7 @@ const categoryCounts = Array.from(
         <button type="submit">搜索</button>
       </div>
       <p id="search-hint" class="search-hint">
-        支持同时输入多个关键词；也可以只选分类，直接浏览该分类下的文章。
+        检索范围：文章标题与正文全文、项目名称与说明、分类和标签。支持多个关键词；也可以只选分类。
       </p>
 
       {categoryCounts.length > 0 && (
@@ -82,10 +86,12 @@ const categoryCounts = Array.from(
   </section>
 
   <section class="axis-section" data-note="结果" aria-label="搜索结果">
-    <p id="search-status" class="search-status" aria-live="polite" data-search-status>
-      输入关键词，或选择一个文章分类。
-    </p>
-    <div class="search-results" data-search-results></div>
+    <div class="search-output" data-search-output>
+      <p id="search-status" class="search-status" aria-live="polite" data-search-status>
+        输入关键词，或选择一个文章分类。
+      </p>
+      <div class="search-results" data-search-results></div>
+    </div>
   </section>
 
 </BaseLayout>
@@ -96,8 +102,6 @@ const categoryCounts = Array.from(
     title?: string
     description?: string
     excerpt?: string
-    content?: string
-    text?: string
     date?: string
     category?: string
     tags: string[]
@@ -112,280 +116,339 @@ const categoryCounts = Array.from(
     }
   }
 
-  const form = document.querySelector<HTMLFormElement>("[data-search-form]")
-  const input = document.querySelector<HTMLInputElement>("[data-search-input]")
-  const status = document.querySelector<HTMLElement>("[data-search-status]")
-  const results = document.querySelector<HTMLElement>("[data-search-results]")
-  const categoryButtons = Array.from(
-    document.querySelectorAll<HTMLButtonElement>("[data-category-filter] [data-category]"),
-  )
+  const initialiseSearch = () => {
+    const form = document.querySelector<HTMLFormElement>("[data-search-form]")
+    if (!form || form.dataset.searchBound === "true") return
+    form.dataset.searchBound = "true"
+    const lifecycle = new AbortController()
+    const { signal } = lifecycle
+    const pagePath = window.location.pathname
+    const isActive = () => !signal.aborted && form.isConnected
+    const input = document.querySelector<HTMLInputElement>("[data-search-input]")
+    const status = document.querySelector<HTMLElement>("[data-search-status]")
+    const results = document.querySelector<HTMLElement>("[data-search-results]")
+    const output = document.querySelector<HTMLElement>("[data-search-output]")
+    const categoryButtons = Array.from(
+      document.querySelectorAll<HTMLButtonElement>("[data-category-filter] [data-category]"),
+    )
 
-  let indexPromise: Promise<SearchRecord[]> | null = null
-  let searchIndex: SearchRecord[] = []
-  let activeCategory = ""
-  let activeType = ""
+    let indexPromise: Promise<SearchRecord[]> | null = null
+    let searchIndex: SearchRecord[] = []
+    let indexReady = false
+    let announceCurrentLoad = false
+    let activeCategory = ""
+    let activeType = ""
+    let outputAnimation: Animation | null = null
+    let searchRevision = 0
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)")
 
-  const normalise = (value: unknown) =>
-    String(value ?? "")
-      .normalize("NFKC")
-      .toLocaleLowerCase("zh-CN")
+    document.addEventListener("astro:before-swap", () => {
+      lifecycle.abort()
+      searchRevision += 1
+      outputAnimation?.cancel()
+      delete form.dataset.searchBound
+    }, { once: true })
 
-  const asArray = (value: unknown): string[] =>
-    (Array.isArray(value) ? value : value ? [value] : []).map(String)
+    const normalise = (value: unknown) =>
+      String(value ?? "")
+        .normalize("NFKC")
+        .toLocaleLowerCase("zh-CN")
 
-  const loadIndex = () => {
-    if (indexPromise) return indexPromise
+    const asArray = (value: unknown): string[] =>
+      (Array.isArray(value) ? value : value ? [value] : []).map(String)
 
-    if (!status) return Promise.reject(new Error("Search status is unavailable"))
+    const loadIndex = (announce = true) => {
+      if (!indexPromise) announceCurrentLoad = false
+      if (announce && !indexReady) {
+        announceCurrentLoad = true
+        if (status) status.textContent = "正在载入搜索索引…"
+      }
 
-    status.textContent = "正在载入搜索索引…"
-    indexPromise = fetch("/search-index.json", {
-      headers: { Accept: "application/json" },
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error(`HTTP ${response.status}`)
-        return response.json()
+      if (indexPromise) return indexPromise
+
+      if (!status) return Promise.reject(new Error("Search status is unavailable"))
+
+      indexPromise = fetch("/search-index.json", {
+        headers: { Accept: "application/json" },
+        signal,
       })
-      .then((payload) => {
-        const items: Record<string, unknown>[] = Array.isArray(payload)
-          ? payload
-          : payload.items || payload.posts || []
-        searchIndex = items.map((item): SearchRecord => {
-          const title = typeof item.title === "string" ? item.title : undefined
-          const description = typeof item.description === "string" ? item.description : undefined
-          const excerpt = typeof item.excerpt === "string" ? item.excerpt : undefined
-          const content = typeof item.content === "string" ? item.content : undefined
-          const text = typeof item.text === "string" ? item.text : undefined
-          const category = typeof item.category === "string" ? item.category : undefined
-          const tags = asArray(item.tags)
-
-          return {
-            kind: typeof item.kind === "string" ? item.kind : undefined,
-            title,
-            description,
-            excerpt,
-            content,
-            text,
-            date: typeof item.date === "string" ? item.date : undefined,
-            category,
-            href: String(item.href || item.url || "#"),
-            url: typeof item.url === "string" ? item.url : undefined,
-            tags,
-            search: {
-              title: normalise(title),
-              tags: normalise(tags.join(" ")),
-              category: normalise(category),
-              description: normalise(description || excerpt),
-              content: normalise(content || text),
-            },
-          }
+        .then((response) => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`)
+          return response.json()
         })
-        return searchIndex
-      })
-      .catch((error) => {
-        console.error("Failed to load search index", error)
-        indexPromise = null
-        status.textContent = "搜索索引暂时无法载入。请稍后重新输入，或前往文章归档浏览。"
-        throw error
-      })
+        .then((payload) => {
+          const items: Record<string, unknown>[] = Array.isArray(payload)
+            ? payload
+            : payload.items || payload.posts || []
+          searchIndex = items.map((item): SearchRecord => {
+            const title = typeof item.title === "string" ? item.title : undefined
+            const description = typeof item.description === "string" ? item.description : undefined
+            const excerpt = typeof item.excerpt === "string" ? item.excerpt : undefined
+            const content = typeof item.content === "string" ? item.content : undefined
+            const text = typeof item.text === "string" ? item.text : undefined
+            const category = typeof item.category === "string" ? item.category : undefined
+            const tags = asArray(item.tags)
 
-    return indexPromise
-  }
+            return {
+              kind: typeof item.kind === "string" ? item.kind : undefined,
+              title,
+              description,
+              excerpt,
+              date: typeof item.date === "string" ? item.date : undefined,
+              category,
+              href: String(item.href || item.url || "#"),
+              url: typeof item.url === "string" ? item.url : undefined,
+              tags,
+              search: {
+                title: normalise(title),
+                tags: normalise(tags.join(" ")),
+                category: normalise(category),
+                description: normalise(description || excerpt),
+                content: normalise(content || text),
+              },
+            }
+          })
+          indexReady = true
+          return searchIndex
+        })
+        .catch((error) => {
+          if (signal.aborted) throw error
+          console.error("Failed to load search index", error)
+          indexPromise = null
+          indexReady = false
+          if (announceCurrentLoad) {
+            status.textContent = "搜索索引暂时无法载入。请稍后重新输入，或前往文章归档浏览。"
+          }
+          throw error
+        })
 
-  const scoreItem = (item: SearchRecord, tokens: string[]) => {
-    const fields = item.search
-
-    let score = 0
-    for (const token of tokens) {
-      let tokenScore = 0
-      if (fields.title.includes(token)) tokenScore += 8
-      if (fields.tags.includes(token)) tokenScore += 5
-      if (fields.category.includes(token)) tokenScore += 4
-      if (fields.description.includes(token)) tokenScore += 2
-      if (fields.content.includes(token)) tokenScore += 1
-      if (tokenScore === 0) return 0
-      score += tokenScore
-    }
-    return score
-  }
-
-  const appendText = (element: HTMLElement, value: string) => {
-    element.textContent = value
-    return element
-  }
-
-  const render = (rawQuery: string, category = activeCategory, type = activeType) => {
-    if (!status || !results) return
-    const tokens = normalise(rawQuery).split(/\s+/).filter(Boolean)
-    const normalisedCategory = normalise(category)
-    const articleOnly = type === "article" || Boolean(normalisedCategory)
-    results.replaceChildren()
-
-    if (tokens.length === 0 && !normalisedCategory && !articleOnly) {
-      status.textContent = "输入关键词，或选择一个文章分类。"
-      return
-    }
-
-    const matches = searchIndex
-      .filter((item) => (
-        (!articleOnly || item.kind === "文章")
-        && (!normalisedCategory || normalise(item.category) === normalisedCategory)
-      ))
-      .map((item) => ({ item, score: tokens.length > 0 ? scoreItem(item, tokens) : 1 }))
-      .filter(({ score }) => score > 0)
-      .sort((a, b) => b.score - a.score || String(b.item.date || "").localeCompare(String(a.item.date || "")))
-      .slice(0, 20)
-
-    const scope = category ? `“${category}”分类` : articleOnly ? "文章" : "全站"
-    status.textContent = matches.length
-      ? (rawQuery
-        ? `在${scope}中找到 ${matches.length} 条与“${rawQuery}”匹配的内容。`
-        : category
-          ? `${scope}共有 ${matches.length} 篇文章。`
-          : `共有 ${matches.length} 篇公开文章。`)
-      : (rawQuery
-        ? `在${scope}中没有找到与“${rawQuery}”匹配的内容。可以减少关键词或切换分类。`
-        : category
-          ? `${scope}暂时没有公开文章。`
-          : "暂时没有公开文章。")
-
-    if (matches.length === 0) {
-      const archiveLink = document.createElement("a")
-      archiveLink.className = "search-empty-link"
-      archiveLink.href = "/articles/"
-      appendText(archiveLink, "浏览全部文章 →")
-      results.append(archiveLink)
-      return
+      return indexPromise
     }
 
-    const fragment = document.createDocumentFragment()
-    for (const { item } of matches) {
-      const article = document.createElement("article")
-      article.className = "search-result"
+    const scoreItem = (item: SearchRecord, tokens: string[]) => {
+      const fields = item.search
 
-      const meta = document.createElement("p")
-      meta.className = "search-result__meta"
-      if (item.kind) meta.append(item.kind)
-      if (item.kind && (item.category || item.date)) meta.append(" · ")
-      if (item.category) {
-        if (item.kind === "文章") {
-          const categoryLink = document.createElement("a")
-          categoryLink.href = `/search/?category=${encodeURIComponent(item.category)}`
-          appendText(categoryLink, item.category)
-          meta.append(categoryLink)
-        } else {
-          meta.append(item.category)
+      let score = 0
+      for (const token of tokens) {
+        let tokenScore = 0
+        if (fields.title.includes(token)) tokenScore += 8
+        if (fields.tags.includes(token)) tokenScore += 5
+        if (fields.category.includes(token)) tokenScore += 4
+        if (fields.description.includes(token)) tokenScore += 2
+        if (fields.content.includes(token)) tokenScore += 1
+        if (tokenScore === 0) return 0
+        score += tokenScore
+      }
+      return score
+    }
+
+    const appendText = (element: HTMLElement, value: string) => {
+      element.textContent = value
+      return element
+    }
+
+    const renderNow = (rawQuery: string, category = activeCategory, type = activeType) => {
+      if (!isActive() || !status || !results) return
+      const tokens = normalise(rawQuery).split(/\s+/).filter(Boolean)
+      const normalisedCategory = normalise(category)
+      const articleOnly = type === "article" || Boolean(normalisedCategory)
+      results.replaceChildren()
+
+      if (tokens.length === 0 && !normalisedCategory && !articleOnly) {
+        status.textContent = "输入关键词，或选择一个文章分类。"
+        return
+      }
+
+      const matches = searchIndex
+        .filter((item) => (
+          (!articleOnly || item.kind === "文章")
+          && (!normalisedCategory || item.search.category === normalisedCategory)
+        ))
+        .map((item) => ({ item, score: tokens.length > 0 ? scoreItem(item, tokens) : 1 }))
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score || String(b.item.date || "").localeCompare(String(a.item.date || "")))
+        .slice(0, 20)
+
+      const scope = category ? `“${category}”分类` : articleOnly ? "文章" : "全站"
+      status.textContent = matches.length
+        ? (rawQuery
+          ? `在${scope}中找到 ${matches.length} 条与“${rawQuery}”匹配的内容。`
+          : category
+            ? `${scope}共有 ${matches.length} 篇文章。`
+            : `共有 ${matches.length} 篇公开文章。`)
+        : (rawQuery
+          ? `在${scope}中没有找到与“${rawQuery}”匹配的内容。可以减少关键词或切换分类。`
+          : category
+            ? `${scope}暂时没有公开文章。`
+            : "暂时没有公开文章。")
+
+      if (matches.length === 0) {
+        const archiveLink = document.createElement("a")
+        archiveLink.className = "search-empty-link"
+        archiveLink.href = "/articles/"
+        appendText(archiveLink, "浏览全部文章 →")
+        results.append(archiveLink)
+        return
+      }
+
+      const fragment = document.createDocumentFragment()
+      for (const { item } of matches) {
+        const article = document.createElement("article")
+        article.className = "search-result"
+
+        const meta = document.createElement("p")
+        meta.className = "search-result__meta"
+        if (item.kind) meta.append(item.kind)
+        if (item.kind && (item.category || item.date)) meta.append(" · ")
+        if (item.category) {
+          if (item.kind === "文章") {
+            const categoryLink = document.createElement("a")
+            categoryLink.href = `/search/?category=${encodeURIComponent(item.category)}`
+            appendText(categoryLink, item.category)
+            meta.append(categoryLink)
+          } else {
+            meta.append(item.category)
+          }
         }
-      }
-      if (item.category && item.date) meta.append(" · ")
-      if (item.date) meta.append(item.date)
+        if (item.category && item.date) meta.append(" · ")
+        if (item.date) meta.append(item.date)
 
-      const heading = document.createElement("h2")
-      const link = document.createElement("a")
-      link.href = item.href
-      appendText(link, item.title || "未命名内容")
-      heading.append(link)
+        const heading = document.createElement("h2")
+        const link = document.createElement("a")
+        link.href = item.href
+        appendText(link, item.title || "未命名内容")
+        heading.append(link)
 
-      article.append(meta, heading)
+        article.append(meta, heading)
 
-      const description = item.description || item.excerpt
-      if (description) {
-        const summary = document.createElement("p")
-        summary.className = "search-result__description"
-        appendText(summary, description)
-        article.append(summary)
-      }
-
-      if (item.tags.length > 0) {
-        const tags = document.createElement("nav")
-        tags.className = "search-result__tags"
-        tags.setAttribute("aria-label", `《${item.title || "未命名内容"}》的标签`)
-        for (const tag of item.tags) {
-          const tagLink = document.createElement("a")
-          tagLink.href = `/search/?q=${encodeURIComponent(tag)}`
-          appendText(tagLink, `#${tag}`)
-          tags.append(tagLink)
+        const description = item.description || item.excerpt
+        if (description) {
+          const summary = document.createElement("p")
+          summary.className = "search-result__description"
+          appendText(summary, description)
+          article.append(summary)
         }
-        article.append(tags)
+
+        if (item.tags.length > 0) {
+          const tags = document.createElement("nav")
+          tags.className = "search-result__tags"
+          tags.setAttribute("aria-label", `《${item.title || "未命名内容"}》的标签`)
+          for (const tag of item.tags) {
+            const tagLink = document.createElement("a")
+            tagLink.href = `/search/?q=${encodeURIComponent(tag)}`
+            appendText(tagLink, `#${tag}`)
+            tags.append(tagLink)
+          }
+          article.append(tags)
+        }
+
+        fragment.append(article)
+      }
+      results.append(fragment)
+    }
+
+    const render = (rawQuery: string, category = activeCategory, type = activeType) => {
+      if (!isActive()) return
+      outputAnimation?.cancel()
+      renderNow(rawQuery, category, type)
+      if (!output || reducedMotion.matches) return
+
+      outputAnimation = output.animate(
+        [{ opacity: 0.25 }, { opacity: 1 }],
+        { duration: 180, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
+      )
+    }
+
+    const syncStateToUrl = (query: string, category: string, type: string) => {
+      const url = new URL(window.location.href)
+      if (query) url.searchParams.set("q", query)
+      else url.searchParams.delete("q")
+      if (category) url.searchParams.set("category", category)
+      else url.searchParams.delete("category")
+      if (type === "article" && !category) url.searchParams.set("type", "article")
+      else url.searchParams.delete("type")
+      window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`)
+    }
+
+    const updateCategoryButtons = () => {
+      for (const button of categoryButtons) {
+        const category = button.dataset.category ?? ""
+        const isPressed = category
+          ? category === activeCategory
+          : activeType === "article" && !activeCategory
+        button.setAttribute("aria-pressed", String(isPressed))
+      }
+    }
+
+    const runSearch = () => {
+      const revision = ++searchRevision
+      const query = input?.value.trim() ?? ""
+      const category = activeCategory
+      const type = activeType
+      syncStateToUrl(query, activeCategory, activeType)
+      if (!query && !activeCategory && activeType !== "article") {
+        render("", "", "")
+        return
       }
 
-      fragment.append(article)
-    }
-    results.append(fragment)
-  }
-
-  const syncStateToUrl = (query: string, category: string, type: string) => {
-    const url = new URL(window.location.href)
-    if (query) url.searchParams.set("q", query)
-    else url.searchParams.delete("q")
-    if (category) url.searchParams.set("category", category)
-    else url.searchParams.delete("category")
-    if (type === "article" && !category) url.searchParams.set("type", "article")
-    else url.searchParams.delete("type")
-    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`)
-  }
-
-  const updateCategoryButtons = () => {
-    for (const button of categoryButtons) {
-      const category = button.dataset.category ?? ""
-      const isPressed = category
-        ? category === activeCategory
-        : activeType === "article" && !activeCategory
-      button.setAttribute("aria-pressed", String(isPressed))
-    }
-  }
-
-  const runSearch = () => {
-    const query = input?.value.trim() ?? ""
-    syncStateToUrl(query, activeCategory, activeType)
-    if (!query && !activeCategory && activeType !== "article") {
-      render("", "", "")
-      return
+      void loadIndex()
+        .then(() => {
+          if (isActive() && revision === searchRevision) render(query, category, type)
+        })
+        .catch(() => {})
     }
 
-    void loadIndex()
-      .then(() => render(query, activeCategory, activeType))
-      .catch(() => {})
-  }
-
-  form?.addEventListener("submit", (event) => {
-    event.preventDefault()
-    runSearch()
-  })
-
-  for (const button of categoryButtons) {
-    button.addEventListener("click", () => {
-      activeCategory = button.dataset.category ?? ""
-      activeType = "article"
-      updateCategoryButtons()
+    form?.addEventListener("submit", (event) => {
+      event.preventDefault()
       runSearch()
-    })
-  }
+    }, { signal })
 
-  const applyUrlState = () => {
-    if (!input) return
-    const parameters = new URLSearchParams(window.location.search)
-    const query = parameters.get("q")?.trim() ?? ""
-    activeCategory = parameters.get("category")?.trim() ?? ""
-    activeType = parameters.get("type") === "article" || activeCategory ? "article" : ""
-    input.value = query
-    updateCategoryButtons()
+    const prefetchIndex = () => {
+      void loadIndex(false).catch(() => {})
+    }
+    input?.addEventListener("focus", prefetchIndex, { once: true, signal })
+    input?.addEventListener("pointerdown", prefetchIndex, { once: true, signal })
 
-    if (!query && !activeCategory && activeType !== "article") {
-      render("", "", "")
-      return
+    for (const button of categoryButtons) {
+      button.addEventListener("click", () => {
+        activeCategory = button.dataset.category ?? ""
+        activeType = "article"
+        updateCategoryButtons()
+        runSearch()
+      }, { signal })
     }
 
-    void loadIndex()
-      .then(() => render(query, activeCategory, activeType))
-      .catch(() => {})
+    const applyUrlState = () => {
+      if (!isActive() || !input || window.location.pathname !== pagePath) return
+      const revision = ++searchRevision
+      const parameters = new URLSearchParams(window.location.search)
+      const query = parameters.get("q")?.trim() ?? ""
+      activeCategory = parameters.get("category")?.trim() ?? ""
+      activeType = parameters.get("type") === "article" || activeCategory ? "article" : ""
+      input.value = query
+      updateCategoryButtons()
+      const category = activeCategory
+      const type = activeType
+
+      if (!query && !activeCategory && activeType !== "article") {
+        render("", "", "")
+        return
+      }
+
+      void loadIndex()
+        .then(() => {
+          if (isActive() && revision === searchRevision) render(query, category, type)
+        })
+        .catch(() => {})
+    }
+
+    applyUrlState()
+
+    window.addEventListener("popstate", applyUrlState, { signal })
   }
 
-  applyUrlState()
-
-  window.addEventListener("popstate", () => {
-    applyUrlState()
-  })
+  document.addEventListener("astro:page-load", initialiseSearch)
+  initialiseSearch()
 </script>
 
 <style>

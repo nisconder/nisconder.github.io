@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#245f64">
-  <meta name="application-name" content="不知名博客 — Nisconder">
-  <title>管理后台 — 不知名博客 — Nisconder</title>
+  <meta name="application-name" content="Nisconder">
+  <title>管理后台 — Nisconder</title>
   <link rel="icon" type="image/png" href="/img/nisconder-avatar.png">
   <link rel="manifest" href="/site.webmanifest">
-  <link rel="stylesheet" href="/admin/admin-portal.css?v=2">
+  <link rel="stylesheet" href="/admin/admin-portal.css?v=3">
   <script>
     if (window.location.hash) {
       window.history.replaceState(null, '', '/admin/');
@@ -18,44 +18,47 @@
 </head>
 <body>
   <header class="portal-header">
-    <a class="portal-brand" href="/" aria-label="返回不知名博客首页">
-      <img src="/img/nisconder-avatar.png" alt="" width="40" height="40">
-      <span>Nisconder</span>
+    <a class="portal-brand" href="/" aria-label="返回 Nisconder 首页">
+      <span class="portal-brand__mark" aria-hidden="true"><span></span><span></span></span>
+      <span class="portal-brand__copy"><strong>Nisconder</strong><small>管理入口</small></span>
     </a>
     <a class="portal-site-link" href="/">查看主站 <span aria-hidden="true">↗</span></a>
   </header>
 
   <main class="portal-main">
-    <div class="portal-intro">
+    <section class="portal-intro" aria-labelledby="portal-title">
       <p class="portal-eyebrow">NISCONDER / ADMIN</p>
-      <h1>管理后台</h1>
-      <p>选择现在要处理的内容。文章与留言各自独立，但都从这里进入。</p>
-    </div>
+      <h1 id="portal-title">管理后台</h1>
+      <p>选择要使用的工具。这里是统一入口，不会自动打开文章集合或留言面板。</p>
+      <p class="portal-intro__note"><span aria-hidden="true"></span> 两套工具各自保留登录状态</p>
+    </section>
 
     <nav class="portal-destinations" aria-label="后台功能">
       <a class="portal-card portal-card--content" href="/admin/content/">
-        <span class="portal-card__label">内容</span>
+        <span class="portal-card__glyph" aria-hidden="true"><span></span><span></span></span>
         <span class="portal-card__copy">
-          <strong>文章与媒体</strong>
-          <small>新建、编辑和发布文章，管理站内图片。</small>
+          <span class="portal-card__label">站内内容 · Decap CMS</span>
+          <strong>写作后台</strong>
+          <small>新建、编辑和发布文章，也可管理站内图片。</small>
         </span>
-        <span class="portal-card__action">进入内容后台 <span aria-hidden="true">→</span></span>
+        <span class="portal-card__action">进入 <span aria-hidden="true">→</span></span>
       </a>
 
       <a class="portal-card portal-card--comments" href="/admin/comments/">
-        <span class="portal-card__label">留言</span>
+        <span class="portal-card__glyph" aria-hidden="true"><span></span><span></span></span>
         <span class="portal-card__copy">
-          <strong>Waline 留言</strong>
-          <small>查看、回复、审核和置顶全站留言。</small>
+          <span class="portal-card__label">外部服务 · Waline</span>
+          <strong>Waline 管理</strong>
+          <small>查看、回复、审核和置顶全站留言；打开后将前往 Waline。</small>
         </span>
-        <span class="portal-card__action">进入留言后台 <span aria-hidden="true">→</span></span>
+        <span class="portal-card__action">打开 <span aria-hidden="true">↗</span></span>
       </a>
     </nav>
   </main>
 
   <footer class="portal-footer">
-    <span>一个入口，两套管理工具。</span>
-    <a href="/admin/content/#/collections/posts/new">直接新建文章</a>
+    <span>统一入口：/admin/</span>
+    <span>写作与留言分开管理</span>
   </footer>
 </body>
 </html>
