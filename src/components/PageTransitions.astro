@@ -2,7 +2,7 @@
 import { ClientRouter } from 'astro:transitions'
 ---
 
-<ClientRouter fallback="animate" />
+<ClientRouter fallback="swap" />
 
 <script>
   import { installNavigationFeedback } from '../lib/navigation-feedback.mjs'
@@ -27,14 +27,4 @@ import { ClientRouter } from 'astro:transitions'
     })
   })
 
-  // Keep the fallback's zoom centred on the visible portion of long articles.
-  document.addEventListener('astro:before-preparation', () => {
-    const main = document.querySelector<HTMLElement>('.site-main')
-    if (main) main.style.setProperty('--page-motion-origin', `${innerHeight / 2 - main.getBoundingClientRect().top}px`)
-  })
-
-  document.addEventListener('astro:after-swap', () => {
-    const main = document.querySelector<HTMLElement>('.site-main')
-    if (main) main.style.setProperty('--page-motion-origin', `${innerHeight / 2 - main.getBoundingClientRect().top}px`)
-  })
 </script>

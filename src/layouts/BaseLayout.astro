@@ -1,4 +1,6 @@
 ---
+import { getImage } from 'astro:assets'
+import avatar from '../../source/img/nisconder-avatar.png'
 import Comments from '../components/Comments.astro'
 import ContinuePath from '../components/ContinuePath.astro'
 import PageTransitions from '../components/PageTransitions.astro'
@@ -52,6 +54,9 @@ const {
 } = Astro.props
 
 const authorName = 'Nisconder'
+// Generate the tab icon at its displayed size instead of fetching the original
+// portrait on every cold visit, including pages with no visible avatar.
+const favicon = await getImage({ src: avatar, width: 32, height: 32, format: 'png' })
 const siteName = 'Nisconder'
 const pageTitle =
   !title || title === '不知名博客' || title === siteName || title === authorName
@@ -109,8 +114,8 @@ const articleStructuredDataJson = articleStructuredData
     {noindex && <meta name="robots" content="noindex, follow" />}
 
     <link rel="canonical" href={canonicalUrl} />
-    <link rel="icon" type="image/png" sizes="100x100" href="/img/nisconder-avatar.png" />
-    <link rel="shortcut icon" href="/img/nisconder-avatar.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href={favicon.src} />
+    <link rel="shortcut icon" href={favicon.src} />
     <link rel="apple-touch-icon" sizes="100x100" href="/img/nisconder-avatar.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="alternate" type="application/rss+xml" title="Nisconder RSS" href="/rss.xml" />

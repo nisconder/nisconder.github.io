@@ -27,7 +27,7 @@ const isCurrent = (href: string) =>
 
     <nav class="site-nav" aria-label="主要导航">
       {navItems.map((item) => (
-        <a href={item.href} data-astro-prefetch="viewport" aria-current={isCurrent(item.href) ? 'page' : undefined}>
+        <a href={item.href} data-astro-prefetch="hover" aria-current={isCurrent(item.href) ? 'page' : undefined}>
           {item.label}
         </a>
       ))}
@@ -36,6 +36,7 @@ const isCurrent = (href: string) =>
       <a
         class="site-search-link"
         href="/search/"
+        data-astro-prefetch="hover"
         aria-label="搜索本站"
         aria-current={isCurrent('/search/') ? 'page' : undefined}
       >

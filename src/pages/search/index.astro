@@ -3,6 +3,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro"
 import { softwareProjects } from "../../data/software"
 import { getInterestJourney } from "../../lib/interests"
 import { getPostCategory, getPostTags, getPublishedPosts } from "../../lib/posts"
+import { getSearchIndexData } from '../../lib/search-index'
 
 const posts = await getPublishedPosts()
 const querySeeds = Array.from(new Set([
@@ -19,6 +20,11 @@ const categoryCounts = Array.from(
   rightCount - leftCount || leftCategory.localeCompare(rightCategory, "zh-CN"),
 )
 const interestPoints = await getInterestJourney('search')
+const searchData = await getSearchIndexData()
+const compactJson = JSON.stringify({
+  fullUrl: searchData.fullUrl,
+  items: searchData.items.map(({ content, ...metadata }) => metadata),
+}).replace(/</g, '\\u003c')
 ---
 
 <BaseLayout
@@ -94,360 +100,12 @@ const interestPoints = await getInterestJourney('search')
     </div>
   </section>
 
+  <script type="application/json" data-search-catalog set:html={compactJson} />
 </BaseLayout>
 
 <script>
-  interface SearchRecord {
-    kind?: string
-    title?: string
-    description?: string
-    excerpt?: string
-    date?: string
-    category?: string
-    tags: string[]
-    href: string
-    url?: string
-    search: {
-      title: string
-      tags: string
-      category: string
-      description: string
-      content: string
-    }
-  }
-
-  const initialiseSearch = () => {
-    const form = document.querySelector<HTMLFormElement>("[data-search-form]")
-    if (!form || form.dataset.searchBound === "true") return
-    form.dataset.searchBound = "true"
-    const lifecycle = new AbortController()
-    const { signal } = lifecycle
-    const pagePath = window.location.pathname
-    const isActive = () => !signal.aborted && form.isConnected
-    const input = document.querySelector<HTMLInputElement>("[data-search-input]")
-    const status = document.querySelector<HTMLElement>("[data-search-status]")
-    const results = document.querySelector<HTMLElement>("[data-search-results]")
-    const output = document.querySelector<HTMLElement>("[data-search-output]")
-    const categoryButtons = Array.from(
-      document.querySelectorAll<HTMLButtonElement>("[data-category-filter] [data-category]"),
-    )
-
-    let indexPromise: Promise<SearchRecord[]> | null = null
-    let searchIndex: SearchRecord[] = []
-    let indexReady = false
-    let announceCurrentLoad = false
-    let activeCategory = ""
-    let activeType = ""
-    let outputAnimation: Animation | null = null
-    let searchRevision = 0
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)")
-
-    document.addEventListener("astro:before-swap", () => {
-      lifecycle.abort()
-      searchRevision += 1
-      outputAnimation?.cancel()
-      delete form.dataset.searchBound
-    }, { once: true })
-
-    const normalise = (value: unknown) =>
-      String(value ?? "")
-        .normalize("NFKC")
-        .toLocaleLowerCase("zh-CN")
-
-    const asArray = (value: unknown): string[] =>
-      (Array.isArray(value) ? value : value ? [value] : []).map(String)
-
-    const loadIndex = (announce = true) => {
-      if (!indexPromise) announceCurrentLoad = false
-      if (announce && !indexReady) {
-        announceCurrentLoad = true
-        if (status) status.textContent = "正在载入搜索索引…"
-      }
-
-      if (indexPromise) return indexPromise
-
-      if (!status) return Promise.reject(new Error("Search status is unavailable"))
-
-      indexPromise = fetch("/search-index.json", {
-        headers: { Accept: "application/json" },
-        signal,
-      })
-        .then((response) => {
-          if (!response.ok) throw new Error(`HTTP ${response.status}`)
-          return response.json()
-        })
-        .then((payload) => {
-          const items: Record<string, unknown>[] = Array.isArray(payload)
-            ? payload
-            : payload.items || payload.posts || []
-          searchIndex = items.map((item): SearchRecord => {
-            const title = typeof item.title === "string" ? item.title : undefined
-            const description = typeof item.description === "string" ? item.description : undefined
-            const excerpt = typeof item.excerpt === "string" ? item.excerpt : undefined
-            const content = typeof item.content === "string" ? item.content : undefined
-            const text = typeof item.text === "string" ? item.text : undefined
-            const category = typeof item.category === "string" ? item.category : undefined
-            const tags = asArray(item.tags)
-
-            return {
-              kind: typeof item.kind === "string" ? item.kind : undefined,
-              title,
-              description,
-              excerpt,
-              date: typeof item.date === "string" ? item.date : undefined,
-              category,
-              href: String(item.href || item.url || "#"),
-              url: typeof item.url === "string" ? item.url : undefined,
-              tags,
-              search: {
-                title: normalise(title),
-                tags: normalise(tags.join(" ")),
-                category: normalise(category),
-                description: normalise(description || excerpt),
-                content: normalise(content || text),
-              },
-            }
-          })
-          indexReady = true
-          return searchIndex
-        })
-        .catch((error) => {
-          if (signal.aborted) throw error
-          console.error("Failed to load search index", error)
-          indexPromise = null
-          indexReady = false
-          if (announceCurrentLoad) {
-            status.textContent = "搜索索引暂时无法载入。请稍后重新输入，或前往文章归档浏览。"
-          }
-          throw error
-        })
-
-      return indexPromise
-    }
-
-    const scoreItem = (item: SearchRecord, tokens: string[]) => {
-      const fields = item.search
-
-      let score = 0
-      for (const token of tokens) {
-        let tokenScore = 0
-        if (fields.title.includes(token)) tokenScore += 8
-        if (fields.tags.includes(token)) tokenScore += 5
-        if (fields.category.includes(token)) tokenScore += 4
-        if (fields.description.includes(token)) tokenScore += 2
-        if (fields.content.includes(token)) tokenScore += 1
-        if (tokenScore === 0) return 0
-        score += tokenScore
-      }
-      return score
-    }
-
-    const appendText = (element: HTMLElement, value: string) => {
-      element.textContent = value
-      return element
-    }
-
-    const renderNow = (rawQuery: string, category = activeCategory, type = activeType) => {
-      if (!isActive() || !status || !results) return
-      const tokens = normalise(rawQuery).split(/\s+/).filter(Boolean)
-      const normalisedCategory = normalise(category)
-      const articleOnly = type === "article" || Boolean(normalisedCategory)
-      results.replaceChildren()
-
-      if (tokens.length === 0 && !normalisedCategory && !articleOnly) {
-        status.textContent = "输入关键词，或选择一个文章分类。"
-        return
-      }
-
-      const matches = searchIndex
-        .filter((item) => (
-          (!articleOnly || item.kind === "文章")
-          && (!normalisedCategory || item.search.category === normalisedCategory)
-        ))
-        .map((item) => ({ item, score: tokens.length > 0 ? scoreItem(item, tokens) : 1 }))
-        .filter(({ score }) => score > 0)
-        .sort((a, b) => b.score - a.score || String(b.item.date || "").localeCompare(String(a.item.date || "")))
-        .slice(0, 20)
-
-      const scope = category ? `“${category}”分类` : articleOnly ? "文章" : "全站"
-      status.textContent = matches.length
-        ? (rawQuery
-          ? `在${scope}中找到 ${matches.length} 条与“${rawQuery}”匹配的内容。`
-          : category
-            ? `${scope}共有 ${matches.length} 篇文章。`
-            : `共有 ${matches.length} 篇公开文章。`)
-        : (rawQuery
-          ? `在${scope}中没有找到与“${rawQuery}”匹配的内容。可以减少关键词或切换分类。`
-          : category
-            ? `${scope}暂时没有公开文章。`
-            : "暂时没有公开文章。")
-
-      if (matches.length === 0) {
-        const archiveLink = document.createElement("a")
-        archiveLink.className = "search-empty-link"
-        archiveLink.href = "/articles/"
-        appendText(archiveLink, "浏览全部文章 →")
-        results.append(archiveLink)
-        return
-      }
-
-      const fragment = document.createDocumentFragment()
-      for (const { item } of matches) {
-        const article = document.createElement("article")
-        article.className = "search-result"
-
-        const meta = document.createElement("p")
-        meta.className = "search-result__meta"
-        if (item.kind) meta.append(item.kind)
-        if (item.kind && (item.category || item.date)) meta.append(" · ")
-        if (item.category) {
-          if (item.kind === "文章") {
-            const categoryLink = document.createElement("a")
-            categoryLink.href = `/search/?category=${encodeURIComponent(item.category)}`
-            appendText(categoryLink, item.category)
-            meta.append(categoryLink)
-          } else {
-            meta.append(item.category)
-          }
-        }
-        if (item.category && item.date) meta.append(" · ")
-        if (item.date) meta.append(item.date)
-
-        const heading = document.createElement("h2")
-        const link = document.createElement("a")
-        link.href = item.href
-        appendText(link, item.title || "未命名内容")
-        heading.append(link)
-
-        article.append(meta, heading)
-
-        const description = item.description || item.excerpt
-        if (description) {
-          const summary = document.createElement("p")
-          summary.className = "search-result__description"
-          appendText(summary, description)
-          article.append(summary)
-        }
-
-        if (item.tags.length > 0) {
-          const tags = document.createElement("nav")
-          tags.className = "search-result__tags"
-          tags.setAttribute("aria-label", `《${item.title || "未命名内容"}》的标签`)
-          for (const tag of item.tags) {
-            const tagLink = document.createElement("a")
-            tagLink.href = `/search/?q=${encodeURIComponent(tag)}`
-            appendText(tagLink, `#${tag}`)
-            tags.append(tagLink)
-          }
-          article.append(tags)
-        }
-
-        fragment.append(article)
-      }
-      results.append(fragment)
-    }
-
-    const render = (rawQuery: string, category = activeCategory, type = activeType) => {
-      if (!isActive()) return
-      outputAnimation?.cancel()
-      renderNow(rawQuery, category, type)
-      if (!output || reducedMotion.matches) return
-
-      outputAnimation = output.animate(
-        [{ opacity: 0.25 }, { opacity: 1 }],
-        { duration: 180, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
-      )
-    }
-
-    const syncStateToUrl = (query: string, category: string, type: string) => {
-      const url = new URL(window.location.href)
-      if (query) url.searchParams.set("q", query)
-      else url.searchParams.delete("q")
-      if (category) url.searchParams.set("category", category)
-      else url.searchParams.delete("category")
-      if (type === "article" && !category) url.searchParams.set("type", "article")
-      else url.searchParams.delete("type")
-      window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`)
-    }
-
-    const updateCategoryButtons = () => {
-      for (const button of categoryButtons) {
-        const category = button.dataset.category ?? ""
-        const isPressed = category
-          ? category === activeCategory
-          : activeType === "article" && !activeCategory
-        button.setAttribute("aria-pressed", String(isPressed))
-      }
-    }
-
-    const runSearch = () => {
-      const revision = ++searchRevision
-      const query = input?.value.trim() ?? ""
-      const category = activeCategory
-      const type = activeType
-      syncStateToUrl(query, activeCategory, activeType)
-      if (!query && !activeCategory && activeType !== "article") {
-        render("", "", "")
-        return
-      }
-
-      void loadIndex()
-        .then(() => {
-          if (isActive() && revision === searchRevision) render(query, category, type)
-        })
-        .catch(() => {})
-    }
-
-    form?.addEventListener("submit", (event) => {
-      event.preventDefault()
-      runSearch()
-    }, { signal })
-
-    const prefetchIndex = () => {
-      void loadIndex(false).catch(() => {})
-    }
-    input?.addEventListener("focus", prefetchIndex, { once: true, signal })
-    input?.addEventListener("pointerdown", prefetchIndex, { once: true, signal })
-
-    for (const button of categoryButtons) {
-      button.addEventListener("click", () => {
-        activeCategory = button.dataset.category ?? ""
-        activeType = "article"
-        updateCategoryButtons()
-        runSearch()
-      }, { signal })
-    }
-
-    const applyUrlState = () => {
-      if (!isActive() || !input || window.location.pathname !== pagePath) return
-      const revision = ++searchRevision
-      const parameters = new URLSearchParams(window.location.search)
-      const query = parameters.get("q")?.trim() ?? ""
-      activeCategory = parameters.get("category")?.trim() ?? ""
-      activeType = parameters.get("type") === "article" || activeCategory ? "article" : ""
-      input.value = query
-      updateCategoryButtons()
-      const category = activeCategory
-      const type = activeType
-
-      if (!query && !activeCategory && activeType !== "article") {
-        render("", "", "")
-        return
-      }
-
-      void loadIndex()
-        .then(() => {
-          if (isActive() && revision === searchRevision) render(query, category, type)
-        })
-        .catch(() => {})
-    }
-
-    applyUrlState()
-
-    window.addEventListener("popstate", applyUrlState, { signal })
-  }
-
-  document.addEventListener("astro:page-load", initialiseSearch)
+  import { initialiseSearch } from '../../lib/search-page'
+  document.addEventListener('astro:page-load', initialiseSearch)
   initialiseSearch()
 </script>
 
@@ -658,9 +316,27 @@ const interestPoints = await getInterestJourney('search')
     margin: 0 0 0.25rem;
   }
 
+  :global(.search-retry) {
+    min-height: 2.75rem;
+    padding: .35rem .65rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--card-radius);
+    background: var(--color-field);
+    color: var(--color-primary);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  :global(.search-retry:focus-visible) {
+    outline: 2px solid var(--color-secondary);
+    outline-offset: 2px;
+  }
+
   :global(.search-result) {
     padding-block: 1.5rem;
     border-bottom: 1px solid var(--color-line);
+    content-visibility: auto;
+    contain-intrinsic-size: auto 18rem;
   }
 
   :global(.search-result__meta),

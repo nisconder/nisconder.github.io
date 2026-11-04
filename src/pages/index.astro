@@ -1,4 +1,6 @@
 ---
+import { Image } from 'astro:assets'
+import avatar from '../../source/img/nisconder-avatar.png'
 import { featuredSoftware, softwareProjects, softwareStatusLabels } from '../data/software'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import SeriesCard from '../components/SeriesCard.astro'
@@ -63,10 +65,13 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
     <section class="identity-panel register-panel">
       <span class="registration-mark" aria-hidden="true"><i></i><i></i></span>
       <div class="identity-panel__profile">
-        <img
-          src="/img/nisconder-avatar.png"
+        <Image
+          src={avatar}
           width="104"
           height="104"
+          format="webp"
+          quality={85}
+          loading="eager"
           alt="Nisconder 的头像"
           decoding="async"
         />

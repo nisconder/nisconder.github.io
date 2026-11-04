@@ -35,6 +35,7 @@ export default defineConfig({
   output: 'static',
   publicDir: './static',
   trailingSlash: 'ignore',
+  prefetch: { prefetchAll: false, defaultStrategy: 'hover' },
   build: {
     format: 'directory',
   },
@@ -48,6 +49,12 @@ export default defineConfig({
   },
   vite: {
     plugins: [adminDirectoryIndex],
+    // Keep common CSS cacheable, but inline small route styles so navigation
+    // does not need a second network round trip before the new page can swap.
+    build: {
+      cssCodeSplit: true,
+      assetsInlineLimit: (file, content) => file.endsWith('.css') ? content.length < 16_384 : undefined,
+    },
   },
   markdown: {
     shikiConfig: {

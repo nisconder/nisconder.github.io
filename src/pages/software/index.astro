@@ -640,6 +640,7 @@ const interestPoints = await getInterestJourney('software')
     }
 
     const sortCards = (order) => {
+      if (grid.dataset.sort === order) return
       cards.sort((left, right) => {
         if (!(left instanceof HTMLElement) || !(right instanceof HTMLElement)) return 0
         if (order === 'name') return compareName(left, right) || compareSlug(left, right)
