@@ -1,3 +1,6 @@
+import githubSnapshot from './github-repositories.json' with { type: 'json' }
+import { mergeSoftwareProjects } from './software-sync.mjs'
+
 export type SoftwareKind = 'tool' | 'integration' | 'game' | 'site' | 'service' | 'data'
 export type SoftwareStatus = 'active' | 'stable' | 'experimental' | 'maintenance'
 
@@ -54,6 +57,8 @@ export interface SoftwareProject {
   archived?: boolean
 }
 
+// Human-written display metadata; old metrics are used only before the first
+// successful GitHub sync. Afterwards GitHub supplies existence and live facts.
 const softwareCatalog: SoftwareProject[] = [
   {
     slug: 'paste-xray',
@@ -172,9 +177,12 @@ const compareName = (left: SoftwareProject, right: SoftwareProject) =>
 const compareSlug = (left: SoftwareProject, right: SoftwareProject) =>
   left.slug.localeCompare(right.slug)
 
-export const softwareProjects = softwareCatalog.filter(
-  (project) => project.fork !== true && project.archived !== true,
-)
+export const softwareProjects: SoftwareProject[] = mergeSoftwareProjects(githubSnapshot, softwareCatalog)
+
+export const softwareSyncInfo = {
+  syncedAt: githubSnapshot.syncedAt as string | null,
+  status: githubSnapshot.syncedAt === null ? 'pending' as const : 'synced' as const,
+}
 
 export function sortSoftwareProjects(
   projects: readonly SoftwareProject[],

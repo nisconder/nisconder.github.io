@@ -81,9 +81,11 @@ const getInterestCatalog = () => {
       project: {
         section: '项目',
         relation: '看正在维护的东西',
-        title: featuredSoftware.name,
-        description: `${softwareStatusLabels[featuredSoftware.status]} · ${shorten(featuredSoftware.summary)}`,
-        href: `/software/#${featuredSoftware.slug}`,
+        title: featuredSoftware?.name ?? '项目与工具',
+        description: featuredSoftware
+          ? `${softwareStatusLabels[featuredSoftware.status]} · ${shorten(featuredSoftware.summary)}`
+          : '查看公开项目目录。',
+        href: featuredSoftware ? `/software/#${featuredSoftware.slug}` : '/software/',
       },
       music: musicPoint,
       about: {

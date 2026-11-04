@@ -5,6 +5,7 @@ import {
   softwareKindLabels,
   softwareKindOrder,
   softwareProjects,
+  softwareSyncInfo,
   softwareStatusLabels,
   softwareStatusOrder,
   sortedSoftwareProjects,
@@ -16,6 +17,10 @@ const kinds = softwareKindOrder.filter((kind) =>
 const statuses = softwareStatusOrder.filter((status) =>
   softwareProjects.some((project) => project.status === status))
 const formatUpdated = (value: string) => value.replace(/-/g, '.')
+const dataUpdated = softwareSyncInfo.syncedAt && new Intl.DateTimeFormat('zh-CN', {
+  timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit',
+  hour: '2-digit', minute: '2-digit', hour12: false,
+}).format(new Date(softwareSyncInfo.syncedAt))
 const searchText = (project: (typeof softwareProjects)[number]) => [
   project.name,
   project.summary,
@@ -41,6 +46,14 @@ const interestPoints = await getInterestJourney('software')
       <h1>原创项目</h1>
       <p class="lede">
         这里只展示由我创建和维护的公开项目。默认按维护优先级排列：重点维护在前，其余按最近更新时间；fork 与归档仓库不进入清单。
+      </p>
+      <p class="software-sync-note" data-project-sync={softwareSyncInfo.status}>
+        GitHub 每小时自动同步
+        {softwareSyncInfo.syncedAt ? (
+          <> · 数据更新于 <time datetime={softwareSyncInfo.syncedAt}>{dataUpdated}</time></>
+        ) : (
+          <> · 首次同步完成前，展示已收录项目</>
+        )}
       </p>
     </div>
     <dl class="software-intro__facts" aria-label="项目概况">
@@ -180,6 +193,13 @@ const interestPoints = await getInterestJourney('software')
 </BaseLayout>
 
 <style>
+  .software-sync-note {
+    margin-block: 1rem 0;
+    color: var(--color-muted);
+    font-size: var(--text-xs);
+    line-height: 1.7;
+  }
+
   .software-intro {
     display: grid;
     max-width: none;

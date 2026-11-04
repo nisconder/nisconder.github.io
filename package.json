@@ -9,6 +9,7 @@
     "prebuild": "node scripts/prepare-static.mjs",
     "build": "astro build",
     "preview": "astro preview",
+    "sync:projects": "node scripts/sync-github-projects.mjs",
     "netlify": "npm run build"
   },
   "dependencies": {

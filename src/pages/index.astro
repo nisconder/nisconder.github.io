@@ -149,21 +149,21 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   )}
 
   <section class="home-secondary" aria-label="项目与音乐">
-    <a class="project-panel register-panel" href={`/software/#${featuredSoftware.slug}`}>
+    <a class="project-panel register-panel" href={featuredSoftware ? `/software/#${featuredSoftware.slug}` : '/software/'}>
       <div class="project-panel__topline">
         <p class="eyebrow">项目 / PROJECTS</p>
-        <span>{softwareStatusLabels[featuredSoftware.status]}</span>
+        {featuredSoftware && <span>{softwareStatusLabels[featuredSoftware.status]}</span>}
       </div>
-      <div class="project-panel__featured">
+      {featuredSoftware && <div class="project-panel__featured">
         <span aria-hidden="true">{featuredSoftware.label}</span>
         <div>
           <small>最近维护</small>
           <strong>{featuredSoftware.name}</strong>
         </div>
-      </div>
+      </div>}
       <h2>项目与工具</h2>
-      <p>{featuredSoftware.summary}</p>
-      <span class="panel-action">从 {featuredSoftware.name} 进入项目页 <i aria-hidden="true">→</i></span>
+      <p>{featuredSoftware?.summary ?? '新的公开项目会自动收录到这里。'}</p>
+      <span class="panel-action">{featuredSoftware ? `从 ${featuredSoftware.name} 进入项目页` : '查看项目目录'} <i aria-hidden="true">→</i></span>
     </a>
 
     <a class="music-panel register-panel" href="/music/">

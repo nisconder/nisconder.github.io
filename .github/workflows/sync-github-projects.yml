@@ -1,0 +1,54 @@
+name: Sync GitHub projects
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/sync-github-projects.yml'
+      - 'scripts/sync-github-projects.mjs'
+      - 'scripts/tests/software-sync.test.mjs'
+      - 'src/data/software-sync.mjs'
+      - 'src/data/software.ts'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: github-project-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'nisconder/nisconder.github.io' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Check sync behavior
+        run: node --test scripts/tests/software-sync.test.mjs
+      - name: Fetch complete public project snapshot
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/sync-github-projects.mjs
+      - name: Publish changed snapshot
+        run: |
+          git add -- src/data/github-repositories.json
+          if git diff --cached --quiet; then
+            echo "Project data is unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: sync GitHub project snapshot"
+          # No force push: a concurrent main update waits until the next sync.
+          # No skip-CI marker: Cloudflare Pages should build this new snapshot.
+          git push origin HEAD:main
