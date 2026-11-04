@@ -670,6 +670,10 @@
     var form = lowestCommonAncestor(fields);
     if (!form || form.id === 'nc-root') return;
     form.dataset.adminForm = 'series';
+    fields.forEach(function (field) {
+      var slot = directChildWithin(form, field);
+      if (slot) slot.dataset.adminSeriesSlot = field.dataset.adminSeriesField;
+    });
     // Decap's editor shell has an 800px minimum and a fixed scroll pane.
     // Mark the real ancestors so a narrow screen can use normal document flow.
     var layer = form.parentElement;

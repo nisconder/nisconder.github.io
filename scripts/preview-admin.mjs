@@ -9,6 +9,9 @@ const port = Number(process.env.ADMIN_PREVIEW_PORT || 4341)
 const files = new Map([
   ['/admin/admin-theme.css', ['source/admin/admin-theme.css', 'text/css']],
   ['/admin/admin-ui.js', ['source/admin/admin-ui.js', 'text/javascript']],
+  ['/admin/series-cards.js', ['source/admin/series-cards.js', 'text/javascript']],
+  ['/admin/series-cards.css', ['source/admin/series-cards.css', 'text/css']],
+  ['/admin/post-options.json', ['dist/admin/post-options.json', 'application/json']],
   ['/admin/editor-preview.css', ['source/admin/editor-preview.css', 'text/css']],
   ['/img/nisconder-avatar.png', ['source/img/nisconder-avatar.png', 'image/png']],
 ])

@@ -65,17 +65,7 @@ collections:
       - label: 阅读顺序
         label_singular: 文章
         name: chapters
-        widget: list
+        widget: seriescards
         default: []
-        collapsed: false
-        allow_reorder: true
-        summary: '{{fields.post}}'
-        hint: 选择文章后拖动条目调整阅读顺序；发布日期和置顶状态不会改变这里的顺序。每篇文章只添加一次，草稿文章会暂时隐藏。
-        fields:
-          - label: 选择文章
-            name: post
-            widget: relation
-            collection: posts
-            search_fields: ['title']
-            display_fields: ['title']
-            value_field: '{{slug}}'
+        required: false
+        hint: 拖动卡片安排阅读顺序，完成后点击“发布”。日期和置顶状态不影响合集顺序。

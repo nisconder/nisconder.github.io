@@ -39,7 +39,9 @@
 
 ## 原创项目目录
 
-项目页当前收录 7 个原创公开项目：
+项目页从 GitHub 自动同步 `nisconder` 的公开仓库，排除 fork、归档仓库和博客基础设施 `my-waline`、`netlify-cms-github-oauth-provider`。新建公开仓库在下次同步成功后自动进入清单；删除、转为私有或归档的仓库会在成功获取全部分页后移出。
+
+以下项目保留已有中文介绍和展示设置：
 
 - [npm-safe](https://github.com/nisconder/npm-safe)
 - [npm-safe for DSH](https://github.com/nisconder/npm-safe-forDSH)
@@ -49,7 +51,21 @@
 - [JCLI Toolkit](https://github.com/nisconder/jcli-toolkit)
 - [生存竞速 / ai-draw-guess](https://github.com/nisconder/ai-draw-guess)
 
-项目展示数据维护在 `src/data/software.ts`。默认重点优先，同组按 `updatedAt` 倒序排列，也允许切换为单纯的最近更新或名称排序。
+`src/data/software.ts` 保留名称、中文简介、分类、维护状态、标签、重点项目与外链等编辑覆盖；`src/data/github-repositories.json` 保存 GitHub 快照。stars、主要语言和代码更新时间以快照为准。新仓库默认采用 GitHub 名称、简介和主题标签，先归入“开发工具 / 实验中”，需要更准确的分类或中文说明时再补充编辑覆盖。新仓库锚点使用 GitHub 仓库 ID，已有项目沿用原锚点。
+
+代码更新时间使用 GitHub `pushed_at`，空仓库没有推送时间时使用创建时间。博客仓库自身使用最新一条非本同步机器人的提交时间，避免每次写入快照又改变自身更新时间、反复触发构建。排序仍为重点优先，同组按代码更新时间倒序；也可切换到最近更新或名称排序。
+
+### 自动同步与失败处理
+
+`.github/workflows/sync-github-projects.yml` 每小时第 17 分钟运行，并支持 Actions 页面 **Sync GitHub projects → Run workflow** 手动触发。同步器、工作流或展示覆盖发生变更并推送 `main` 时也会运行，因此首次发布会自动取得认证快照。工作流使用仓库自带的 `GITHUB_TOKEN`，需要 `contents: write` 权限，不需要新增 npm 依赖或把令牌写入文件。
+
+脚本分页获取完整仓库清单并验证数据，所有请求成功后原子替换快照；限流、超时、非预期响应和后续分页失败都会保留原文件并将任务标记为失败。只有真实项目数据变化才更新快照和 `syncedAt`；没有变化时不创建提交。初始 `syncedAt: null` 表示尚未成功同步，此时页面继续显示原有手工目录并标明等待首次同步，不会把旧数字冒充实时数据。成功同步结果为空时，项目清单也为空。
+
+工作流只提交快照文件到 `main`，由现有 Cloudflare Pages Git 集成部署。快照路径不在工作流的 push 触发条件中；提交不加跳过 CI 的标记，以免阻止 Pages 构建。并发同步串行执行，遇到用户同时更新主分支时不强制推送，等待下次运行。首次上线需检查 Actions 成功状态、快照提交和对应 Pages 部署，确认线上“数据更新于”已出现。
+
+本地可在进程环境中提供 `GITHUB_TOKEN` 后运行 `npm run sync:projects`；不设置令牌也能读取公开数据，但可能更快遇到 GitHub 限流。`node --test scripts/tests/software-sync.test.mjs` 验证分页、过滤、合并、错误保留、原子写入和防止自动提交循环。正常开发和构建只读取已保存快照，不发起网络同步。
+
+GitHub 定时任务可能因平台负载延后；公开仓库 60 天没有活动时，定时任务可能自动停用，需在 Actions 中重新启用。参考：[公开仓库 API 与分页](https://docs.github.com/en/rest/repos/repos#list-repositories-for-a-user)、[定时任务规则](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)、[GITHUB_TOKEN 触发规则](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow)、[Cloudflare GitHub 部署](https://developers.cloudflare.com/pages/configuration/git-integration/github-integration/)。
 
 ## 本地开发
 
@@ -103,7 +119,7 @@ npm run preview
 
 加入已公开合集的章节不再重复出现在首页最新/置顶文章、普通归档、最新文章推荐或独立文章的前后篇中。章节通过合集统一浏览，原有地址、全文搜索和 RSS 保持可用。移出合集或将合集转为草稿后，公开章节会自动回到普通文章列表。
 
-在写作后台通过“文章 / 合集”切换进入合集列表，新建或打开一个合集，填写标题、简介和链接名称。在“阅读顺序”中添加文章，通过标题搜索选择已有文章，再拖动条目调整顺序。保存并等待站点构建后，目录和前后篇导航会一起更新。后台入口：`/admin/content/#/collections/series`。
+在写作后台通过“文章 / 合集”进入合集，新建或打开一个合集。在“阅读顺序”中直接拖动文章卡片调整顺序，手机长按卡片后拖动；靠近屏幕边缘会自动滚动。也可以用卡片上的 ↑ / ↓ 按钮，或选中卡片后按 Alt + ↑ / ↓；拖动时按 Esc 取消。卡片显示文章标题、摘要与序号，通过“添加文章”搜索已发布文章；移除卡片仅移出合集，不删除正文。点击顶部“发布”，等待站点构建后目录与前后篇导航一起更新。后台入口：`/admin/content/#/collections/series`。
 
 新建合集、调整阅读顺序和保存修改均需要通过现有 GitHub OAuth 登录，并拥有 `nisconder/nisconder.github.io` 仓库写入权限。公开合集页面只提供阅读入口，不提供排序或保存操作；访客不能修改站点的合集顺序。权限由 GitHub 后端检查，不依赖隐藏按钮或浏览器本地存储。
 

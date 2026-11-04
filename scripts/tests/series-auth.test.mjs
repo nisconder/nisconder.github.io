@@ -18,13 +18,15 @@ test('series saves use the existing authenticated GitHub repository backend', ()
   assert.doesNotMatch(config, /^local_backend:|name:\s*(test-repo|proxy)\b/m)
   const series = config.slice(config.indexOf('  - name: series\n'))
   assert.match(series, /folder: source\/_series/)
-  assert.match(series, /allow_reorder: true/)
-  assert.match(series, /widget: relation[\s\S]*collection: posts[\s\S]*value_field: '\{\{slug\}\}'/)
+  assert.match(series, /name: chapters\s+widget: seriescards/)
+  assert.match(read('source/admin/series-cards.js'), /CMS\.registerWidget\('seriescards'/)
+  assert.match(read('source/admin/series-cards.js'), /this\.props\.onChange\(/)
+  assert.doesNotMatch(read('source/admin/series-cards.js'), /localStorage|sessionStorage|\.persistEntry\(|\.commit\(|method:\s*['"](?:POST|PUT|PATCH|DELETE)['"]/i)
   assert.doesNotMatch(series, /(?:^|\n)\s*backend:/)
 })
 
 test('production admin contains no disposable repository or anonymous backend override', () => {
-  for (const file of ['source/admin/content/index.html', 'source/admin/admin-ui.js']) {
+  for (const file of ['source/admin/content/index.html', 'source/admin/admin-ui.js', 'source/admin/series-cards.js']) {
     assert.doesNotMatch(read(file), /test-repo|repoFiles|local_backend|name:\s*['"]proxy['"]/, file)
   }
   assert.equal(read('dist/admin/config.yml'), read('source/admin/config.yml'))

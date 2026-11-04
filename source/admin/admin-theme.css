@@ -1603,9 +1603,15 @@ body::before {
 }
 
 #nc-root[data-admin-page="series-editor"] [data-admin-form="series"] {
-  width: min(calc(100% - 32px), 760px) !important;
+  display: grid !important;
+  grid-template-columns: minmax(230px, 0.8fr) minmax(0, 1.8fr);
+  grid-template-areas: "title chapters" "description chapters" "slug chapters" "draft chapters";
+  grid-template-rows: auto auto auto 1fr;
+  align-items: start;
+  gap: 20px 28px;
+  width: min(calc(100% - 32px), 1160px) !important;
   min-width: 0 !important;
-  max-width: 760px !important;
+  max-width: 1160px !important;
   margin: 24px auto 48px !important;
   padding: clamp(16px, 3vw, 28px) !important;
   background: var(--admin-surface) !important;
@@ -1613,14 +1619,25 @@ body::before {
   border-radius: var(--admin-radius-panel) !important;
 }
 
+#nc-root[data-admin-page="series-editor"] [data-admin-series-slot] {
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+#nc-root[data-admin-page="series-editor"] [data-admin-series-slot="title"] { grid-area: title; }
+#nc-root[data-admin-page="series-editor"] [data-admin-series-slot="description"] { grid-area: description; }
+#nc-root[data-admin-page="series-editor"] [data-admin-series-slot="slug"] { grid-area: slug; }
+#nc-root[data-admin-page="series-editor"] [data-admin-series-slot="draft"] { grid-area: draft; }
+#nc-root[data-admin-page="series-editor"] [data-admin-series-slot="chapters"] { grid-area: chapters; }
+
 #nc-root[data-admin-page="series-editor"] [data-admin-series-field] {
   min-width: 0;
   scroll-margin-top: calc(var(--admin-header-height) + 16px);
 }
 
 #nc-root[data-admin-page="series-editor"] [data-admin-series-field="chapters"] {
-  padding-top: 20px;
-  border-top: 1px solid var(--admin-line);
+  padding-top: 0;
+  border-top: 0;
 }
 
 #nc-root[data-admin-page="series-editor"] [data-admin-series-field="title"] input,
@@ -1637,6 +1654,31 @@ body::before {
 #nc-root[data-admin-page="series-editor"] [data-admin-series-field="title"] input {
   font-size: 18px;
   font-weight: 600;
+}
+
+#nc-root[data-admin-page="series-editor"] [data-admin-series-field="title"] input,
+#nc-root[data-admin-page="series-editor"] [data-admin-series-field="slug"] input {
+  height: 44px;
+  padding: 8px 12px;
+}
+
+#nc-root[data-admin-page="series-editor"] [data-admin-series-field="description"] textarea {
+  height: 92px;
+  min-height: 76px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+@media (max-width: 780px) {
+  #nc-root[data-admin-page="series-editor"] [data-admin-form="series"] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "title" "description" "slug" "draft" "chapters";
+    grid-template-rows: none;
+    gap: 12px;
+    padding: 12px !important;
+    margin-top: 16px !important;
+  }
+  #nc-root[data-admin-page="series-editor"] [data-admin-series-field="title"] input { font-size: 16px; }
 }
 
 #nc-root[data-admin-page="series-editor"] [data-admin-series-field="chapters"] [role="button"] {
