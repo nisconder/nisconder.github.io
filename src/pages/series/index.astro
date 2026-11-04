@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import SeriesCard from '../../components/SeriesCard.astro'
+import { getPublishedSeries } from '../../lib/series'
+const series = await getPublishedSeries()
+---
+
+<BaseLayout title="合集" description="把同一个主题的笔记收在一起，沿着目录逐篇阅读。" canonical="/series/">
+  <div class="series-index">
+    <header class="page-intro">
+      <p class="eyebrow">合集 / SERIES</p>
+      <h1><span>把一个主题，</span><span>读下去。</span></h1>
+      <p class="lede">把散落的笔记收成一册，沿着目录逐篇展开。</p>
+    </header>
+    <div class="series-index__heading"><span>{series.length} 个合集</span><a href="/articles/">按时间浏览文章 <span aria-hidden="true">↗</span></a></div>
+    <div class="series-index__list">
+      {series.length ? series.map(item => <SeriesCard series={item} />) : <div class="empty-state"><h2>合集正在整理</h2><p>先到文章目录，读一篇感兴趣的笔记。</p><a href="/articles/">浏览文章 →</a></div>}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .series-index { max-width:60rem; margin-inline:auto; }
+  .series-index .page-intro h1 { max-width:none; font-size:clamp(1.85rem,4.2vw,2.8rem); font-weight:600; }
+  .series-index .page-intro h1 span { display:inline-block; }
+  .series-index__heading { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:.5rem 1rem; margin-block:0 1rem; color:var(--color-muted); font-size:.8125rem; }
+  .series-index__heading a { display:inline-flex; align-items:center; gap:.5rem; min-height:2.75rem; text-underline-offset:.25em; }
+  .series-index__list { display:grid; gap:2rem; }
+</style>

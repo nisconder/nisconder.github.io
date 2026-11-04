@@ -14,7 +14,7 @@ tags:
 ---
 
 > **ICS 与 8086 汇编复习 · 第 15 篇**
-> [系列目录](/2026/10/30/ics-8086-00-overview/) · [上一篇](/2026/10/30/ics-8086-14-arrays-pointers-layout-alignment/) · [下一篇](/2026/10/30/ics-8086-16-loading-static-dynamic-linking/)
+> [合集目录](/series/ics-8086/)
 
 两个源文件都能单独编译成功，为什么放在一起仍会出现 `undefined reference`？原因是“把每个文件翻译成机器代码”和“把跨文件引用接起来”属于不同阶段。复习链接时，先回答两个问题：这个名字由谁定义，它最终位于哪里。
 
@@ -146,7 +146,6 @@ E8 09 00 00 00
 
 ## 系列导航
 
-- [系列导读与完整目录](/2026/10/30/ics-8086-00-overview/)
-- 上一篇：[ICS 与 8086 复习 14：数组 指针 结构体与数据对齐](/2026/10/30/ics-8086-14-arrays-pointers-layout-alignment/)
-- 下一篇：[ICS 与 8086 复习 16：装载运行与静态动态链接](/2026/10/30/ics-8086-16-loading-static-dynamic-linking/)
+- [合集目录](/series/ics-8086/)
+- [系列导读](/2026/10/30/ics-8086-00-overview/)
 - [考前速查与易错点](/2026/10/30/ics-8086-99-review-checklist/)

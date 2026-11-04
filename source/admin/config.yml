@@ -45,3 +45,37 @@ collections:
       - { label: 分类, name: categories, widget: categoryselect, options: ['随笔', '公告', '技术', '阅读', '观影', '生活'], required: true, hint: 选择一个主分类。 }
       - { label: 标签, name: tags, widget: taglist, required: false, hint: 输入后按 Enter 添加；输入时会联想已有标签。 }
       - { label: 正文, name: body, widget: richtext, modes: ['raw'], hint: 使用 Markdown 写作；需要检查排版时，点顶部“预览文章”。 }
+  - name: series
+    label: 合集
+    label_singular: 合集
+    folder: source/_series
+    create: true
+    slug: '{{fields.slug}}'
+    summary: '{{title}}'
+    sortable_fields: ['title']
+    extension: md
+    format: yaml-frontmatter
+    editor:
+      preview: false
+    fields:
+      - { label: 合集标题, name: title, widget: string, hint: 例如 ICS 8086 系列笔记。 }
+      - { label: 合集简介, name: description, widget: text, hint: 说明合集主题和适合的读者；显示在合集卡片上。 }
+      - { label: 链接名称, name: slug, widget: string, hint: '仅用于新合集地址，例如 ics-8086；只用小写字母、数字和短横线。创建后请保持不变。', pattern: ['^[a-z0-9]+(-[a-z0-9]+)*$', '请使用小写字母、数字和单个短横线，例如 ics-8086'] }
+      - { label: 合集草稿, name: draft, widget: boolean, default: false, required: false, hint: 开启后隐藏整个合集，不改变其中文章的发布状态。 }
+      - label: 阅读顺序
+        label_singular: 文章
+        name: chapters
+        widget: list
+        default: []
+        collapsed: false
+        allow_reorder: true
+        summary: '{{fields.post}}'
+        hint: 选择文章后拖动条目调整阅读顺序；发布日期和置顶状态不会改变这里的顺序。每篇文章只添加一次，草稿文章会暂时隐藏。
+        fields:
+          - label: 选择文章
+            name: post
+            widget: relation
+            collection: posts
+            search_fields: ['title']
+            display_fields: ['title']
+            value_field: '{{slug}}'

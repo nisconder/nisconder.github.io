@@ -2,6 +2,8 @@
 import { render } from 'astro:content'
 import type { GetStaticPaths } from 'astro'
 import BaseLayout from '../../../../layouts/BaseLayout.astro'
+import SeriesNavigation from '../../../../components/SeriesNavigation.astro'
+import { getSeriesForPost } from '../../../../lib/series'
 import { getInterestJourney } from '../../../../lib/interests'
 import {
   formatPostDate,
@@ -40,6 +42,7 @@ export const getStaticPaths = (async () => {
 }) satisfies GetStaticPaths
 
 const { post, previousPost, nextPost } = Astro.props
+const postSeries = await getSeriesForPost(post.id)
 const { Content, headings } = await render(post)
 const category = getPostCategory(post)
 const tags = getPostTags(post)
@@ -143,6 +146,8 @@ const interestPoints = await getInterestJourney('article', post)
           )}
         </header>
 
+        {postSeries.map(series => <SeriesNavigation series={series} postId={post.id} />)}
+
         <aside
           class="reading-guide-mobile-shell"
           aria-label="文章阅读导航"
@@ -181,7 +186,8 @@ const interestPoints = await getInterestJourney('article', post)
         </div>
 
         <footer class="article-footer">
-          {(previousPost || nextPost) && (
+          {postSeries.map(series => <SeriesNavigation series={series} postId={post.id} pagination />)}
+          {postSeries.length === 0 && (previousPost || nextPost) && (
             <nav class="article-pagination" aria-label="上一篇和下一篇文章">
               {previousPost && (
                 <a class="article-pagination__item article-pagination__item--previous" href={getPostUrl(previousPost)}>

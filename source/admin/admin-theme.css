@@ -1494,3 +1494,151 @@ body::before {
 @media (prefers-contrast: more) {
   :root { --admin-line: #aeb8b6; --admin-line-strong: #687273; }
 }
+
+/* Series management: independent of the article editor layout. */
+#nc-root[data-admin-page="collection"][data-admin-collection="series"] [data-admin-action="new-post"]::after {
+  content: "新建合集";
+}
+
+#nc-root[data-admin-page="collection"][data-admin-collection="series"] [data-admin-section="collection-header"] :is(h1, h2, h3)::before {
+  content: "CONTENT / SERIES";
+}
+
+#nc-root[data-admin-page="collection"] [data-admin-section="collection-header"] .admin-collection-tabs {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#nc-root[data-admin-page="collection"] .admin-collection-tabs a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 72px;
+  padding: 8px 16px;
+  color: var(--admin-muted);
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius-control);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+#nc-root[data-admin-page="collection"] .admin-collection-tabs a:hover {
+  color: var(--admin-brand-700);
+  background: var(--admin-brand-050);
+}
+
+#nc-root[data-admin-page="collection"] .admin-collection-tabs a[aria-current="page"] {
+  color: var(--admin-brand-700);
+  background: var(--admin-brand-050);
+  border-color: var(--admin-brand-600);
+  font-weight: 650;
+}
+
+
+/* A collection is an ordered reading list, with no article settings sidebar. */
+#nc-root[data-admin-page="series-editor"],
+#nc-root[data-admin-page="series-editor"] [data-admin-series-layer="flow"] {
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+#nc-root[data-admin-page="series-editor"] [data-admin-series-toolbar] {
+  position: sticky !important;
+  z-index: 50;
+  inset: 0 0 auto !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: var(--admin-header-height) !important;
+  padding: 4px 8px !important;
+  background: var(--admin-surface) !important;
+}
+
+#nc-root[data-admin-page="series-editor"] [data-admin-series-toolbar] > * {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
+  flex-wrap: wrap !important;
+}
+
+#nc-root[data-admin-page="series-editor"] [data-admin-series-toolbar] a,
+#nc-root[data-admin-page="series-editor"] [data-admin-series-toolbar] button,
+#nc-root[data-admin-page="series-editor"] [data-admin-series-toolbar] [role="button"] {
+  min-height: 44px;
+}
+
+@media (max-width: 600px) {
+  #nc-root[data-admin-page="series-editor"] [data-admin-series-toolbar] {
+    position: relative !important;
+    gap: 4px;
+  }
+
+  #nc-root[data-admin-page="series-editor"] [data-admin-series-toolbar] > * {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    margin-inline: 0 !important;
+  }
+
+  #nc-root[data-admin-page="series-editor"] [data-admin-series-toolbar] > * > * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    flex-wrap: wrap !important;
+  }
+}
+
+#nc-root[data-admin-page="series-editor"] [data-admin-form="series"] {
+  width: min(calc(100% - 32px), 760px) !important;
+  min-width: 0 !important;
+  max-width: 760px !important;
+  margin: 24px auto 48px !important;
+  padding: clamp(16px, 3vw, 28px) !important;
+  background: var(--admin-surface) !important;
+  border: 1px solid var(--admin-line) !important;
+  border-radius: var(--admin-radius-panel) !important;
+}
+
+#nc-root[data-admin-page="series-editor"] [data-admin-series-field] {
+  min-width: 0;
+  scroll-margin-top: calc(var(--admin-header-height) + 16px);
+}
+
+#nc-root[data-admin-page="series-editor"] [data-admin-series-field="chapters"] {
+  padding-top: 20px;
+  border-top: 1px solid var(--admin-line);
+}
+
+#nc-root[data-admin-page="series-editor"] [data-admin-series-field="title"] input,
+#nc-root[data-admin-page="series-editor"] [data-admin-series-field="slug"] input,
+#nc-root[data-admin-page="series-editor"] [data-admin-series-field="description"] textarea {
+  width: 100%;
+  min-height: 44px;
+  color: var(--admin-heading);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--admin-radius-control);
+}
+
+#nc-root[data-admin-page="series-editor"] [data-admin-series-field="title"] input {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+#nc-root[data-admin-page="series-editor"] [data-admin-series-field="chapters"] [role="button"] {
+  min-height: 44px;
+}

@@ -14,7 +14,7 @@ tags:
 ---
 
 > **ICS 与 8086 汇编复习 · 第 03 篇**
-> [系列目录](/2026/10/30/ics-8086-00-overview/) · [上一篇](/2026/10/30/ics-8086-02-numbers-characters-endianness/) · [下一篇](/2026/10/30/ics-8086-04-ieee754-floating-point-rounding/)
+> [合集目录](/series/ics-8086/)
 
 `FFH` 是 255 还是 -1？`7FH+01H` 为什么可能有“溢出”却没有“进位”？这些题都在考一个共同点：位模式、解释规则和运算语义需要分开判断。
 
@@ -100,7 +100,6 @@ int add_ok(int a, int b)
 
 ## 系列导航
 
-- [系列导读与完整目录](/2026/10/30/ics-8086-00-overview/)
-- 上一篇：[ICS 与 8086 复习 02：进制转换 字符编码与字节序](/2026/10/30/ics-8086-02-numbers-characters-endianness/)
-- 下一篇：[ICS 与 8086 复习 04：IEEE 754 浮点表示与舍入](/2026/10/30/ics-8086-04-ieee754-floating-point-rounding/)
+- [合集目录](/series/ics-8086/)
+- [系列导读](/2026/10/30/ics-8086-00-overview/)
 - [考前速查与易错点](/2026/10/30/ics-8086-99-review-checklist/)

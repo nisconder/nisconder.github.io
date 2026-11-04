@@ -4,6 +4,7 @@ import {
   getPostUrl,
   getPublishedPosts,
 } from '../lib/posts'
+import { getPublishedSeries } from '../lib/series'
 
 export const prerender = true
 
@@ -16,9 +17,9 @@ const escapeXml = (value: string) =>
     .replace(/'/g, '&apos;')
 
 export const GET: APIRoute = async ({ site, url }) => {
-  const posts = await getPublishedPosts()
+  const [posts, series] = await Promise.all([getPublishedPosts(), getPublishedSeries()])
   const base = site ?? new URL(url.origin)
-  const staticPaths = ['/', '/articles/', '/about/', '/music/', '/software/']
+  const staticPaths = ['/', '/articles/', '/series/', '/about/', '/music/', '/software/']
 
   const staticEntries = staticPaths.map((path) =>
     `<url><loc>${escapeXml(new URL(path, base).href)}</loc></url>`,
@@ -32,12 +33,18 @@ export const GET: APIRoute = async ({ site, url }) => {
       '</url>',
     ].join('')
   })
+  // Series have no publication timestamp: editing the reading order does not
+  // change a chapter's date, and an invented lastmod would mislead crawlers.
+  const seriesEntries = series.map((entry) =>
+    `<url><loc>${escapeXml(new URL(entry.href, base).href)}</loc></url>`,
+  )
 
   const xml = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     ...staticEntries,
     ...postEntries,
+    ...seriesEntries,
     '</urlset>',
   ].join('')
 

@@ -14,7 +14,7 @@ tags:
 ---
 
 > **ICS 与 8086 汇编复习 · 第 04 篇**
-> [系列目录](/2026/10/30/ics-8086-00-overview/) · [上一篇](/2026/10/30/ics-8086-03-twos-complement-overflow-conversions/) · [下一篇](/2026/10/30/ics-8086-05-registers-segmented-addressing/)
+> [合集目录](/series/ics-8086/)
 
 为什么 0.1 不能被常见二进制浮点数精确存储，而 0.125 可以？为什么两个浮点数相加后，一个较小的非零量可能消失？复习浮点数时，应先掌握编码结构，再理解精度与舍入。
 
@@ -98,7 +98,6 @@ a+(b+c)：b+c = -16777215 可精确表示；再加 a 得 1
 
 ## 系列导航
 
-- [系列导读与完整目录](/2026/10/30/ics-8086-00-overview/)
-- 上一篇：[ICS 与 8086 复习 03：补码 溢出与类型转换](/2026/10/30/ics-8086-03-twos-complement-overflow-conversions/)
-- 下一篇：[ICS 与 8086 复习 05：8086 寄存器与分段寻址](/2026/10/30/ics-8086-05-registers-segmented-addressing/)
+- [合集目录](/series/ics-8086/)
+- [系列导读](/2026/10/30/ics-8086-00-overview/)
 - [考前速查与易错点](/2026/10/30/ics-8086-99-review-checklist/)

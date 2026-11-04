@@ -23,15 +23,15 @@ const interestPoints = await getInterestJourney('search')
 
 <BaseLayout
   title="搜索"
-  description="搜索本站文章正文全文、项目说明、分类和标签。"
+  description="搜索本站文章正文、系列合集、项目说明、分类和标签。"
   noindex
   interestPoints={interestPoints}
 >
   <header class="page-intro search-intro">
     <p class="eyebrow">SEARCH / ARCHIVE</p>
-    <h1>搜索文章与项目</h1>
+    <h1>搜索文章、合集与项目</h1>
     <p class="lede">
-      文章正文全文已纳入索引，也可以按项目、分类或标签查找。
+      文章正文与合集目录已纳入索引，也可以按项目、分类或标签查找。
     </p>
     <nav class="query-seeds" aria-label="常用搜索主题">
       <span>常见标签</span>
@@ -62,7 +62,7 @@ const interestPoints = await getInterestJourney('search')
         <button type="submit">搜索</button>
       </div>
       <p id="search-hint" class="search-hint">
-        检索范围：文章标题与正文全文、项目名称与说明、分类和标签。支持多个关键词；也可以只选分类。
+        检索范围：文章标题与正文全文、合集目录、项目名称与说明、分类和标签。支持多个关键词；也可以只选分类。
       </p>
 
       {categoryCounts.length > 0 && (

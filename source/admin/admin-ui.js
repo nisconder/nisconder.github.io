@@ -111,7 +111,7 @@
     return svg;
   };
 
-  var ensureCollectionSearch = function (toolbar, sourceInput) {
+  var ensureCollectionSearch = function (toolbar, sourceInput, collectionLabel) {
     if (!toolbar || !sourceInput) return;
     var search = toolbar.querySelector('.admin-list-search');
     if (!search) {
@@ -132,6 +132,10 @@
 
     search.__adminSearchTarget = sourceInput;
     var proxyInput = search.querySelector('input');
+    if (proxyInput) {
+      proxyInput.placeholder = '搜索' + collectionLabel;
+      proxyInput.setAttribute('aria-label', '搜索' + collectionLabel);
+    }
     if (proxyInput && document.activeElement !== proxyInput && proxyInput.value !== sourceInput.value) {
       proxyInput.value = sourceInput.value;
     }
@@ -162,7 +166,9 @@
   };
 
   var decorateNavigation = function (root, route) {
-    var postLinks = Array.prototype.slice.call(root.querySelectorAll('a[href="#/collections/posts"]'));
+    var postLinks = Array.prototype.slice.call(root.querySelectorAll('a[href="#/collections/posts"]')).filter(function (link) {
+      return !link.closest('.admin-collection-tabs');
+    });
     var mediaLink = root.querySelector('a[href="#/media"]');
     var topPostLink = null;
     var navGroup = null;
@@ -208,6 +214,20 @@
       navGroup.appendChild(commentsLink);
     }
 
+    // The article list hides Decap's collection sidebar. Keep every content
+    // collection reachable without applying the article form grid to series.
+    if (navGroup && !navGroup.querySelector('[data-admin-destination="series"]')) {
+      var seriesLink = document.createElement('a');
+      seriesLink.href = '#/collections/series';
+      seriesLink.textContent = '合集';
+      seriesLink.dataset.adminNav = 'top';
+      seriesLink.dataset.adminDestination = 'series';
+      navGroup.insertBefore(seriesLink, directChildWithin(navGroup, mediaLink));
+    }
+    root.querySelectorAll('a[href="#/collections/series"]').forEach(function (link) {
+      link.dataset.adminActive = String(route.indexOf('#/collections/series') === 0);
+    });
+
     postLinks.forEach(function (link) {
       if (link === topPostLink) return;
       link.dataset.adminNav = 'collection';
@@ -222,11 +242,11 @@
   var decorateActions = function (root) {
     root.querySelectorAll('a[href]').forEach(function (link) {
       var href = link.getAttribute('href') || '';
-      if (/\/collections\/posts\/new$/.test(href)) {
+      if (/\/collections\/(posts|series)\/new$/.test(href)) {
         link.dataset.adminAction = 'new-post';
-        link.setAttribute('aria-label', '\u65b0\u5efa\u6587\u7ae0');
+        link.setAttribute('aria-label', href.indexOf('/series/') !== -1 ? '新建合集' : '新建文章');
       }
-      if (/\/collections\/posts\/entries\//.test(href)) link.dataset.adminEntry = 'post';
+      if (/\/collections\/(posts|series)\/entries\//.test(href)) link.dataset.adminEntry = 'post';
     });
 
     root.querySelectorAll('button, a, [role="button"]').forEach(function (control) {
@@ -241,9 +261,9 @@
     });
 
     root.querySelectorAll('input[placeholder]').forEach(function (input) {
-      if (/(\u67e5\u627e|\u641c\u7d22).*(\u6587\u7ae0|\u6240\u6709)/.test(input.placeholder)) {
+      if (/(\u67e5\u627e|\u641c\u7d22).*(\u6587\u7ae0|\u6240\u6709|合集)/.test(input.placeholder)) {
         input.dataset.adminSearch = 'posts';
-        input.placeholder = '\u641c\u7d22\u6587\u7ae0';
+        input.placeholder = root.dataset.adminCollection === 'series' ? '搜索合集' : '搜索文章';
       }
     });
   };
@@ -335,9 +355,10 @@
   };
 
   var decorateCollection = function (root) {
+    var collectionLabel = root.dataset.adminCollection === 'series' ? '合集' : '文章';
     var entryLinks = Array.prototype.slice.call(root.querySelectorAll('[data-admin-entry="post"]'));
     var newPost = root.querySelector('[data-admin-action="new-post"]');
-    var heading = findExactText(root, 'h1, h2, h3', '\u6587\u7ae0').filter(function (element) {
+    var heading = findExactText(root, 'h1, h2, h3', collectionLabel).filter(function (element) {
       return !element.closest('aside');
     })[0];
     var controls = Array.prototype.slice.call(root.querySelectorAll('[data-admin-action="list-control"]'));
@@ -345,8 +366,28 @@
     var entryList = lowestCommonAncestor(entryLinks);
     var collectionHeader = lowestCommonAncestor([heading, newPost]);
 
-    if (heading) heading.dataset.adminCount = entryLinks.length ? String(entryLinks.length).padStart(2, '0') + ' \u7bc7' : '';
-    if (collectionHeader) collectionHeader.dataset.adminSection = 'collection-header';
+    if (heading) heading.dataset.adminCount = entryLinks.length ? String(entryLinks.length).padStart(2, '0') + (collectionLabel === '合集' ? ' 个' : ' 篇') : '';
+    if (collectionHeader) {
+      collectionHeader.dataset.adminSection = 'collection-header';
+      var collectionTabs = collectionHeader.querySelector('.admin-collection-tabs');
+      if (!collectionTabs) {
+        collectionTabs = document.createElement('nav');
+        collectionTabs.className = 'admin-collection-tabs';
+        collectionTabs.setAttribute('aria-label', '内容类型');
+        [['posts', '文章'], ['series', '合集']].forEach(function (entry) {
+          var tab = document.createElement('a');
+          tab.href = '#/collections/' + entry[0];
+          tab.textContent = entry[1];
+          tab.dataset.adminCollectionTab = entry[0];
+          collectionTabs.appendChild(tab);
+        });
+        collectionHeader.insertBefore(collectionTabs, collectionHeader.firstChild);
+      }
+      collectionTabs.querySelectorAll('a').forEach(function (tab) {
+        if (tab.dataset.adminCollectionTab === root.dataset.adminCollection) tab.setAttribute('aria-current', 'page');
+        else tab.removeAttribute('aria-current');
+      });
+    }
     if (toolbar) {
       toolbar.dataset.adminSection = 'list-toolbar';
       decorateViewControls(toolbar);
@@ -360,7 +401,7 @@
     }
 
     var searchInput = root.querySelector('[data-admin-search="posts"]');
-    ensureCollectionSearch(toolbar, searchInput);
+    ensureCollectionSearch(toolbar, searchInput, collectionLabel);
 
     if (collectionHeader && toolbar && entryList) {
       var workspace = lowestCommonAncestor([collectionHeader, toolbar, entryList]);
@@ -613,6 +654,36 @@
     }, 240);
   };
 
+  var decorateSeriesEditor = function (root) {
+    var fields = ['title', 'description', 'slug', 'draft', 'chapters'].map(function (name) {
+      var label = Array.prototype.slice.call(root.querySelectorAll('label[for], [class*="FieldLabel"][for]')).find(function (candidate) {
+        var target = candidate.getAttribute('for') || '';
+        return target === name || target.indexOf(name + '-field-') === 0;
+      });
+      if (!label) return null;
+      var wrapper = findFieldWrapper(label);
+      if (!wrapper) return null;
+      wrapper.dataset.adminSeriesField = name;
+      return wrapper;
+    }).filter(Boolean);
+    if (fields.length !== 5) return;
+    var form = lowestCommonAncestor(fields);
+    if (!form || form.id === 'nc-root') return;
+    form.dataset.adminForm = 'series';
+    // Decap's editor shell has an 800px minimum and a fixed scroll pane.
+    // Mark the real ancestors so a narrow screen can use normal document flow.
+    var layer = form.parentElement;
+    while (layer && layer !== root) {
+      layer.dataset.adminSeriesLayer = 'flow';
+      layer = layer.parentElement;
+    }
+    var back = root.querySelector('a[href="#/collections/series"]');
+    var shell = back && lowestCommonAncestor([back, form]);
+    var toolbar = shell && directChildWithin(shell, back);
+    if (toolbar && !toolbar.contains(form)) toolbar.dataset.adminSeriesToolbar = 'true';
+  };
+
+
   var decorate = function () {
     decorationFrame = 0;
     var root = document.getElementById('nc-root');
@@ -621,14 +692,17 @@
     var route = window.location.hash || '#/';
     var routePath = route.split('?')[0].replace(/\/$/, '');
     root.dataset.adminContract = 'v6';
-    root.dataset.adminPage = routePath === '#/collections/posts'
+    root.dataset.adminCollection = routePath.indexOf('#/collections/series') === 0 ? 'series' : 'posts';
+    root.dataset.adminPage = /^#\/collections\/(posts|series)$/.test(routePath)
       ? 'collection'
-      : (/^#\/collections\/posts\/(new|entries\/)/.test(routePath) ? 'editor' : 'other');
+      : (/^#\/collections\/posts\/(new|entries\/)/.test(routePath) ? 'editor'
+        : (/^#\/collections\/series\/(new|entries\/)/.test(routePath) ? 'series-editor' : 'other'));
 
     decorateNavigation(root, routePath);
     decorateActions(root);
     if (root.dataset.adminPage === 'collection') decorateCollection(root);
     if (root.dataset.adminPage === 'editor') decorateEditor(root);
+    if (root.dataset.adminPage === 'series-editor') decorateSeriesEditor(root);
   };
 
   var scheduleDecoration = function () {

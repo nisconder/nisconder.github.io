@@ -1,0 +1,54 @@
+---
+import type { BlogSeries } from '../lib/series'
+import { getPostUrl } from '../lib/posts'
+interface Props { series: BlogSeries; postId: string; pagination?: boolean }
+const { series, postId, pagination = false } = Astro.props
+const index = series.posts.findIndex(post => post.id === postId)
+const previous = series.posts[index - 1]
+const next = series.posts[index + 1]
+---
+
+{pagination ? <nav class="series-pagination" aria-label={`${series.data.title}：合集上一篇与下一篇`}>
+  <p><a href={series.href}>{series.data.title}</a><span>第 {index + 1} / {series.posts.length} 篇</span></p>
+  <div class="series-pagination__links">
+    {previous ? <a href={getPostUrl(previous)} rel="prev"><small>← 合集上一篇</small><strong>{previous.data.title}</strong></a> : <div class="series-pagination__edge"><small>这是合集第一篇</small><a href={series.href}>查看完整目录</a></div>}
+    {next ? <a href={getPostUrl(next)} rel="next"><small>合集下一篇 →</small><strong>{next.data.title}</strong></a> : <div class="series-pagination__edge"><small>已到合集最后一篇</small><a href={series.href}>返回合集目录 →</a></div>}
+  </div>
+</nav> : <aside class="series-navigation" aria-label={`所属合集：${series.data.title}`} data-reader-exclude>
+  <div class="series-navigation__heading"><span>收录于合集</span><a href={series.href}>{series.data.title}</a></div>
+  <details>
+    <summary><span>第 {index + 1} / {series.posts.length} 篇</span><span class="series-navigation__expand">展开合集目录</span><span class="series-navigation__collapse">收起合集目录</span></summary>
+    <ol>
+      {series.posts.map((post, position) => <li><span aria-hidden="true">{String(position + 1).padStart(2,'0')}</span><a href={getPostUrl(post)} aria-current={post.id === postId ? 'page' : undefined}>{post.data.title}</a></li>)}
+    </ol>
+  </details>
+</aside>}
+
+<style>
+  .series-navigation { padding:1rem 1.25rem; margin-block:0 1.5rem; border:var(--panel-border, 1px solid var(--color-line)); border-radius:var(--panel-radius, var(--card-radius)); background:var(--color-panel-secondary, color-mix(in srgb,var(--color-secondary-soft) 70%,var(--color-card))); }
+  .series-navigation__heading { display:flex; flex-wrap:wrap; align-items:center; gap:0 .75rem; }
+  .series-navigation__heading > span { color:var(--color-secondary); font-size:.75rem; }
+  .series-navigation__heading a { display:inline-flex; align-items:center; min-height:2.75rem; color:var(--color-text); font-weight:650; text-underline-offset:.25em; overflow-wrap:anywhere; }
+  .series-navigation summary { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem 1rem; min-height:2.75rem; color:var(--color-secondary); font-size:.8125rem; cursor:pointer; }
+  .series-navigation summary::after { margin-inline-start:auto; content:'+'; font:1.2rem var(--font-utility); }
+  .series-navigation details[open] summary::after { content:'−'; }
+  .series-navigation__collapse, .series-navigation details[open] .series-navigation__expand { display:none; }
+  .series-navigation details[open] .series-navigation__collapse { display:inline; }
+  .series-navigation ol { display:grid; gap:.1rem; max-height:24rem; overflow:auto; padding:.75rem 0 0; margin:.25rem 0 0; border-block-start:1px solid var(--color-line); list-style:none; }
+  .series-navigation li { display:grid; grid-template-columns:1.5rem minmax(0,1fr); align-items:baseline; gap:.65rem; }
+  .series-navigation li > span { color:var(--color-muted); font: .75rem/1.6 var(--font-utility); }
+  .series-navigation li a { display:flex; align-items:center; min-height:2.75rem; padding:.45rem .5rem; border-radius:var(--control-radius, .65rem); color:var(--color-text); font-size:.8125rem; text-decoration:none; overflow-wrap:anywhere; }
+  .series-navigation li a:hover, .series-navigation li a[aria-current] { background:var(--color-card); color:var(--color-secondary); }
+  .series-navigation li a[aria-current] { font-weight:700; }
+  .series-pagination { padding-block:1.5rem; border-block-start:1px solid var(--color-line); }
+  .series-pagination > p { display:flex; flex-wrap:wrap; justify-content:space-between; gap:.5rem 1rem; margin:0 0 .75rem; font-size:.8125rem; }
+  .series-pagination > p a { display:inline-flex; align-items:center; min-height:2.75rem; color:var(--color-secondary); text-underline-offset:.25em; }
+  .series-pagination > p > span { display:flex; align-items:center; color:var(--color-muted); }
+  .series-pagination__links { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+  .series-pagination__links > a, .series-pagination__edge { display:flex; flex-direction:column; align-items:flex-start; gap:.65rem; padding:1rem; border:var(--panel-border, 1px solid var(--color-line)); border-radius:var(--panel-radius, var(--card-radius)); background:var(--color-card); text-decoration:none; }
+  .series-pagination__links small { color:var(--color-secondary); font-size:.75rem; }
+  .series-pagination__links strong { color:var(--color-text); font-size:.9375rem; font-weight:600; line-height:1.7; overflow-wrap:anywhere; }
+  .series-pagination__links > a:hover strong { color:var(--color-primary); }
+  .series-pagination__edge a { display:inline-flex; align-items:center; min-height:2.75rem; font-size:.875rem; text-underline-offset:.25em; }
+  @media (max-width:35rem) { .series-pagination__links { grid-template-columns:minmax(0,1fr); } }
+</style>

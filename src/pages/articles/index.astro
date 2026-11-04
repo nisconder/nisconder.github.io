@@ -1,6 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import PostRow from '../../components/PostRow.astro'
+import SeriesCard from '../../components/SeriesCard.astro'
+import { getPublishedSeries } from '../../lib/series'
 import { getInterestJourney } from '../../lib/interests'
 import {
   formatPostDate,
@@ -15,6 +17,7 @@ import {
 } from '../../lib/posts'
 
 const posts = await getPublishedPosts()
+const series = await getPublishedSeries()
 const categoryCounts = new Map<string, number>()
 const topicCounts = new Map<string, number>()
 const postsByYear = new Map<string, typeof posts>()
@@ -112,6 +115,16 @@ const interestPoints = await getInterestJourney('articles')
     </div>
   </header>
 
+  {series.length > 0 && (
+    <section class="articles-series" aria-labelledby="articles-series-title">
+      <header>
+        <h2 id="articles-series-title">按合集阅读</h2>
+        <a href="/series/">全部 {series.length} 个合集 →</a>
+      </header>
+      <SeriesCard series={series[0]} />
+    </section>
+  )}
+
   {(topics.length > 0 || yearGroups.length > 0) && (
     <section class="axis-section article-index" data-note="索引">
       <div class="section-heading article-index__heading">
@@ -205,6 +218,33 @@ const interestPoints = await getInterestJourney('articles')
 </BaseLayout>
 
 <style>
+  .articles-series {
+    margin-block-end: 2.5rem;
+  }
+
+  .articles-series > header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-block-end: 1rem;
+  }
+
+  .articles-series > header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  .articles-series > header a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    font-size: 0.8125rem;
+    text-underline-offset: 0.25em;
+  }
+
   .articles-intro {
     display: grid;
     grid-template-columns: minmax(14rem, 0.78fr) minmax(18rem, 1.22fr);

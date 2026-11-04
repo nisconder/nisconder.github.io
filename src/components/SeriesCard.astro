@@ -1,0 +1,57 @@
+---
+import type { BlogSeries } from '../lib/series'
+import { getPostUrl } from '../lib/posts'
+
+interface Props { series: BlogSeries }
+const { series } = Astro.props
+const preview = series.posts.slice(0, 3)
+---
+
+<article class="series-card">
+  <div class="series-card__spine" aria-hidden="true"><span>合集</span></div>
+  <div class="series-card__cover">
+    <p class="series-card__meta">系列笔记 <span>·</span> {series.posts.length} 篇</p>
+    <h2 class="series-card__title"><a href={series.href}>{series.data.title}</a></h2>
+    <p class="series-card__description">{series.data.description}</p>
+    <a class="series-card__open" href={series.href} aria-label={`查看《${series.data.title}》的完整目录`}>打开合集 <span aria-hidden="true">→</span></a>
+  </div>
+  <div class="series-card__contents">
+    <p>从这里开始</p>
+    <ol>
+      {preview.map((post, index) => <li>
+        <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+        <a href={getPostUrl(post)}>{post.data.title}</a>
+      </li>)}
+    </ol>
+    {series.posts.length > preview.length && <a class="series-card__more" href={series.href}>查看全部 {series.posts.length} 篇 <span aria-hidden="true">↗</span></a>}
+  </div>
+</article>
+
+<style>
+  .series-card { position:relative; isolation:isolate; display:grid; grid-template-columns:2.5rem minmax(0,1fr) minmax(0,.9fr); min-width:0; margin-block-end:.55rem; border:var(--panel-border, 1px solid var(--color-line)); border-radius:var(--panel-radius, var(--card-radius)); background:var(--color-card); }
+  .series-card::after { position:absolute; z-index:-1; inset:auto .5rem -.5rem; height:.5rem; border:var(--panel-border, 1px solid var(--color-line)); border-block-start:0; border-radius:0 0 .75rem .75rem; background:var(--color-surface-soft); content:''; }
+  .series-card__spine { display:flex; justify-content:center; align-items:flex-start; padding-block:2rem; border-inline-end:1px solid var(--color-line); border-start-start-radius:var(--panel-radius, var(--card-radius)); border-end-start-radius:var(--panel-radius, var(--card-radius)); background:var(--color-panel-secondary, color-mix(in srgb,var(--color-secondary-soft) 70%,var(--color-card))); }
+  .series-card__spine span { color:var(--color-secondary); font-size:.75rem; font-weight:650; writing-mode:vertical-rl; letter-spacing:.25em; }
+  .series-card__cover { min-width:0; padding:clamp(1.25rem,3vw,2rem); background:var(--color-card); }
+  .series-card__meta { display:flex; flex-wrap:wrap; gap:.6rem; margin:0 0 .8rem; color:var(--color-secondary); font: .75rem/1.6 var(--font-utility); }
+  .series-card__title { margin:0 0 .85rem; font-family:var(--font-display); font-size:clamp(1.4rem,2.4vw,1.85rem); font-weight:600; line-height:1.45; overflow-wrap:anywhere; }
+  .series-card__title a { color:var(--color-heading); text-decoration:none; }
+  .series-card__title a:hover { color:var(--color-primary); }
+  .series-card__description { margin:0; color:var(--color-muted); font-size:.9375rem; line-height:1.85; overflow-wrap:anywhere; }
+  .series-card__open { display:inline-flex; align-items:center; gap:1rem; min-height:2.75rem; margin-block-start:1rem; color:var(--color-primary); font-size:.875rem; font-weight:650; text-underline-offset:.25em; }
+  .series-card__contents { min-width:0; margin-block:1.5rem; padding:0 clamp(1.25rem,3vw,2rem); border-inline-start:1px solid var(--color-line); border-start-end-radius:var(--panel-radius, var(--card-radius)); border-end-end-radius:var(--panel-radius, var(--card-radius)); background:var(--color-card); }
+  .series-card__contents > p { margin:0 0 .5rem; color:var(--color-muted); font: .75rem/1.6 var(--font-utility); }
+  .series-card__contents ol { padding:0; margin:0; list-style:none; }
+  .series-card__contents li { display:grid; grid-template-columns:1.5rem minmax(0,1fr); align-items:baseline; gap:.65rem; border-block-end:1px solid var(--color-line); }
+  .series-card__contents li > span { color:var(--color-secondary); font: .75rem/1.6 var(--font-utility); }
+  .series-card__contents li a { display:flex; align-items:center; min-height:2.75rem; padding-block:.65rem; color:var(--color-text); font-size:.8125rem; line-height:1.6; text-decoration:none; overflow-wrap:anywhere; }
+  .series-card__contents li a:hover { color:var(--color-primary); text-decoration:underline; text-underline-offset:.2em; }
+  .series-card__more { display:inline-flex; align-items:center; min-height:2.75rem; gap:.65rem; margin-block-start:.35rem; color:var(--color-muted); font-size:.75rem; text-underline-offset:.25em; }
+  @media (max-width:40rem) {
+    .series-card { grid-template-columns:1.75rem minmax(0,1fr); }
+    .series-card__spine { grid-row:1 / 3; padding-block:1.5rem; }
+    .series-card__cover { border-start-end-radius:var(--panel-radius, var(--card-radius)); padding:1.25rem 1.25rem .75rem; }
+    .series-card__contents { grid-column:2; margin:0; padding:0 1.25rem 1rem; border:0; }
+    .series-card__contents > p { padding-block-start:.85rem; border-block-start:1px solid var(--color-line); }
+  }
+</style>

@@ -1,6 +1,8 @@
 ---
 import { featuredSoftware, softwareProjects, softwareStatusLabels } from '../data/software'
 import BaseLayout from '../layouts/BaseLayout.astro'
+import SeriesCard from '../components/SeriesCard.astro'
+import { getPublishedSeries } from '../lib/series'
 import { getPlaylistTracks, isPlayableTrack } from '../lib/playlist'
 import {
   formatPostDate,
@@ -15,6 +17,7 @@ import {
 } from '../lib/posts'
 
 const posts = await getPublishedPosts()
+const series = await getPublishedSeries()
 const playlist = await getPlaylistTracks()
 const playableTracks = playlist.filter(isPlayableTrack)
 const playlistPreview = (playableTracks.length > 0 ? playableTracks : playlist).slice(0, 3)
@@ -132,6 +135,19 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
     )}
   </section>
 
+  {series.length > 0 && (
+    <section class="home-series" aria-labelledby="home-series-title">
+      <header class="home-series__heading">
+        <div>
+          <p class="eyebrow">沿着一个主题读下去</p>
+          <h2 id="home-series-title">系列合集</h2>
+        </div>
+        <a class="quiet-link" href="/series/">全部 {series.length} 个合集 <span aria-hidden="true">→</span></a>
+      </header>
+      <SeriesCard series={series[0]} />
+    </section>
+  )}
+
   <section class="home-secondary" aria-label="项目与音乐">
     <a class="project-panel register-panel" href={`/software/#${featuredSoftware.slug}`}>
       <div class="project-panel__topline">
@@ -200,6 +216,25 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
 </BaseLayout>
 
 <style>
+  .home-series {
+    margin-block: 2.5rem;
+  }
+
+  .home-series__heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-block-end: 1rem;
+  }
+
+  .home-series__heading h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--title-section);
+  }
+
   .register-panel {
     position: relative;
     min-width: 0;
