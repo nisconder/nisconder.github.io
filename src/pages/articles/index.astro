@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import PostRow from '../../components/PostRow.astro'
 import SeriesCard from '../../components/SeriesCard.astro'
-import { getPublishedSeries } from '../../lib/series'
+import { getPublishedSeries, getStandalonePosts } from '../../lib/series'
 import { getInterestJourney } from '../../lib/interests'
 import {
   formatPostDate,
@@ -16,8 +16,8 @@ import {
   getPublishedPosts,
 } from '../../lib/posts'
 
-const posts = await getPublishedPosts()
-const series = await getPublishedSeries()
+const [publishedPosts, series] = await Promise.all([getPublishedPosts(), getPublishedSeries()])
+const posts = getStandalonePosts(publishedPosts, series)
 const categoryCounts = new Map<string, number>()
 const topicCounts = new Map<string, number>()
 const postsByYear = new Map<string, typeof posts>()
@@ -67,7 +67,7 @@ const interestPoints = await getInterestJourney('articles')
     <div class="articles-intro__copy">
       <p class="article-kicker">Articles</p>
       <h1>文章</h1>
-      <p>公开文章按正式发布日期倒序排列；置顶只用于推荐，不改变归档顺序。</p>
+      <p>系列笔记按合集阅读，独立文章按发布日期倒序排列。</p>
     </div>
 
     <div class="articles-discovery">
@@ -209,8 +209,8 @@ const interestPoints = await getInterestJourney('articles')
     ) : (
       <section class="axis-section" data-note="按时间">
         <div class="empty-state">
-          <h2>还没有公开文章</h2>
-          <p>新文章发布后会按时间出现在这里。</p>
+          <h2>还没有独立文章</h2>
+          <p>系列笔记可以从上方合集进入阅读。</p>
         </div>
       </section>
     )

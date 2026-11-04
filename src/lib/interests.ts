@@ -1,5 +1,6 @@
 import { featuredSoftware, softwareStatusLabels } from '../data/software'
 import { getPlaylistTracks, isPlayableTrack } from './playlist'
+import { getPublishedSeries, getStandalonePosts } from './series'
 import {
   getPostCategory,
   getPostReadingMinutes,
@@ -46,7 +47,8 @@ let catalogPromise: Promise<{
 }> | undefined
 
 const getInterestCatalog = () => {
-  catalogPromise ??= Promise.all([getPublishedPosts(), getPlaylistTracks()]).then(([posts, playlist]) => {
+  catalogPromise ??= Promise.all([getPublishedPosts(), getPlaylistTracks(), getPublishedSeries()]).then(([publishedPosts, playlist, series]) => {
+    const posts = getStandalonePosts(publishedPosts, series)
     const latestPost = posts[0]
     const firstPlayable = playlist.find(isPlayableTrack) ?? playlist[0]
     const musicPoint = firstPlayable
@@ -73,7 +75,7 @@ const getInterestCatalog = () => {
         section: '文章索引',
         relation: '回到完整索引',
         title: '按主题或年份继续找',
-        description: `${posts.length} 篇公开文章，保留完整分类、主题与年份入口。`,
+        description: `${posts.length} 篇独立文章与 ${series.length} 个合集，从分类、主题或目录继续阅读。`,
         href: '/articles/',
       },
       project: {

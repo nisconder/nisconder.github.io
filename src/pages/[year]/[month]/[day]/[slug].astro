@@ -3,7 +3,7 @@ import { render } from 'astro:content'
 import type { GetStaticPaths } from 'astro'
 import BaseLayout from '../../../../layouts/BaseLayout.astro'
 import SeriesNavigation from '../../../../components/SeriesNavigation.astro'
-import { getSeriesForPost } from '../../../../lib/series'
+import { getPublishedSeries, getSeriesForPost, getStandalonePosts } from '../../../../lib/series'
 import { getInterestJourney } from '../../../../lib/interests'
 import {
   formatPostDate,
@@ -26,16 +26,19 @@ interface Props {
 }
 
 export const getStaticPaths = (async () => {
-  const posts = await getPublishedPosts()
+  const [posts, series] = await Promise.all([getPublishedPosts(), getPublishedSeries()])
+  const standalonePosts = getStandalonePosts(posts, series)
+  const standalonePositions = new Map(standalonePosts.map((post, index) => [post.id, index]))
 
-  return posts.map((post, index) => {
+  return posts.map((post) => {
+    const index = standalonePositions.get(post.id)
     const { year, month, day } = getPostCalendarParts(post.data.date)
     return {
       params: { year, month, day, slug: getPostSlug(post) },
       props: {
         post,
-        previousPost: posts[index + 1],
-        nextPost: posts[index - 1],
+        previousPost: index === undefined ? undefined : standalonePosts[index + 1],
+        nextPost: index === undefined ? undefined : standalonePosts[index - 1],
       },
     }
   })

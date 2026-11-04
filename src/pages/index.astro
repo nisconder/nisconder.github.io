@@ -2,7 +2,7 @@
 import { featuredSoftware, softwareProjects, softwareStatusLabels } from '../data/software'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import SeriesCard from '../components/SeriesCard.astro'
-import { getPublishedSeries } from '../lib/series'
+import { getPublishedSeries, getStandalonePosts } from '../lib/series'
 import { getPlaylistTracks, isPlayableTrack } from '../lib/playlist'
 import {
   formatPostDate,
@@ -16,8 +16,8 @@ import {
   getPublishedPosts,
 } from '../lib/posts'
 
-const posts = await getPublishedPosts()
-const series = await getPublishedSeries()
+const [publishedPosts, series] = await Promise.all([getPublishedPosts(), getPublishedSeries()])
+const posts = getStandalonePosts(publishedPosts, series)
 const playlist = await getPlaylistTracks()
 const playableTracks = playlist.filter(isPlayableTrack)
 const playlistPreview = (playableTracks.length > 0 ? playableTracks : playlist).slice(0, 3)
