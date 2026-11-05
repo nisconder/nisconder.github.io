@@ -21,11 +21,12 @@ const selectedTargets = option('--targets', 'local,online').split(',')
 const devices = option('--devices', 'desktop,mobile').split(',')
 const scenarios = option('--scenarios', 'cold-search,cold-query,home-to-search').split(',')
 const traceEnabled = args.includes('--trace')
+const articlePath = option('--article', '/2026/08/26/2026-08-26-blog1/')
 const iterations = Number(option('--iterations', '1'))
 assert.ok(iterations >= 1 && iterations <= 10)
 const output = resolve(import.meta.dirname, '..', '.deploy-search-performance', label)
 await mkdir(output, { recursive: true })
-const browser = await chromium.launch({ channel: 'chrome', headless: true })
+const browser = await chromium.launch({ channel: 'chrome', headless: true, ignoreDefaultArgs: ['--disable-back-forward-cache'] })
 const throttle = { latencyMs: 150, downloadMbps: 1.6, uploadMbps: 0.75, cpuSlowdown: 4 }
 const allResults = await readFile(resolve(output, 'summary.json'), 'utf8').then(source => JSON.parse(source).results).catch(error => {
   if (error.code === 'ENOENT') return []
@@ -41,12 +42,34 @@ async function session(base, device) {
     reducedMotion: 'no-preference', serviceWorkers: 'block',
   })
   await context.addInitScript(() => {
-    const data = window.__searchBenchmark = { longTasks: [], inputFrames: [], paint: [], resultPaints: [], intent: 0, events: [], errors: [] }
+    const data = window.__searchBenchmark = { longTasks: [], inputFrames: [], paint: [], lcp: [], router: [], pageShows: [], transitions: [], resultPaints: [], intent: 0, events: [], errors: [] }
+    window.addEventListener('pageshow', event => data.pageShows.push({ time: performance.now(), persisted: event.persisted }))
     const observe = (type, callback, options = {}) => {
       try { new PerformanceObserver(list => list.getEntries().forEach(callback)).observe({ type, buffered: true, ...options }) } catch {}
     }
     observe('longtask', entry => data.longTasks.push({ start: entry.startTime, duration: entry.duration }))
     observe('paint', entry => data.paint.push({ name: entry.name, start: entry.startTime }))
+    observe('largest-contentful-paint', entry => data.lcp.push({ start: entry.startTime, size: entry.size, element: entry.element?.tagName, text: entry.element?.textContent?.slice(0, 120), url: entry.url }))
+    for (const name of ['astro:before-preparation', 'astro:after-preparation', 'astro:before-swap', 'astro:after-swap', 'astro:page-load']) {
+      document.addEventListener(name, () => {
+        data.router.push({ name, time: performance.now(), path: location.pathname })
+        performance.mark(`benchmark:${name}`)
+      })
+    }
+    document.addEventListener('click', event => {
+      const link = event.target.closest?.('a[href]')
+      if (link) { data.router.push({ name: 'click', time: performance.now(), href: link.href }); performance.mark('benchmark:click') }
+    }, true)
+    if (document.startViewTransition) {
+      const original = document.startViewTransition.bind(document)
+      document.startViewTransition = (...args) => {
+        const sample = { start: performance.now() }
+        data.transitions.push(sample)
+        const transition = original(...args)
+        for (const name of ['updateCallbackDone', 'ready', 'finished']) transition[name].then(() => { sample[name] = performance.now() }, error => { sample[`${name}Error`] = error.message })
+        return transition
+      }
+    }
     observe('event', entry => data.events.push({ name: entry.name, start: entry.startTime, duration: entry.duration, processingStart: entry.processingStart, processingEnd: entry.processingEnd, interactionId: entry.interactionId }), { durationThreshold: 16 })
     document.addEventListener('input', event => {
       if (!event.target.matches?.('[data-search-input]')) return
@@ -74,6 +97,7 @@ async function session(base, device) {
   const page = await context.newPage()
   page.setDefaultTimeout(45000)
   const cdp = await context.newCDPSession(page)
+  await cdp.send('Performance.enable')
   await cdp.send('Network.enable')
   await cdp.send('Network.setCacheDisabled', { cacheDisabled: false })
   await cdp.send('Network.emulateNetworkConditions', {
@@ -143,11 +167,19 @@ async function session(base, device) {
     const topFrames = [...selfTime].sort((a, b) => b[1] - a[1]).slice(0, 35).map(([id, microseconds]) => ({ ...nodeById.get(id).callFrame, sampledSelfMs: microseconds / 1000 }))
     await writeFile(resolve(output, `${name}.trace-summary.json`), JSON.stringify({ expensiveEvents, topFrames }, null, 2) + '\n')
   }
-  return { context, page, waterfall, finishTrace }
+  return { context, page, waterfall, finishTrace, cdp }
 }
 
 async function nextPaint(page) {
   return page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve(performance.timeOrigin + performance.now())))))
+}
+async function contentReady(page, selector) {
+  await page.locator(selector).first().waitFor({ state: 'visible' })
+  return nextPaint(page)
+}
+async function transitionReady(page) {
+  await page.waitForFunction(() => window.__searchBenchmark.transitions.every(item => item.finished !== undefined || item.finishedError !== undefined), null, { polling: 'raf' })
+  return nextPaint(page)
 }
 async function inputReady(page) {
   await page.waitForFunction(() => {
@@ -197,12 +229,36 @@ async function snapshot(page, waterfall, beforeEpoch, afterEpoch) {
 }
 
 async function measure(base, device, target, iteration, scenario) {
-  const { context, page, waterfall, finishTrace } = await session(base, device)
+  const { context, page, waterfall, finishTrace, cdp } = await session(base, device)
   const name = `${target}-${device}-${iteration}-${scenario}`
   const start = Date.now()
   const result = { target, base, device, iteration, scenario, throttle, timings: {} }
   try {
-    if (scenario === 'cold-query') {
+    if (scenario === 'cold-home' || scenario === 'cold-article') {
+      await page.goto(new URL(scenario === 'cold-home' ? '/' : articlePath, base).href, { waitUntil: 'commit' })
+      result.timings.mainContentPaintMs = round(await contentReady(page, scenario === 'cold-home' ? '#home-title' : '#article-start') - start)
+      // Allow the LCP/long-task observers to deliver their initial frame entries.
+      await page.waitForTimeout(250)
+    } else if (scenario === 'home-to-article') {
+      await page.goto(new URL('/', base).href, { waitUntil: 'commit' })
+      await contentReady(page, '#home-title')
+      const link = page.locator('.article-panel h2 a').first()
+      result.articleHref = await link.getAttribute('href')
+      await link.scrollIntoViewIfNeeded()
+      await nextPaint(page)
+      const previousTimeOrigin = await page.evaluate(() => performance.timeOrigin)
+      const clickStart = Date.now()
+      await link.click()
+      await page.waitForURL(url => url.pathname === result.articleHref)
+      result.timings.clickToContentPaintMs = round(await contentReady(page, '#article-start') - clickStart)
+      result.timings.clickToTransitionFinishedPaintMs = round(await transitionReady(page) - clickStart)
+      result.navigation = await page.evaluate(previousTimeOrigin => {
+        const { router, transitions } = window.__searchBenchmark
+        const click = router.findLast(event => event.name === 'click')
+        return { type: performance.timeOrigin === previousTimeOrigin ? 'same-document' : 'new-document', click, events: click ? router.filter(event => event.time >= click.time).map(event => ({ ...event, fromClickMs: event.time - click.time })) : router, transitions: click ? transitions.filter(item => item.start >= click.time).map(item => ({ ...item, fromClickMs: item.start - click.time })) : transitions }
+      }, previousTimeOrigin)
+      await page.waitForTimeout(250)
+    } else if (scenario === 'cold-query') {
       await page.goto(new URL('/search/?q=8086', base).href, { waitUntil: 'commit' })
       const ready = await inputReady(page)
       result.timings.inputReadyMs = round(ready - start)
@@ -210,6 +266,11 @@ async function measure(base, device, target, iteration, scenario) {
       result.timings.firstBatchMs = round(firstBatch.epoch - start)
       result.firstBatchPhase = firstBatch.phase
       result.timings.fullResultMs = round(await resultReady(page, '8086') - start)
+    } else if (scenario === 'cold-search-empty') {
+      await page.goto(new URL('/search/', base).href, { waitUntil: 'commit' })
+      result.timings.mainContentPaintMs = round(await contentReady(page, '[data-search-input]') - start)
+      result.timings.inputReadyMs = round(await inputReady(page) - start)
+      await page.waitForTimeout(250)
     } else if (scenario === 'cold-search') {
       await page.goto(new URL('/search/', base).href, { waitUntil: 'commit' })
       const ready = await inputReady(page)
@@ -267,6 +328,19 @@ async function measure(base, device, target, iteration, scenario) {
     const end = Date.now()
     Object.assign(result, await snapshot(page, waterfall, start, end))
     result.timings.fcpMs = result.measurements.paint.find(entry => entry.name === 'first-contentful-paint')?.start ?? null
+    result.timings.lcpObservedMs = result.measurements.lcp.at(-1)?.start ?? null
+    result.performanceMetrics = Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.filter(entry => ['LayoutCount', 'RecalcStyleCount', 'LayoutDuration', 'RecalcStyleDuration', 'ScriptDuration', 'TaskDuration', 'JSHeapUsedSize', 'Nodes'].includes(entry.name)).map(entry => [entry.name, entry.value]))
+    result.nativeViewTransitionCount = result.measurements.transitions.length
+    if (scenario === 'home-to-article' && args.includes('--history')) {
+      const historyStart = Date.now()
+      await page.goBack({ waitUntil: 'commit' })
+      // BFCache restoration dispatches pageshow, but not another load event.
+      // waitForURL's default load readiness can therefore time out on a
+      // successfully restored homepage. Observe its live DOM instead.
+      await page.waitForFunction(() => location.pathname === '/' && document.querySelector('#home-title'), null, { polling: 'raf', timeout: 15000 })
+      const historyPaint = await contentReady(page, '#home-title')
+      result.historyRestore = { backToContentPaintMs: round(historyPaint - historyStart), ...(await page.evaluate(() => ({ url: location.href, pageShows: window.__searchBenchmark.pageShows, navigationType: performance.getEntriesByType('navigation')[0]?.type, restoredFromBFCache: window.__searchBenchmark.pageShows.at(-1)?.persisted ?? false }))) }
+    }
     result.resultViewport = { initiallyInViewport: result.measurements.firstResultInViewport, initiallyContentVisible: result.measurements.firstResultContentVisible }
     if (result.measurements.resultCount > 0 && !result.measurements.firstResultInViewport) {
       const scrollStart = Date.now()
@@ -299,7 +373,7 @@ try {
       assert.ok(['desktop', 'mobile'].includes(device))
       for (let iteration = 1; iteration <= iterations; iteration++) {
         for (const scenario of scenarios) {
-          assert.ok(['cold-search', 'cold-query', 'home-to-search'].includes(scenario))
+          assert.ok(['cold-search', 'cold-search-empty', 'cold-query', 'home-to-search', 'cold-home', 'cold-article', 'home-to-article'].includes(scenario))
           await measure(targets[target], device, target, iteration, scenario)
         }
       }

@@ -11,19 +11,19 @@ const preview = series.posts.slice(0, 3)
   <div class="series-card__spine" aria-hidden="true"><span>合集</span></div>
   <div class="series-card__cover">
     <p class="series-card__meta">系列笔记 <span>·</span> {series.posts.length} 篇</p>
-    <h2 class="series-card__title"><a href={series.href}>{series.data.title}</a></h2>
+    <h2 class="series-card__title"><a data-astro-prefetch href={series.href}>{series.data.title}</a></h2>
     <p class="series-card__description">{series.data.description}</p>
-    <a class="series-card__open" href={series.href} aria-label={`查看《${series.data.title}》的完整目录`}>打开合集 <span aria-hidden="true">→</span></a>
+    <a data-astro-prefetch class="series-card__open" href={series.href} aria-label={`查看《${series.data.title}》的完整目录`}>打开合集 <span aria-hidden="true">→</span></a>
   </div>
   <div class="series-card__contents">
     <p>从这里开始</p>
     <ol>
       {preview.map((post, index) => <li>
         <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-        <a href={getPostUrl(post)}>{post.data.title}</a>
+        <a data-astro-prefetch href={getPostUrl(post)}>{post.data.title}</a>
       </li>)}
     </ol>
-    {series.posts.length > preview.length && <a class="series-card__more" href={series.href}>查看全部 {series.posts.length} 篇 <span aria-hidden="true">↗</span></a>}
+    {series.posts.length > preview.length && <a data-astro-prefetch class="series-card__more" href={series.href}>查看全部 {series.posts.length} 篇 <span aria-hidden="true">↗</span></a>}
   </div>
 </article>
 

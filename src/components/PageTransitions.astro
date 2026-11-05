@@ -6,13 +6,26 @@ import { ClientRouter } from 'astro:transitions'
 
 <script>
   import { installNavigationFeedback } from '../lib/navigation-feedback.mjs'
+  import { installPublicNavigationPrefetch } from '../lib/navigation-cache.mjs'
 
+  // The feedback wrapper runs after the cache hook and covers hits and misses.
+  // Development keeps Astro's loader, including its client-only island setup.
+  if (import.meta.env.PROD) installPublicNavigationPrefetch(document, window)
   installNavigationFeedback(document)
 
-  // The router swaps <html> attributes too. Set the destination's theme before
-  // it is painted, including the controls captured in the transition snapshot.
   document.addEventListener('astro:before-swap', (event) => {
-    const theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
+    // Keep Astro's lifecycle and history while skipping navigation animation.
+    // CSS separately excludes the document from navigation snapshot capture.
+    event.viewTransition.ready.catch(() => {})
+    event.viewTransition.skipTransition()
+
+    let theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
+    try {
+      const saved = localStorage.getItem('nisconder-theme')
+      if (saved === 'light' || saved === 'dark') theme = saved
+    } catch {
+      // Preserve the current visible theme if storage is unavailable.
+    }
     const nextRoot = event.newDocument.documentElement
     nextRoot.dataset.theme = theme
     nextRoot.style.colorScheme = theme
@@ -26,5 +39,4 @@ import { ClientRouter } from 'astro:transitions'
       if (label) label.textContent = theme === 'dark' ? '浅色' : '深色'
     })
   })
-
 </script>

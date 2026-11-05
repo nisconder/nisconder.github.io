@@ -19,7 +19,7 @@ const metadata = item => [item.title, item.description, item.category, ...(item.
 const includesQuery = (item, query) => normalise(query).split(/\s+/).filter(Boolean)
   .every(token => normalise(`${metadata(item)} ${item.content ?? ''}`).includes(token))
 const expectedURLs = (query, kind) => records.filter(item => (!kind || item.kind === kind) && includesQuery(item, query)).map(item => item.url)
-const browser = await chromium.launch({ channel: 'chrome', headless: true })
+const browser = await chromium.launch({ channel: 'chrome', headless: true, ignoreDefaultArgs: ['--disable-back-forward-cache'] })
 const report = { base: base.href, started: new Date().toISOString(), scenarios: [] }
 const inputSelector = '[data-search-input]'
 const resultsSelector = '[data-search-results] .search-result h2 a'
@@ -107,6 +107,33 @@ async function run(name, mobile, scenario) {
 }
 
 const scenarios = {
+  async prefetchedNavigation(api, checks) {
+    await api.page.goto(base.href, { waitUntil: 'load' })
+    await api.page.evaluate(() => { window.__qaNavigationDocument = 'same-document' })
+    const requests = []
+    let release
+    const gate = new Promise(resolve => { release = resolve })
+    await api.page.route('**/search/', async route => {
+      requests.push(route.request())
+      await gate
+      await route.continue().catch(() => {})
+    })
+    try {
+      const pending = api.page.waitForRequest(request => new URL(request.url()).pathname === '/search/')
+      await api.page.locator('.site-search-link').focus()
+      const request = await pending
+      assert.equal(request.resourceType(), 'fetch', 'intent starts the HTML fetch before navigation')
+      await api.page.locator('.site-search-link').evaluate(link => link.click())
+      release()
+      await ready(api.page)
+      await paint(api.page)
+      assert.equal(requests.length, 1, 'click consumes the in-flight prefetch without a second request')
+      assert.equal(await api.page.evaluate(() => window.__qaNavigationDocument), 'same-document', 'cache retains Astro navigation lifecycle')
+      await query(api.page, 'unsigned')
+      await assertQuery(api.page, 'unsigned')
+      checks.push('focus prefetch starts before click', 'pending HTML fetch reused exactly once', 'cached page initializes search correctly')
+    } finally { release() }
+  },
   async compact(api, checks) {
     const release = api.hold()
     await visit(api.page, '/search/?q=8086')
@@ -223,14 +250,15 @@ const scenarios = {
     await api.page.locator('.site-brand').click()
     await api.page.locator('#home-title').waitFor()
     release()
-    await api.page.waitForResponse(response => new URL(response.url()).pathname.startsWith('/search-data/'))
     await paint(api.page)
+    assert.equal(await api.page.locator('[data-search-results]').count(), 0, 'a departed query cannot render into the home page')
     await api.page.locator('.site-search-link').click()
     await ready(api.page)
     await query(api.page, 'unsigned')
     await assertQuery(api.page, 'unsigned')
     await api.page.locator('.site-nav a[href="/articles/"]').click()
     await api.page.waitForURL(url => url.pathname === '/articles/')
+    await api.page.locator(inputSelector).waitFor({ state: 'detached' })
     await api.page.goBack()
     await ready(api.page)
     await phase(api.page, 'complete')
@@ -238,18 +266,19 @@ const scenarios = {
     await assertQuery(api.page, 'unsigned')
     await api.page.goForward()
     await api.page.waitForURL(url => url.pathname === '/articles/')
+    await api.page.locator(inputSelector).waitFor({ state: 'detached' })
     await api.page.goBack()
     await ready(api.page)
     await phase(api.page, 'complete')
     await assertQuery(api.page, 'unsigned')
     assert.equal(api.fullRequests.length, 1, 'SPA leave/return/history reuse full text')
-    checks.push('pending request survives leaving without writing to new page', 'returning search reuses full text', 'history back/forward restores query and results')
+    checks.push('departed query cannot write into another page', 'returning search reuses full text', 'history back/forward restores query and results')
   },
 }
 
 try {
   for (const [name, scenario] of Object.entries(scenarios)) await run(name, false, scenario)
-  for (const name of ['compact', 'language', 'ime', 'stale', 'navigation']) await run(name, true, scenarios[name])
+  for (const name of ['compact', 'language', 'ime', 'stale', 'navigation', 'prefetchedNavigation']) await run(name, true, scenarios[name])
 } finally {
   await browser.close()
   report.completed = new Date().toISOString()

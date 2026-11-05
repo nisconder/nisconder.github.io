@@ -22,6 +22,7 @@
     const { signal } = controller
     let themeTransition
     let feedbackTimer
+    let themeRevision = 0
 
     const updateControls = (theme) => {
       document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
@@ -40,7 +41,30 @@
       updateControls(theme)
     }
 
-    updateControls(root.dataset.theme === 'dark' ? 'dark' : 'light')
+    const finishTransition = () => {
+      themeRevision += 1
+      themeTransition?.skipTransition()
+      themeTransition = undefined
+      window.clearTimeout(feedbackTimer)
+      delete root.dataset.themeTransition
+      document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+        delete button.dataset.themeSwitching
+      })
+    }
+
+    const restoreTheme = () => {
+      finishTransition()
+      let theme = systemTheme.matches ? 'dark' : 'light'
+      try {
+        const saved = localStorage.getItem(storageKey)
+        if (saved === 'light' || saved === 'dark') theme = saved
+      } catch {
+        // Restore the system choice when storage is unavailable.
+      }
+      applyTheme(theme)
+    }
+
+    restoreTheme()
 
     document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
       if (button.dataset.themeBound === 'true') return
@@ -48,10 +72,13 @@
       button.addEventListener('click', () => {
         button.dataset.themeSwitching = 'true'
         const nextTheme = root.dataset.theme === 'dark' ? 'light' : 'dark'
+        const revision = ++themeRevision
         themeTransition?.skipTransition()
         if (!reducedMotion.matches && !root.hasAttribute('data-astro-transition') && typeof document.startViewTransition === 'function') {
           root.dataset.themeTransition = ''
-          const transition = document.startViewTransition(() => applyTheme(nextTheme))
+          const transition = document.startViewTransition(() => {
+            if (revision === themeRevision) applyTheme(nextTheme)
+          })
           themeTransition = transition
           transition.finished.catch(() => {}).finally(() => {
             if (themeTransition !== transition) return
@@ -82,16 +109,16 @@
       applyTheme(event.matches ? 'dark' : 'light')
     }, { signal })
 
-    document.addEventListener('astro:before-preparation', () => {
-      themeTransition?.skipTransition()
-      delete root.dataset.themeTransition
-    }, { signal })
-
+    // A BFCache or prerendered document keeps its old DOM. Refresh the saved
+    // choice on activation without rebinding controls or animating the restore.
+    window.addEventListener('pageshow', restoreTheme, { signal })
+    document.addEventListener('prerenderingchange', restoreTheme, { signal })
+    window.addEventListener('pagehide', finishTransition, { signal })
+    document.addEventListener('astro:before-preparation', restoreTheme, { signal })
     document.addEventListener('astro:before-swap', () => {
+      finishTransition()
       controller.abort()
-      window.clearTimeout(feedbackTimer)
-      themeTransition?.skipTransition()
-    }, { once: true })
+    }, { once: true, signal })
   })()
 </script>
 

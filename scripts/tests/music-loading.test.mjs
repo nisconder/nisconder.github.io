@@ -91,7 +91,7 @@ const setup = () => {
     constructor(options) {
       this.options = options
       this.list = { index: 0 }
-      this.audio = { paused: true, duration: Number.NaN, pause() {}, removeAttribute() {}, load() {} }
+      this.audio = { paused: true, duration: Number.NaN, pause() { this.paused = true }, removeAttribute() {}, load() {} }
       this.destroyed = false
       instances.push(this)
       options.container.replaceChildren()
@@ -99,7 +99,7 @@ const setup = () => {
     on() {}
     destroy() { this.destroyed = true }
   }
-  const window = {
+  const window = Object.assign(new EventTarget(), {
     matchMedia: () => ({ matches: true }),
     setTimeout: (callback, delay) => {
       const id = ++timerId
@@ -107,7 +107,7 @@ const setup = () => {
       return id
     },
     clearTimeout: (id) => timers.delete(id),
-  }
+  })
   const context = vm.createContext({
     window, document, HTMLElement: Element, AbortController, DOMException,
     requestAnimationFrame: () => 0,
@@ -146,6 +146,11 @@ const setup = () => {
   return {
     run, getCss, getJs, getMount, getStatus, finishCss, finishJs, leave, retry, makePage,
     head, siteStyle, walineStyle, timers, instances,
+    pageEvent(type, persisted) {
+      const event = new Event(type)
+      Object.defineProperty(event, 'persisted', { value: persisted })
+      window.dispatchEvent(event)
+    },
     fireTimeouts() { [...timers.values()].forEach(({ callback }) => callback()) },
   }
 }
@@ -258,4 +263,32 @@ test('a mounted player is destroyed on leave; reentry reloads CSS but reuses JS'
   env.finishCss()
   await nextTurn()
   assert.equal(env.instances.length, 2)
+})
+
+test('BFCache pauses playback and keeps the same working player on restoration', async () => {
+  const env = setup()
+  env.run()
+  env.finishCss()
+  env.finishJs()
+  await nextTurn()
+  const player = env.instances[0]
+  player.audio.paused = false
+  env.pageEvent('pagehide', true)
+  assert.equal(player.audio.paused, true)
+  assert.equal(player.destroyed, false)
+  env.pageEvent('pageshow', true)
+  assert.equal(env.instances.length, 1)
+  assert.equal(player.destroyed, false)
+  assert.equal(player.audio.paused, true, 'restoration never autoplays')
+})
+
+test('native navigation releases a player when the document is not retained', async () => {
+  const env = setup()
+  env.run()
+  env.finishCss()
+  env.finishJs()
+  await nextTurn()
+  env.pageEvent('pagehide', false)
+  assert.equal(env.instances[0].destroyed, true)
+  assert.equal(env.timers.size, 0)
 })

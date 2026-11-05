@@ -50,7 +50,7 @@ test('built homepage has separate complete article entries, not a nested recomme
   const links = []
   for (const [, , content] of articles) {
     assert.ok(!content.includes('<article'), 'one article must not contain another')
-    const title = content.match(/<h2\b[^>]*>\s*<a href="([^"]+)"[^>]*>([^<]+)<\/a>/)
+    const title = content.match(/<h2\b[^>]*>\s*<a\b[^>]*\bhref="([^"]+)"[^>]*>([^<]+)<\/a>/)
     assert.ok(title, 'each card has a complete linked h2')
     assert.ok(content.includes('<time '), 'each card has its own publication date')
     assert.match(content, /<p\b[^>]*>[^<]+<\/p>/, 'each card has its own description')

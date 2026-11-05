@@ -115,11 +115,11 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
           </header>
 
           <div class="article-panel__body">
-            <h2 id={`home-${kind}-title`}><a href={getPostUrl(post)}>{post.data.title}</a></h2>
+            <h2 id={`home-${kind}-title`}><a data-astro-prefetch href={getPostUrl(post)}>{post.data.title}</a></h2>
             <p>{getPostDescription(post)}</p>
 
             <div class="article-panel__actions">
-              <a class="primary-link" href={getPostUrl(post)} aria-label={`阅读：${post.data.title}`}>
+              <a data-astro-prefetch class="primary-link" href={getPostUrl(post)} aria-label={`阅读：${post.data.title}`}>
                 阅读文章 <span aria-hidden="true">→</span>
               </a>
             </div>
@@ -221,6 +221,13 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
 </BaseLayout>
 
 <style>
+  .home-series,
+  .home-secondary,
+  .home-search {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 28rem;
+  }
+
   .home-series {
     margin-block: 2.5rem;
   }

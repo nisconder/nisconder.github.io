@@ -610,8 +610,8 @@ const interestPoints = await getInterestJourney('music')
         player?.audio?.pause()
       }, { signal: lifecycle.signal })
 
-      document.addEventListener('astro:after-swap', () => {
-        if (mount.isConnected) return
+      const dispose = () => {
+        if (disposed) return
         disposed = true
         resourceRevision += 1
         lifecycle.abort()
@@ -629,6 +629,27 @@ const interestPoints = await getInterestJourney('music')
           audio?.load()
           player = undefined
         }
+      }
+
+      document.addEventListener('astro:after-swap', () => {
+        if (!mount.isConnected) dispose()
+      }, { signal: lifecycle.signal })
+
+      window.addEventListener('pagehide', (event) => {
+        player?.audio?.pause()
+        cancelAnimationFrame(trackFrame)
+        statusAnimation?.cancel()
+        mountAnimation?.cancel()
+        // BFCache preserves this document and its controls. Only release the
+        // player when the browser is actually discarding the page.
+        if (!event.persisted) dispose()
+      }, { signal: lifecycle.signal })
+
+      window.addEventListener('pageshow', (event) => {
+        if (!event.persisted || !active() || !player) return
+        syncCurrentTrack()
+        setPlaying(false)
+        setReadyStatus()
       }, { signal: lifecycle.signal })
 
       setListState(false)

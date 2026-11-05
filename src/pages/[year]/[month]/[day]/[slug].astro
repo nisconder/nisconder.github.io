@@ -193,14 +193,14 @@ const interestPoints = await getInterestJourney('article', post)
           {postSeries.length === 0 && (previousPost || nextPost) && (
             <nav class="article-pagination" aria-label="上一篇和下一篇文章">
               {previousPost && (
-                <a class="article-pagination__item article-pagination__item--previous" href={getPostUrl(previousPost)}>
+                <a data-astro-prefetch class="article-pagination__item article-pagination__item--previous" href={getPostUrl(previousPost)}>
                   <span class="article-pagination__direction"><span aria-hidden="true">←</span> 上一篇</span>
                   <strong>{previousPost.data.title}</strong>
                   <small>较早 · {formatPostDate(previousPost.data.date)}</small>
                 </a>
               )}
               {nextPost && (
-                <a class="article-pagination__item article-pagination__item--next" href={getPostUrl(nextPost)}>
+                <a data-astro-prefetch class="article-pagination__item article-pagination__item--next" href={getPostUrl(nextPost)}>
                   <span class="article-pagination__direction">下一篇 <span aria-hidden="true">→</span></span>
                   <strong>{nextPost.data.title}</strong>
                   <small>较新 · {formatPostDate(nextPost.data.date)}</small>
@@ -586,7 +586,9 @@ const interestPoints = await getInterestJourney('article', post)
     let bodyStart = 0
     let bodyEnd = 1
     let headingPositions = []
-    let queued = false
+    let measurementPending = true
+    let layoutReady = false
+    let viewportWidth = 0
     let lastPercent = -1
     let lastHeadingId = ''
 
@@ -615,9 +617,29 @@ const interestPoints = await getInterestJourney('article', post)
     }
 
     const update = () => {
-      queued = false
+      updateFrame = 0
       if (signal.aborted || !root.isConnected) return
-      const readingLine = window.scrollY + window.innerHeight * 0.32
+      const scrollY = window.scrollY
+      const viewportHeight = window.innerHeight
+      const nextWidth = window.innerWidth
+      if (nextWidth !== viewportWidth) {
+        viewportWidth = nextWidth
+        measurementPending = true
+      }
+
+      // Read all geometry before updating progress or TOC attributes. Resize
+      // and disclosure events share this single frame.
+      if (measurementPending) {
+        measurementPending = false
+        bodyStart = body.getBoundingClientRect().top + scrollY
+        bodyEnd = bodyStart + body.scrollHeight
+        headingPositions = headings.map((element) => ({
+          element,
+          top: element.getBoundingClientRect().top + scrollY,
+        }))
+      }
+
+      const readingLine = scrollY + viewportHeight * 0.32
       const ratio = (readingLine - bodyStart) / Math.max(bodyEnd - bodyStart, 1)
       setProgress(Math.round(Math.min(1, Math.max(0, ratio)) * 100))
 
@@ -630,32 +652,37 @@ const interestPoints = await getInterestJourney('article', post)
     }
 
     const queueUpdate = () => {
-      if (queued || signal.aborted) return
-      queued = true
+      if (updateFrame || signal.aborted || !layoutReady) return
       updateFrame = window.requestAnimationFrame(update)
     }
 
-    const measure = () => {
+    const queueMeasurement = () => {
       if (signal.aborted || !root.isConnected) return
-      const rect = body.getBoundingClientRect()
-      bodyStart = rect.top + window.scrollY
-      bodyEnd = bodyStart + body.scrollHeight
-      headingPositions = headings.map((element) => ({
-        element,
-        top: element.getBoundingClientRect().top + window.scrollY,
-      }))
+      measurementPending = true
       queueUpdate()
     }
 
     window.addEventListener('scroll', queueUpdate, { passive: true, signal })
-    window.addEventListener('resize', measure, { passive: true, signal })
-    document.addEventListener('astro:page-load', measure, { signal })
+    // Width is checked in the read phase; height-only changes need no remeasure.
+    window.addEventListener('resize', queueUpdate, { passive: true, signal })
+    // Details before the prose move its start without resizing the prose itself.
+    root.addEventListener('toggle', queueMeasurement, { capture: true, signal })
     if ('ResizeObserver' in window) {
-      resizeObserver = new ResizeObserver(measure)
+      // The first notification follows natural layout. Do not read even the
+      // viewport dimensions while the initial script is binding a dirty page.
+      resizeObserver = new ResizeObserver(() => {
+        layoutReady = true
+        queueMeasurement()
+      })
       resizeObserver.observe(body)
+    } else {
+      // Without ResizeObserver, leave one frame for layout/paint before reads.
+      updateFrame = window.requestAnimationFrame(() => {
+        updateFrame = 0
+        layoutReady = true
+        queueMeasurement()
+      })
     }
-    document.fonts?.ready.then(measure)
-    measure()
 
     if (mobileToc instanceof HTMLDetailsElement) {
       mobileToc.addEventListener('click', (event) => {

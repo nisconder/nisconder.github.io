@@ -12,14 +12,14 @@ const firstPost = series.posts[0]
 
 <BaseLayout title={series.data.title} description={series.data.description} canonical={series.href}>
   <div class="series-detail">
-    <nav class="series-detail__breadcrumb" aria-label="当前位置"><a href="/series/">全部合集</a><span aria-hidden="true">/</span><span>合集目录</span></nav>
+    <nav class="series-detail__breadcrumb" aria-label="当前位置"><a data-astro-prefetch href="/series/">全部合集</a><span aria-hidden="true">/</span><span>合集目录</span></nav>
     <header class="series-detail__cover">
       <div class="series-detail__binding" aria-hidden="true"><span></span><span></span></div>
       <div>
         <p class="eyebrow">系列笔记 · {series.posts.length} 篇</p>
         <h1>{series.data.title}</h1>
         <p class="series-detail__description">{series.data.description}</p>
-        {firstPost && <a class="series-detail__start" href={getPostUrl(firstPost)}>从第一篇开始 <span aria-hidden="true">→</span></a>}
+        {firstPost && <a data-astro-prefetch class="series-detail__start" href={getPostUrl(firstPost)}>从第一篇开始 <span aria-hidden="true">→</span></a>}
       </div>
     </header>
     <section aria-labelledby="series-chapters-title">
@@ -28,14 +28,14 @@ const firstPost = series.posts[0]
         {series.posts.map((post,index) => <li>
           <span class="series-chapters__number" aria-hidden="true">{String(index + 1).padStart(2,'0')}</span>
           <div>
-            <h3><a href={getPostUrl(post)}>{post.data.title}<span aria-hidden="true">↗</span></a></h3>
+            <h3><a data-astro-prefetch href={getPostUrl(post)}>{post.data.title}<span aria-hidden="true">↗</span></a></h3>
             <p>{getPostDescription(post)}</p>
             <small>约 {getPostReadingMinutes(post)} 分钟</small>
           </div>
         </li>)}
       </ol>
     </section>
-    <a class="series-detail__back" href="/series/">← 返回全部合集</a>
+    <a data-astro-prefetch class="series-detail__back" href="/series/">← 返回全部合集</a>
   </div>
 </BaseLayout>
 

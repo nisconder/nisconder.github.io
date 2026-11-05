@@ -49,7 +49,7 @@ const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(
   </div>
 
   <div class="post-row__body">
-    <h3 class="post-row__title"><a href={href}>{title}</a></h3>
+    <h3 class="post-row__title"><a data-astro-prefetch href={href}>{title}</a></h3>
     {summary && <p class="post-row__summary">{summary}</p>}
 
     <div class="post-row__footer">
@@ -68,7 +68,7 @@ const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(
           </nav>
         )
       }
-      <a class="post-row__read" href={href} aria-label={`阅读《${title}》`}>
+      <a data-astro-prefetch class="post-row__read" href={href} aria-label={`阅读《${title}》`}>
         阅读全文 <span aria-hidden="true">→</span>
       </a>
     </div>

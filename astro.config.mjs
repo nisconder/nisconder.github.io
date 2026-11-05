@@ -35,9 +35,10 @@ export default defineConfig({
   output: 'static',
   publicDir: './static',
   trailingSlash: 'ignore',
-  prefetch: { prefetchAll: false, defaultStrategy: 'hover' },
+  prefetch: false,
   build: {
     format: 'directory',
+    inlineStylesheets: 'always',
   },
   redirects: {
     '/archives': '/articles/',
@@ -49,11 +50,11 @@ export default defineConfig({
   },
   vite: {
     plugins: [adminDirectoryIndex],
-    // Keep common CSS cacheable, but inline small route styles so navigation
-    // does not need a second network round trip before the new page can swap.
+    // Small standalone interactions (including search) arrive with the HTML.
+    // Images and shared/dynamic modules keep their normal cacheable URLs.
     build: {
       cssCodeSplit: true,
-      assetsInlineLimit: (file, content) => file.endsWith('.css') ? content.length < 16_384 : undefined,
+      assetsInlineLimit: (file, content) => file.endsWith('.js') ? content.length < 16_384 : undefined,
     },
   },
   markdown: {

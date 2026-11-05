@@ -9,17 +9,17 @@ const next = series.posts[index + 1]
 ---
 
 {pagination ? <nav class="series-pagination" aria-label={`${series.data.title}：合集上一篇与下一篇`}>
-  <p><a href={series.href}>{series.data.title}</a><span>第 {index + 1} / {series.posts.length} 篇</span></p>
+  <p><a data-astro-prefetch href={series.href}>{series.data.title}</a><span>第 {index + 1} / {series.posts.length} 篇</span></p>
   <div class="series-pagination__links">
-    {previous ? <a href={getPostUrl(previous)} rel="prev"><small>← 合集上一篇</small><strong>{previous.data.title}</strong></a> : <div class="series-pagination__edge"><small>这是合集第一篇</small><a href={series.href}>查看完整目录</a></div>}
-    {next ? <a href={getPostUrl(next)} rel="next"><small>合集下一篇 →</small><strong>{next.data.title}</strong></a> : <div class="series-pagination__edge"><small>已到合集最后一篇</small><a href={series.href}>返回合集目录 →</a></div>}
+    {previous ? <a data-astro-prefetch href={getPostUrl(previous)} rel="prev"><small>← 合集上一篇</small><strong>{previous.data.title}</strong></a> : <div class="series-pagination__edge"><small>这是合集第一篇</small><a data-astro-prefetch href={series.href}>查看完整目录</a></div>}
+    {next ? <a data-astro-prefetch href={getPostUrl(next)} rel="next"><small>合集下一篇 →</small><strong>{next.data.title}</strong></a> : <div class="series-pagination__edge"><small>已到合集最后一篇</small><a data-astro-prefetch href={series.href}>返回合集目录 →</a></div>}
   </div>
 </nav> : <aside class="series-navigation" aria-label={`所属合集：${series.data.title}`} data-reader-exclude>
-  <div class="series-navigation__heading"><span>收录于合集</span><a href={series.href}>{series.data.title}</a></div>
+  <div class="series-navigation__heading"><span>收录于合集</span><a data-astro-prefetch href={series.href}>{series.data.title}</a></div>
   <details>
     <summary><span>第 {index + 1} / {series.posts.length} 篇</span><span class="series-navigation__expand">展开合集目录</span><span class="series-navigation__collapse">收起合集目录</span></summary>
     <ol>
-      {series.posts.map((post, position) => <li><span aria-hidden="true">{String(position + 1).padStart(2,'0')}</span><a href={getPostUrl(post)} aria-current={post.id === postId ? 'page' : undefined}>{post.data.title}</a></li>)}
+      {series.posts.map((post, position) => <li><span aria-hidden="true">{String(position + 1).padStart(2,'0')}</span><a data-astro-prefetch href={getPostUrl(post)} aria-current={post.id === postId ? 'page' : undefined}>{post.data.title}</a></li>)}
     </ol>
   </details>
 </aside>}
