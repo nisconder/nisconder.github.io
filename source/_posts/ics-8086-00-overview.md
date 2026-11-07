@@ -42,6 +42,26 @@ tags:
 
 第一次阅读可按顺序完成；专项复习时，从薄弱题型进入，再回看相关前置篇目。每篇自测应先独立写出过程，再对照答案。做程序跟踪题时统一记录“位宽、地址、操作数、结果、相关标志”，比只记最终寄存器值更容易定位错误。
 
+## 配套实验
+
+[8086 Step Lab](https://nisconder.github.io/8086-step-lab/) 按本系列篇号组织演示。下列链接直接打开对应章节，可先预测结果，再用单步、回退和内存视图核对。
+
+| 篇次 | 演示重点 |
+| --- | --- |
+| [01](https://nisconder.github.io/8086-step-lab/?chapter=01) | 读数、运算与写回的逐条跟踪 |
+| [02](https://nisconder.github.io/8086-step-lab/?chapter=02) | 字寄存器与小端字节排列 |
+| [03](https://nisconder.github.io/8086-step-lab/?chapter=03) | 16 位补码解释、进位与溢出 |
+| [05](https://nisconder.github.io/8086-step-lab/?chapter=05) | 段值、有效地址与物理地址 |
+| [06](https://nisconder.github.io/8086-step-lab/?chapter=06) | 操作数来源、默认段与数据传送 |
+| [07](https://nisconder.github.io/8086-step-lab/?chapter=07) | 算术指令与状态标志 |
+| [08](https://nisconder.github.io/8086-step-lab/?chapter=08) | 近调用、栈与返回 |
+| [09](https://nisconder.github.io/8086-step-lab/?chapter=09) | 数组求和与循环跟踪 |
+| [10](https://nisconder.github.io/8086-step-lab/?chapter=10) | 求和片段的检查点与内存结果 |
+
+实验室采用 16 位指令级教学模型。第 01 篇的模型机思路改用 8086 子集表达，第 03 篇的边界运算使用 16 位宽度；CALL/RET 的返回位置采用指令索引。第 09 篇演示中的 DEC/JNZ 会修改部分标志，不能视为正文 LOOP 的完整替代。
+
+第 04 篇浮点数、第 11—16 篇 IA-32 与编译链接内容在实验室中保留文章阅读入口；现有演示不覆盖这些执行环境。完整 MASM 文件、DOS 服务和 DEBUG 命令仍需在文章指定的工具链中验证。
+
 ## 两套实验环境的边界
 
 | 项目 | 8086 汇编部分 | ICS 机器级分析部分 |
