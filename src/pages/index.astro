@@ -19,6 +19,7 @@ import {
 } from '../lib/posts'
 
 const [publishedPosts, series] = await Promise.all([getPublishedPosts(), getPublishedSeries()])
+// Collection membership only changes the cards shown, not the site's article totals.
 const posts = getStandalonePosts(publishedPosts, series)
 const playlist = await getPlaylistTracks()
 const playableTracks = playlist.filter(isPlayableTrack)
@@ -39,7 +40,7 @@ const homeArticles = [
 ]
 
 const topicCounts = new Map<string, number>()
-for (const post of posts) {
+for (const post of publishedPosts) {
   for (const tag of getPostTags(post)) {
     topicCounts.set(tag, (topicCounts.get(tag) ?? 0) + 1)
   }
@@ -84,7 +85,7 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
       <p class="identity-panel__bio">技术文章、个人项目、阅读与音乐记录。</p>
 
       <dl class="identity-panel__stats" aria-label="站点内容统计">
-        <div><dt>文章</dt><dd>{posts.length.toString().padStart(2, '0')}</dd></div>
+        <div><dt>文章</dt><dd>{publishedPosts.length.toString().padStart(2, '0')}</dd></div>
         <div><dt>项目</dt><dd>{softwareProjects.length.toString().padStart(2, '0')}</dd></div>
         <div><dt>歌曲</dt><dd>{playlist.length.toString().padStart(2, '0')}</dd></div>
       </dl>
@@ -133,9 +134,9 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
         </section>
       )
     }
-    {posts.length > 0 && (
+    {publishedPosts.length > 0 && (
       <nav class="home-articles__archive" aria-label="全部文章">
-        <a class="quiet-link" href="/articles/">全部 {posts.length} 篇文章 →</a>
+        <a class="quiet-link" href="/articles/">全部 {publishedPosts.length} 篇文章 →</a>
       </nav>
     )}
   </section>

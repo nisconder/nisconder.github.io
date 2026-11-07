@@ -22,14 +22,18 @@ const categoryCounts = new Map<string, number>()
 const topicCounts = new Map<string, number>()
 const postsByYear = new Map<string, typeof posts>()
 
-for (const post of posts) {
+// Category and topic links search all published articles, including collection chapters.
+for (const post of publishedPosts) {
   const category = getPostCategory(post)
   if (category) categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1)
 
   for (const tag of getPostTags(post)) {
     topicCounts.set(tag, (topicCounts.get(tag) ?? 0) + 1)
   }
+}
 
+// The chronological list still displays only standalone articles.
+for (const post of posts) {
   const { year } = getPostCalendarParts(post.data.date)
   const yearPosts = postsByYear.get(year)
   if (yearPosts) yearPosts.push(post)
@@ -103,7 +107,7 @@ const interestPoints = await getInterestJourney('articles')
         <nav id="categories" class="category-index" aria-label="按分类浏览文章">
           <span>按分类浏览</span>
           <a class="is-current" href="/articles/" aria-current="page">
-            全部 <small>{posts.length}</small>
+            全部 <small>{publishedPosts.length}</small>
           </a>
           {categories.map(([category, count]) => (
             <a href={categoryHref(category)}>
