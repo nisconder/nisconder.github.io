@@ -209,6 +209,71 @@ test('the blog commit query skips only this automation, including across pages',
   assert.equal(await fetchLatestCodeCommit({ fetchImpl: async () => response([codeCommit(SYNC_COMMIT_MESSAGE)]) }), date)
 })
 
+test('accepts GitHub numeric commit pagination after 100 commits while requesting the named repository', async () => {
+  const automated = codeCommit(SYNC_COMMIT_MESSAGE, { author: { login: 'github-actions[bot]' } })
+  const link = '<https://api.github.com/repositories/1096817490/commits?per_page=100&page=2>; rel="next"'
+  for (const firstPageHasCode of [true, false]) {
+    const requests = []
+    const result = await fetchLatestCodeCommit({ token: 'test-token', fetchImpl: async (url, options) => {
+      requests.push(url)
+      assert.equal(url.origin, 'https://api.github.com')
+      assert.equal(url.pathname, '/repos/nisconder/nisconder.github.io/commits')
+      assert.equal(url.searchParams.get('page'), String(requests.length))
+      assert.equal(options.headers.Authorization, 'Bearer test-token')
+      if (requests.length === 2) return response([codeCommit()])
+      const entries = Array.from({ length: 100 }, () => automated)
+      if (firstPageHasCode) entries[0] = codeCommit()
+      return response(entries, { link })
+    } })
+    assert.equal(result, date)
+    assert.equal(requests.length, firstPageHasCode ? 1 : 2)
+  }
+})
+
+test('canonical commit aliases do not permit unrelated hosts, paths, IDs or page numbers', async () => {
+  const invalidLinks = [
+    'https://example.org/repositories/1096817490/commits?page=2',
+    'http://api.github.com/repositories/1096817490/commits?page=2',
+    'https://api.github.com/repositories/1096817490/issues?page=2',
+    'https://api.github.com/repos/another/repository/commits?page=2',
+    'https://api.github.com/repositories/0/commits?page=2',
+    'https://api.github.com/repositories/-1/commits?page=2',
+    'https://api.github.com/repositories/not-an-id/commits?page=2',
+    'https://api.github.com/repositories/1096817490/commits?page=3',
+    'https://api.github.com/repositories/1096817490/commits',
+    'not-a-url',
+  ]
+  for (const next of invalidLinks) {
+    let calls = 0
+    await assert.rejects(fetchLatestCodeCommit({ fetchImpl: async () => {
+      calls += 1
+      return response([codeCommit()], { link: `<${next}>; rel="next"` })
+    } }), /Invalid GitHub pagination link/)
+    assert.equal(calls, 1, next)
+  }
+  await assert.rejects(fetchRepositories({ fetchImpl: async () => response([repo('a')], {
+    link: '<https://api.github.com/repositories/1096817490/commits?page=2>; rel="next"',
+  }) }), /Invalid GitHub pagination link/, 'the numeric alias is limited to commit queries')
+})
+
+test('pagination failures preserve the snapshot and report safe request context', async (t) => {
+  const { outputPath, directory } = await temporarySnapshot(t, snapshot([{ name: 'reliable' }]))
+  const before = await readFile(outputPath, 'utf8')
+  await assert.rejects(syncGitHubProjects({ outputPath, token: 'private-test-token', fetchImpl: async (url) =>
+    url.pathname.endsWith('/commits') ? response([codeCommit()], {
+      link: '<https://example.org/secret?token=private-test-token>; rel="next"',
+      'x-github-request-id': 'ABCD:1234:5678',
+    }) : response([repo('nisconder.github.io')]),
+  }), (error) => {
+    assert.match(error.message, /Invalid GitHub pagination link/)
+    assert.match(error.message, /\/repos\/nisconder\/nisconder\.github\.io\/commits page=1, HTTP 200, GitHubRequestID=ABCD:1234:5678/)
+    assert.doesNotMatch(error.message, /private-test-token|example\.org/)
+    return true
+  })
+  assert.equal(await readFile(outputPath, 'utf8'), before)
+  assert.deepEqual(await readdir(directory), ['snapshot.json'])
+})
+
 test('HTTP failures on later pages preserve the previous snapshot byte-for-byte', async (t) => {
   const { outputPath } = await temporarySnapshot(t, snapshot([{ name: 'reliable' }]))
   const before = await readFile(outputPath, 'utf8')

@@ -623,6 +623,8 @@ a:hover {
   overflow-x: auto;
   border: 1px solid var(--color-line);
   border-radius: 0.25rem;
+  background: #24292e;
+  color: #e1e4e8;
   font-family: var(--font-utility);
   font-size: 0.875rem;
   line-height: 1.65;
@@ -864,15 +866,6 @@ a:hover {
   color: var(--color-on-reading-panel) !important;
 }
 
-html[data-theme='dark'] .astro-code,
-html[data-theme='dark'] .astro-code span {
-  color: var(--shiki-dark) !important;
-  background-color: var(--shiki-dark-bg) !important;
-  font-style: var(--shiki-dark-font-style) !important;
-  font-weight: var(--shiki-dark-font-weight) !important;
-  text-decoration: var(--shiki-dark-text-decoration) !important;
-}
-
 [data-waline-root] a {
   color: var(--color-primary) !important;
 }
@@ -1029,6 +1022,19 @@ html[data-theme='dark'] .astro-code span {
   .prose pre,
   .prose :not(pre) > code {
     border-width: 2px;
+  }
+}
+
+@media print {
+  .prose pre,
+  .prose pre span {
+    background: #fff !important;
+    color: #24292e !important;
+  }
+
+  .prose pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
 }
 

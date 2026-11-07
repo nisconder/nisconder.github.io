@@ -25,15 +25,25 @@ async function requestPage(path, page, { token, fetchImpl, cacheBust }) {
     signal: AbortSignal.timeout(30_000),
     redirect: 'error',
   })
-  if (!response.ok) throw new Error(`GitHub API HTTP ${response.status}; snapshot retained.`)
-  const items = await response.json()
-  if (!Array.isArray(items) || items.length > 100) throw new Error('Invalid GitHub API page; snapshot retained.')
+  const rawRequestId = response.headers.get('x-github-request-id')
+  const requestId = rawRequestId && /^[\w:-]{1,120}$/.test(rawRequestId) ? rawRequestId : 'unavailable'
+  const failure = (reason) => new Error(`${reason}; ${url.pathname} page=${page}, HTTP ${response.status}, GitHubRequestID=${requestId}; snapshot retained.`)
+  if (!response.ok) throw failure('GitHub API request failed')
+  let items
+  try { items = await response.json() } catch { throw failure('Invalid GitHub API JSON') }
+  if (!Array.isArray(items) || items.length > 100) throw failure('Invalid GitHub API page')
   const next = response.headers.get('link')?.match(/<([^>]+)>;\s*rel="next"/)?.[1]
   if (next) {
-    const nextUrl = new URL(next)
-    if (nextUrl.origin !== API_ORIGIN || nextUrl.pathname !== url.pathname
+    let nextUrl
+    try { nextUrl = new URL(next) } catch { throw failure('Invalid GitHub pagination link') }
+    // GitHub canonicalizes commit pagination links to the numeric repository ID.
+    // This is only a next-page hint: callers still construct the named endpoint,
+    // so a Link header never changes the repository or token destination.
+    const canonicalCommitPath = url.pathname === `/repos/${GITHUB_OWNER}/${BLOG_REPOSITORY}/commits`
+      && /^\/repositories\/[1-9]\d*\/commits$/.test(nextUrl.pathname)
+    if (nextUrl.origin !== API_ORIGIN || (nextUrl.pathname !== url.pathname && !canonicalCommitPath)
       || Number(nextUrl.searchParams.get('page')) !== page + 1 || items.length === 0) {
-      throw new Error('Invalid GitHub pagination link; snapshot retained.')
+      throw failure('Invalid GitHub pagination link')
     }
   }
   return { items, hasNext: Boolean(next) || items.length === 100 }
