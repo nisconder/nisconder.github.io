@@ -248,6 +248,8 @@ Cloudflare Pages 连接 `nisconder/nisconder.github.io`，生产分支为 `main`
 
 RSS 正文从 Markdown 渲染结果生成，不包含网页目录或阅读进度控件。`src/lib/feed-identity.ts` 保留迁移前两篇文章的原 GUID，仅文章链接切到新域名；新文章使用不依赖域名的标识。请勿为了清除旧域名文字而改写历史 GUID。
 
+订阅地址为 `https://nisconder.pages.dev/rss.xml`，包含所有已发布文章的全文（包括合集章节），排除草稿，按发布日期倒序排列；合集排序和文章置顶不会改变 RSS 顺序。页面提供完整的订阅自动发现地址，Pages 为 RSS 返回 `application/rss+xml` 并要求缓存重新验证。正文链接与图片地址以文章地址为基准补全，查询参数中的 HTML 转义只处理一次。
+
 `netlify.toml` 暂时保留，旧 Netlify 入口与先前创建的 Pages 项目未自动删除或停用。确认新站后，应在各平台关闭不再使用项目的自动部署，避免重复构建。旧 RSS 地址和旧站跳转仍需在原托管平台可部署时另行处理。
 
 ### 导航加载

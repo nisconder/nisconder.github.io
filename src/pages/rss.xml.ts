@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro'
 import { getFeedIdentity } from '../lib/feed-identity'
+import { absolutizeFeedHtml } from '../lib/feed-html.mjs'
 import {
   getPostCategory,
   getPostDescription,
@@ -20,15 +21,6 @@ const escapeXml = (value: string) =>
     .replace(/'/g, '&apos;')
 
 const escapeCdata = (value: string) => value.replace(/]]>/g, ']]]]><![CDATA[>')
-
-const absolutizeFeedHtml = (html: string, postUrl: string) =>
-  html.replace(
-    /\b(href|src)=(['"])(\/(?!\/)[^'"]*|\.{1,2}\/[^'"]*|#[^'"]*)\2/gi,
-    (_match, attribute: string, quote: string, value: string) => {
-      const absoluteUrl = new URL(value, postUrl).href.replace(/&/g, '&amp;')
-      return `${attribute}=${quote}${absoluteUrl}${quote}`
-    },
-  )
 
 export const GET: APIRoute = async ({ site, url }) => {
   const posts = await getPublishedPosts()

@@ -4,6 +4,10 @@
 /search-index.json
   Cache-Control: public, max-age=300, stale-while-revalidate=86400
 
+/rss.xml
+  Content-Type: application/rss+xml; charset=utf-8
+  Cache-Control: public, max-age=0, must-revalidate
+
 /search-data/*
   Cache-Control: public, max-age=31536000, immutable
 
