@@ -20,6 +20,9 @@ tags:
 
 这批材料采用 DOSBox、DOS DEBUG、MASM 与 LINK，练习的是 8086 实模式 DOS 程序。DOSBox 运行在 Windows 上，并不使其中的 `INT 21H` 程序成为 Win32 汇编程序。
 
+> **配套实验**：[打开第 10 篇演示](https://nisconder.github.io/8086-step-lab/?chapter=10)
+> 复现 DS:0200 处的三条求和读写，核对 AX=0148H 与内存中的 48 01；不执行 DOS DEBUG 命令。
+
 ## 把四次实验串成一条路线
 
 | 实验 | 要练熟的能力 | 复习时应能回答的问题 |
