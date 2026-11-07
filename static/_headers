@@ -8,6 +8,10 @@
   Content-Type: application/rss+xml; charset=utf-8
   Cache-Control: public, max-age=0, must-revalidate
 
+/series/:slug/rss.xml
+  Content-Type: application/rss+xml; charset=utf-8
+  Cache-Control: public, max-age=0, must-revalidate
+
 /search-data/*
   Cache-Control: public, max-age=31536000, immutable
 

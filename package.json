@@ -8,6 +8,7 @@
     "dev": "astro dev",
     "prebuild": "node scripts/prepare-static.mjs",
     "build": "astro build",
+    "build:series": "node scripts/build-series.mjs",
     "preview": "astro preview",
     "sync:projects": "node scripts/sync-github-projects.mjs",
     "netlify": "npm run build"

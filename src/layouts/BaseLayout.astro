@@ -29,6 +29,7 @@ interface Props {
   interestPoints?: InterestPoint[]
   interestTitle?: string
   interestDescription?: string
+  rssFeed?: { title: string; href: string }
 }
 
 const {
@@ -51,6 +52,7 @@ const {
   interestPoints = [],
   interestTitle,
   interestDescription,
+  rssFeed = { title: 'Nisconder RSS', href: '/rss.xml' },
 } = Astro.props
 
 const authorName = 'Nisconder'
@@ -118,7 +120,7 @@ const articleStructuredDataJson = articleStructuredData
     <link rel="shortcut icon" href={favicon.src} />
     <link rel="apple-touch-icon" sizes="100x100" href="/img/nisconder-avatar.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <link rel="alternate" type="application/rss+xml" title="Nisconder RSS" href={new URL('/rss.xml', baseUrl)} />
+    <link rel="alternate" type="application/rss+xml" title={rssFeed.title} href={new URL(rssFeed.href, baseUrl)} />
 
     <meta property="og:type" content={ogType} />
     <meta property="og:locale" content="zh_CN" />

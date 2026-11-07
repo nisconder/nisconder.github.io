@@ -5,6 +5,7 @@ db.json
 node_modules/
 public/
 dist/
+dist-series/
 .astro/
 static/admin/
 static/img/
