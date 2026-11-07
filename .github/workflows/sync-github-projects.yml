@@ -2,16 +2,13 @@ name: Sync GitHub projects
 
 on:
   schedule:
-    - cron: '17 * * * *'
+    - cron: '17,47 * * * *'
   workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - '.github/workflows/sync-github-projects.yml'
-      - 'scripts/sync-github-projects.mjs'
-      - 'scripts/tests/software-sync.test.mjs'
-      - 'src/data/software-sync.mjs'
-      - 'src/data/software.ts'
+    # Refresh on every blog change, without recursively reacting to our snapshot commit.
+    paths-ignore:
+      - 'src/data/github-repositories.json'
 
 permissions:
   contents: write

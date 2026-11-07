@@ -1,8 +1,26 @@
 {
   "version": 1,
   "owner": "nisconder",
-  "syncedAt": "2026-11-05T18:46:50.912Z",
+  "syncedAt": "2026-11-07T15:31:41.601Z",
   "repositories": [
+    {
+      "id": 1449359414,
+      "name": "8086-step-lab",
+      "description": "Offline 16-bit assembly teaching lab: step, undo, registers, flags, memory and stack.",
+      "sourceUrl": "https://github.com/nisconder/8086-step-lab",
+      "projectUrl": "https://nisconder.github.io/8086-step-lab/",
+      "language": "JavaScript",
+      "stars": 2,
+      "createdAt": "2026-11-07T12:59:02Z",
+      "pushedAt": "2026-11-07T13:27:10Z",
+      "topics": [
+        "8086",
+        "assembly",
+        "education",
+        "offline",
+        "visualization"
+      ]
+    },
     {
       "id": 1143273485,
       "name": "ai-draw-guess",
@@ -12,7 +30,7 @@
       "language": "TypeScript",
       "stars": 4,
       "createdAt": "2026-01-27T11:29:03Z",
-      "pushedAt": "2026-07-02T05:13:51Z",
+      "pushedAt": "2026-11-07T13:12:19Z",
       "topics": []
     },
     {
@@ -48,7 +66,7 @@
       "language": "JavaScript",
       "stars": 3,
       "createdAt": "2025-11-15T02:08:55Z",
-      "pushedAt": "2026-11-05T11:38:15Z",
+      "pushedAt": "2026-11-07T14:29:42Z",
       "topics": []
     },
     {
@@ -60,7 +78,7 @@
       "language": "TypeScript",
       "stars": 9,
       "createdAt": "2026-07-29T10:29:10Z",
-      "pushedAt": "2026-11-05T07:55:08Z",
+      "pushedAt": "2026-11-07T14:44:02Z",
       "topics": [
         "ai-agents",
         "cli",
@@ -123,7 +141,7 @@
       "language": "JavaScript",
       "stars": 3,
       "createdAt": "2026-10-30T14:28:35Z",
-      "pushedAt": "2026-10-30T14:28:43Z",
+      "pushedAt": "2026-11-07T15:27:09Z",
       "topics": [
         "developer-tools",
         "diff",
@@ -143,7 +161,7 @@
       "language": "JavaScript",
       "stars": 4,
       "createdAt": "2026-08-29T11:39:28Z",
-      "pushedAt": "2026-10-23T13:47:56Z",
+      "pushedAt": "2026-11-07T13:11:09Z",
       "topics": [
         "bidi",
         "browser-tool",
@@ -166,7 +184,7 @@
       "language": "JavaScript",
       "stars": 4,
       "createdAt": "2026-10-23T11:47:09Z",
-      "pushedAt": "2026-10-31T08:39:39Z",
+      "pushedAt": "2026-11-07T13:11:30Z",
       "topics": [
         "cli",
         "diagnostics",

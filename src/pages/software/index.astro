@@ -43,12 +43,12 @@ const interestPoints = await getInterestJourney('software')
   <header class="page-intro software-intro">
     <div class="software-intro__copy">
       <p class="eyebrow">PROJECTS / INDEX</p>
-      <h1>原创项目</h1>
+      <h1>项目与小实验</h1>
       <p class="lede">
-        这里只展示由我创建和维护的公开项目。默认按维护优先级排列：重点维护在前，其余按最近更新时间；fork 与归档仓库不进入清单。
+        一些解决日常问题的小工具，也有课程里的尝试和做着玩的作品。能直接打开的先试试看，感兴趣再翻翻源码。
       </p>
       <p class="software-sync-note" data-project-sync={softwareSyncInfo.status}>
-        GitHub 每小时自动同步
+        项目数据定期更新
         {softwareSyncInfo.syncedAt ? (
           <> · 数据更新于 <time datetime={softwareSyncInfo.syncedAt}>{dataUpdated}</time></>
         ) : (
@@ -58,16 +58,16 @@ const interestPoints = await getInterestJourney('software')
     </div>
     <dl class="software-intro__facts" aria-label="项目概况">
       <div>
-        <dt>原创项目</dt>
+        <dt>公开项目</dt>
         <dd>{softwareProjects.length.toString().padStart(2, '0')}</dd>
       </div>
       <div>
         <dt>主要方向</dt>
-        <dd>安全 · 工具 · AI</dd>
+        <dd>工具 · 安全 · 学习</dd>
       </div>
       <div>
-        <dt>清单范围</dt>
-        <dd>非 Fork · 未归档</dd>
+        <dt>从哪里开始</dt>
+        <dd>在线体验 · 源码</dd>
       </div>
     </dl>
   </header>
@@ -76,9 +76,9 @@ const interestPoints = await getInterestJourney('software')
     <div class="section-head section-head--split">
       <div>
         <p class="eyebrow">PROJECT INDEX</p>
-        <h2 id="software-list-title">原创项目</h2>
+        <h2 id="software-list-title">项目清单</h2>
       </div>
-      <p>先看用途与维护状态，再决定要不要点进仓库。</p>
+      <p>从一个具体问题，看看这些代码能做什么。</p>
     </div>
 
     <form
@@ -125,7 +125,7 @@ const interestPoints = await getInterestJourney('software')
       </div>
     </form>
     <p id="software-sort-note" class="software-sort-note">
-      “维护优先”使用手动设置的重点标记；同级项目按最近更新时间排序。
+      重点维护的项目排在前面，其余按最近更新时间排列。
     </p>
 
     <p class="software-empty" data-software-empty hidden>
@@ -355,7 +355,7 @@ const interestPoints = await getInterestJourney('software')
     background: var(--color-card);
   }
 
-  .software-card[hidden] {
+  .software-grid > .software-card[hidden] {
     display: none;
   }
 

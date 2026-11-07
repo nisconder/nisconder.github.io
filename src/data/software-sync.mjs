@@ -2,8 +2,8 @@ export const GITHUB_OWNER = 'nisconder'
 export const BLOG_REPOSITORY = 'nisconder.github.io'
 export const SYNC_COMMIT_MESSAGE = 'chore: sync GitHub project snapshot'
 
-// Blog authentication/comments infrastructure is not part of the project list.
-export const EXCLUDED_REPOSITORIES = new Set(['my-waline', 'netlify-cms-github-oauth-provider'])
+// The GitHub profile and blog infrastructure are not standalone software projects.
+export const EXCLUDED_REPOSITORIES = new Set([GITHUB_OWNER, 'my-waline', 'netlify-cms-github-oauth-provider'])
 export const isProjectRepository = (repository) =>
   repository.private === false && repository.fork === false && repository.archived === false
   && !EXCLUDED_REPOSITORIES.has(repository.name.toLowerCase())
@@ -65,14 +65,18 @@ function safeHomepage(value) {
   } catch { return null }
 }
 
-/** Live metadata wins; existing editorial copy and stable anchors survive. */
+const pendingProjectSummary = '这个项目的介绍还在整理，可以先到仓库里看看。'
+const editorialSummary = project =>
+  (typeof project?.summary === 'string' ? project.summary.trim() : '') || pendingProjectSummary
+
+/** Live facts update independently of the blog's editorial copy and stable anchors. */
 export function mergeSoftwareProjects(snapshot, editorial) {
   if (snapshot.version !== 1 || snapshot.owner !== GITHUB_OWNER || !Array.isArray(snapshot.repositories)) {
     throw new Error('Unsupported GitHub project snapshot')
   }
   if (snapshot.syncedAt === null) {
     return editorial.filter((project) => project.fork !== true && project.archived !== true)
-      .map((project) => ({ ...project, tags: [...project.tags] }))
+      .map((project) => ({ ...project, summary: editorialSummary(project), tags: [...project.tags] }))
   }
   if (!validDate(snapshot.syncedAt)) throw new Error('Invalid GitHub project snapshot timestamp')
   const overrides = new Map(editorial.map((project) => [
@@ -86,11 +90,13 @@ export function mergeSoftwareProjects(snapshot, editorial) {
       slug: `github-${repository.id}`,
       name: repository.name,
       label: repository.name.slice(0, 2).toUpperCase(),
-      summary: repository.description?.trim() || '公开仓库，项目说明见 GitHub。',
       kind: 'tool',
       status: 'experimental',
       ...(repository.projectUrl ? { projectUrl: repository.projectUrl, actionLabel: '访问项目' } : {}),
       ...override,
+      // Repository descriptions remain source material in the snapshot, never
+      // display copy. Empty or partial editorial entries use the same fallback.
+      summary: editorialSummary(override),
       // Missing live repositories are never restored from the editorial list.
       sourceUrl: repository.sourceUrl,
       language: repository.language ?? undefined,

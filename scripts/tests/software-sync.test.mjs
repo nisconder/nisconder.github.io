@@ -63,13 +63,22 @@ test('rejects unexpected pagination hosts rather than forwarding a GitHub token'
   assert.equal(calls, 1)
 })
 
-test('filters forks, archives, private repositories and explicit blog infrastructure', () => {
+test('filters forks, archives, private repositories, the profile and blog infrastructure', () => {
   const repositories = [
     repo('original'), repo('fork', { id: 2, fork: true }), repo('old', { id: 3, archived: true }),
     repo('private', { id: 4, private: true }), repo('my-waline', { id: 5 }),
-    repo('netlify-cms-github-oauth-provider', { id: 6 }),
+    repo('netlify-cms-github-oauth-provider', { id: 6 }), repo('nisconder', { id: 7 }),
   ]
   assert.deepEqual(normalizeRepositories(repositories).map(({ name }) => name), ['original'])
+})
+
+test('new numbered project names and their online homepage are included automatically', () => {
+  const [project] = mergeSoftwareProjects(snapshot(normalizeRepositories([
+    repo('8086-step-lab', { id: 1449359414, homepage: 'https://nisconder.github.io/8086-step-lab/' }),
+  ])), [])
+  assert.equal(project.slug, 'github-1449359414')
+  assert.equal(project.name, '8086-step-lab')
+  assert.equal(project.projectUrl, 'https://nisconder.github.io/8086-step-lab/')
 })
 
 test('rejects malformed/duplicate API data before replacing a reliable snapshot', () => {
@@ -92,7 +101,7 @@ test('normalization is deterministic and ignores profile edits when deriving cod
 })
 
 test('live facts replace stale metrics while editorial copy, stable slug, and featured flag survive', () => {
-  const editorial = [{ slug: 'custom-anchor', name: '中文名称', summary: '中文简介', kind: 'game',
+  const editorial = [{ slug: 'custom-anchor', name: '中文名称', summary: '  中文简介\n', kind: 'game',
     status: 'stable', featured: true, label: 'CN', tags: ['人工标签'], stars: 999, language: 'Old',
     updatedAt: '2020-01-01', sourceUrl: 'https://github.com/nisconder/NewProject', projectUrl: '/special/' }]
   const original = structuredClone(editorial)
@@ -116,14 +125,53 @@ test('new repositories appear automatically and deleted/private repositories lea
   const result = mergeSoftwareProjects(snapshot(normalizeRepositories([repo('new'), repo('gone', { id: 2, private: true })])), editorial)
   assert.equal(result.length, 1)
   assert.equal(result[0].name, 'new')
-  assert.equal(result[0].summary, 'From GitHub')
+  assert.equal(result[0].summary, '这个项目的介绍还在整理，可以先到仓库里看看。')
   assert.deepEqual(mergeSoftwareProjects(snapshot([]), editorial), [])
 })
 
+test('missing and blank editorial descriptions never expose repository copy', () => {
+  const normalized = normalizeRepositories([repo('new', { description: 'Raw repository pitch, not blog copy.' })])
+  const original = structuredClone(normalized)
+  const sourceUrl = 'https://github.com/nisconder/new'
+  const cases = [[], [{ sourceUrl, name: '自定义名称' }],
+    ...[undefined, null, '', ' \n\t '].map(summary => [{ sourceUrl, summary }])]
+  for (const editorial of cases) {
+    const [project] = mergeSoftwareProjects(snapshot(normalized), editorial)
+    assert.equal(project.summary, '这个项目的介绍还在整理，可以先到仓库里看看。')
+    assert.equal(project.sourceUrl, sourceUrl, 'new projects still have their live repository link')
+    assert.equal(project.stars, 12)
+  }
+  assert.equal(normalized[0].description, 'Raw repository pitch, not blog copy.', 'raw descriptions remain available as source material')
+  assert.deepEqual(normalized, original, 'rendering does not rewrite the snapshot')
+})
+
+test('later GitHub description edits cannot replace blog copy or its fallback', () => {
+  const editorial = [{ sourceUrl: 'https://github.com/nisconder/known', summary: '从实际用途写起的博客简介。' }]
+  const before = normalizeRepositories([repo('known'), repo('new', { id: 2 })])
+  const after = normalizeRepositories([
+    repo('known', { description: 'Changed upstream pitch', stargazers_count: 20, language: 'JavaScript' }),
+    repo('new', { id: 2, description: 'Another upstream pitch', stargazers_count: 30 }),
+  ])
+  const initial = mergeSoftwareProjects(snapshot(before), editorial)
+  const updated = mergeSoftwareProjects(snapshot(after), editorial)
+  assert.deepEqual(updated.map(project => project.summary), initial.map(project => project.summary))
+  assert.deepEqual(updated.map(project => project.stars), [20, 30], 'live facts continue to refresh')
+  assert.equal(updated[0].language, 'JavaScript')
+  assert.equal(after[0].description, 'Changed upstream pitch', 'sync still retains source descriptions')
+})
+
 test('pending initial snapshot preserves the existing catalog without presenting invented live data', () => {
-  const editorial = [{ name: 'Existing', tags: ['manual'] }]
+  const editorial = [{ name: 'Existing', summary: '已有项目的博客简介。', tags: ['manual'] }]
   assert.deepEqual(mergeSoftwareProjects(snapshot([], null), editorial), editorial)
   assert.throws(() => mergeSoftwareProjects({ ...snapshot([]), owner: 'other' }, editorial), /Unsupported/)
+})
+
+test('pending initial snapshots also trim editorial copy and handle incomplete introductions', () => {
+  const editorial = [{ name: 'Written', summary: '  简介已整理。\n', tags: [] }, { name: 'Unwritten', tags: [] }]
+  const original = structuredClone(editorial)
+  const result = mergeSoftwareProjects(snapshot([], null), editorial)
+  assert.deepEqual(result.map(project => project.summary), ['简介已整理。', '这个项目的介绍还在整理，可以先到仓库里看看。'])
+  assert.deepEqual(editorial, original)
 })
 
 test('empty repositories use their creation date, and unsafe homepage schemes are ignored', () => {
@@ -131,7 +179,7 @@ test('empty repositories use their creation date, and unsafe homepage schemes ar
   assert.equal(normalized[0].projectUrl, null)
   const [project] = mergeSoftwareProjects(snapshot(normalized), [])
   assert.equal(project.updatedAt, '2026-01-01')
-  assert.equal(project.summary, '公开仓库，项目说明见 GitHub。')
+  assert.equal(project.summary, '这个项目的介绍还在整理，可以先到仓库里看看。')
 })
 
 test('sort keeps featured priority, uses live code dates, and does not mutate the input', () => {

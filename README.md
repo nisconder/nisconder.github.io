@@ -49,7 +49,7 @@
 
 ## 原创项目目录
 
-项目页从 GitHub 自动同步 `nisconder` 的公开仓库，排除 fork、归档仓库和博客基础设施 `my-waline`、`netlify-cms-github-oauth-provider`。新建公开仓库在下次同步成功后自动进入清单；删除、转为私有或归档的仓库会在成功获取全部分页后移出。
+项目页从 GitHub 自动同步 `nisconder` 的公开仓库，排除 fork、归档仓库、个人资料仓库 `nisconder` 和博客基础设施 `my-waline`、`netlify-cms-github-oauth-provider`。新建公开仓库在下次同步成功后自动进入清单；删除、转为私有或归档的仓库会在成功获取全部分页后移出。
 
 以下项目保留已有中文介绍和展示设置：
 
@@ -60,14 +60,20 @@
 - [Git Auto Updater](https://github.com/nisconder/git-auto-updater)
 - [JCLI Toolkit](https://github.com/nisconder/jcli-toolkit)
 - [生存竞速 / ai-draw-guess](https://github.com/nisconder/ai-draw-guess)
+- [Pack Receipt](https://github.com/nisconder/pack-receipt)
+- [Portdoc](https://github.com/nisconder/portdoc)
+- [RoboMaster EP · Team 06](https://github.com/nisconder/team06-robomaster-ep)
+- [8086 Step Lab](https://github.com/nisconder/8086-step-lab)
 
-`src/data/software.ts` 保留名称、中文简介、分类、维护状态、标签、重点项目与外链等编辑覆盖；`src/data/github-repositories.json` 保存 GitHub 快照。stars、主要语言和代码更新时间以快照为准。新仓库默认采用 GitHub 名称、简介和主题标签，先归入“开发工具 / 实验中”，需要更准确的分类或中文说明时再补充编辑覆盖。新仓库锚点使用 GitHub 仓库 ID，已有项目沿用原锚点。
+`src/data/software.ts` 保留名称、中文简介、分类、维护状态、标签、重点项目与外链等编辑覆盖；`src/data/github-repositories.json` 保存 GitHub 快照。stars、主要语言和代码更新时间以快照为准。新仓库默认采用 GitHub 名称和主题标签，先归入“开发工具 / 实验中”。简介只使用去除首尾空白后的手写中文，缺少简介时显示“这个项目的介绍还在整理，可以先到仓库里看看。”，不直接复制 GitHub description；原 description 仍保留在快照中作为编辑资料。新仓库锚点使用 GitHub 仓库 ID，补充文案时也保持已发布的锚点。
+
+项目介绍从具体场景和用途写起，避免照译功能清单或虚构创作经历。“在线体验”只指向已核实可直接使用的网页；npm 包、版本下载与安装说明使用对应按钮文字。当前可直接打开 8086 Step Lab、Paste X-Ray、Pack Receipt 和本站，不填入推测或未部署的 Pages 地址。
 
 代码更新时间使用 GitHub `pushed_at`，空仓库没有推送时间时使用创建时间。博客仓库自身使用最新一条非本同步机器人的提交时间，避免每次写入快照又改变自身更新时间、反复触发构建。排序仍为重点优先，同组按代码更新时间倒序；也可切换到最近更新或名称排序。
 
 ### 自动同步与失败处理
 
-`.github/workflows/sync-github-projects.yml` 每小时第 17 分钟运行，并支持 Actions 页面 **Sync GitHub projects → Run workflow** 手动触发。同步器、工作流或展示覆盖发生变更并推送 `main` 时也会运行，因此首次发布会自动取得认证快照。工作流使用仓库自带的 `GITHUB_TOKEN`，需要 `contents: write` 权限，不需要新增 npm 依赖或把令牌写入文件。
+`.github/workflows/sync-github-projects.yml` 每小时第 17、47 分钟尝试运行，并支持 Actions 页面 **Sync GitHub projects → Run workflow** 手动触发。博客变更推送 `main` 时也会刷新，只有纯快照更新被排除，避免同步提交再次触发自己。GitHub 定时调度可能延迟，因此前台只标注“定期更新”。工作流使用仓库自带的 `GITHUB_TOKEN`，需要 `contents: write` 权限，不需要新增 npm 依赖或把令牌写入文件。
 
 脚本分页获取完整仓库清单并验证数据，所有请求成功后原子替换快照；限流、超时、非预期响应和后续分页失败都会保留原文件并将任务标记为失败。只有真实项目数据变化才更新快照和 `syncedAt`；没有变化时不创建提交。初始 `syncedAt: null` 表示尚未成功同步，此时页面继续显示原有手工目录并标明等待首次同步，不会把旧数字冒充实时数据。成功同步结果为空时，项目清单也为空。
 
