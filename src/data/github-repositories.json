@@ -1,7 +1,7 @@
 {
   "version": 1,
   "owner": "nisconder",
-  "syncedAt": "2026-11-07T19:40:13.214Z",
+  "syncedAt": "2026-11-08T16:23:05.888Z",
   "repositories": [
     {
       "id": 1449359414,
@@ -10,7 +10,7 @@
       "sourceUrl": "https://github.com/nisconder/8086-step-lab",
       "projectUrl": "https://nisconder.github.io/8086-step-lab/",
       "language": "JavaScript",
-      "stars": 2,
+      "stars": 1,
       "createdAt": "2026-11-07T12:59:02Z",
       "pushedAt": "2026-11-07T15:55:01Z",
       "topics": [
