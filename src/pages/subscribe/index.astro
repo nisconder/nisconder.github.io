@@ -7,11 +7,11 @@ const rssUrl = 'https://nisconder.pages.dev/rss.xml'
 const gkdUrl = 'https://nisconder.pages.dev/gkd/subscription.json5'
 ---
 
-<BaseLayout title="订阅" description="订阅 Nisconder 的文章 RSS，或获取 GKD 规则订阅地址。">
+<BaseLayout title="RSS 与 GKD 订阅" description="订阅 Nisconder 的文章 RSS，或获取 GKD 规则订阅地址。">
   <div class="subscribe-page">
     <header class="page-intro subscribe-intro">
       <p class="eyebrow">RSS / GKD</p>
-      <h1>订阅</h1>
+      <h1>RSS 与 GKD 订阅</h1>
       <p class="lede">订阅文章更新，或获取 GKD 规则。</p>
     </header>
 
@@ -35,7 +35,7 @@ const gkdUrl = 'https://nisconder.pages.dev/gkd/subscription.json5'
 
     <section class="subscription-row subscription-row--gkd" aria-labelledby="gkd-title">
       <div class="subscription-object">
-        <p class="eyebrow">界面规则 <span class="subscription-version">v{subscription.version}</span></p>
+        <p class="eyebrow">界面规则</p>
         <h2 id="gkd-title">{subscription.name}</h2>
         <p>在 GKD 中添加此地址，获取规则更新，再按需要开启对应规则组。</p>
       </div>
@@ -66,10 +66,9 @@ const gkdUrl = 'https://nisconder.pages.dev/gkd/subscription.json5'
   .subscription-row--rss { border-inline-start-color: var(--color-secondary); }
   .subscription-row--gkd { border-inline-start-color: var(--color-primary); }
   .subscription-object, .subscription-target { min-width: 0; }
-  .subscription-object .eyebrow { display: flex; align-items: center; gap: 0.75rem; margin-block-end: 0.65rem; }
+  .subscription-object .eyebrow { margin-block-end: 0.65rem; }
   .subscription-object h2 { margin: 0; font-family: var(--font-display); font-size: clamp(1.4rem, 2.3vw, 1.8rem); line-height: 1.4; overflow-wrap: anywhere; }
   .subscription-object > p:last-child { margin: 1rem 0 0; color: var(--color-muted); font-size: var(--text-sm); line-height: 1.8; }
-  .subscription-version { padding: 0.1rem 0.5rem; border: 1px solid var(--color-line); border-radius: var(--card-radius); font-family: var(--font-utility); font-size: var(--text-xs); letter-spacing: 0; }
   .subscription-links { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin-block-start: 0.5rem; padding-block-start: 0.5rem; border-block-start: 1px solid var(--color-line); }
   .subscription-links a { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 2.75rem; font-size: var(--text-sm); font-weight: 650; }
   @media (max-width: 46rem) {

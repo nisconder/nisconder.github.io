@@ -8,13 +8,8 @@ const backupUrl = 'https://raw.githubusercontent.com/nisconder/Nisconder-GKD-Sub
 const repositoryUrl = 'https://github.com/nisconder/Nisconder-GKD-Subscription'
 const releaseHistory = [
   {
-    version: 8,
-    title: '统一仓库名称',
-    changes: ['仓库统一命名为 Nisconder-GKD-Subscription，订阅更新地址保持不变，规则行为不变。'],
-  },
-  {
-    version: 7,
-    title: '社区订阅发布',
+    date: '2026-11-13',
+    title: '订阅地址上线',
     changes: [
       '提供固定订阅地址与 GitHub 备用地址，后续可通过同一地址获取更新。',
       '整理应用规则与全局规则的适用范围，继续保留原有排除条件和按需开启的默认设置。',
@@ -30,7 +25,7 @@ const releaseHistory = [
 >
   <div class="gkd-page" data-gkd-subscription>
     <header class="page-intro gkd-intro">
-      <p class="eyebrow">GKD / 规则订阅 <span class="gkd-version">v{subscription.version}</span></p>
+      <p class="eyebrow">GKD / 规则订阅</p>
       <h1>{subscription.name}</h1>
       <p class="lede">在 GKD 中添加订阅地址，获取规则与后续更新。</p>
     </header>
@@ -83,7 +78,7 @@ const releaseHistory = [
       <ol class="release-list">
         {releaseHistory.map((release) => (
           <li>
-            <span class="release-version">v{release.version}</span>
+            <time class="release-date" datetime={release.date}>{release.date}</time>
             <div>
               <h3>{release.title}</h3>
               <ul>{release.changes.map((change) => <li>{change}</li>)}</ul>
@@ -110,8 +105,6 @@ const releaseHistory = [
   .gkd-page { max-width: 62rem; margin-inline: auto; }
   .gkd-intro { margin-block-end: 2rem; }
   .gkd-intro h1 { max-width: 19ch; font-size: clamp(2rem, 5vw, 3.2rem); overflow-wrap: anywhere; }
-  .gkd-intro .eyebrow { display: flex; align-items: center; gap: 1rem; }
-  .gkd-version { padding: 0.15rem 0.55rem; border: 1px solid var(--color-line-strong); border-radius: var(--card-radius); color: var(--color-muted); font-family: var(--font-utility); letter-spacing: 0; }
   .gkd-start { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); border: 1px solid var(--color-line-strong); border-block-start: 0.35rem solid var(--color-primary); border-radius: var(--card-radius); background: var(--color-card); overflow: hidden; }
   .subscription-address, .subscription-steps { min-width: 0; padding: clamp(1.25rem, 3vw, 2rem); }
   .gkd-start h2, .gkd-maintenance h2 { margin: 0 0 1.25rem; font-family: var(--font-display); font-size: var(--title-card); }
@@ -130,8 +123,8 @@ const releaseHistory = [
   .release-history > header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1.5rem; margin-block-end: 1.25rem; }
   .release-history h2 { margin: 0; font-family: var(--font-display); font-size: var(--title-section); }
   .release-list { padding: 0; margin: 0; border-block-start: 1px solid var(--color-line-strong); list-style: none; }
-  .release-list > li { display: grid; grid-template-columns: 4rem minmax(0, 1fr); gap: 1rem; padding-block: 1.5rem; border-block-end: 1px solid var(--color-line); }
-  .release-version { color: var(--color-primary); font-family: var(--font-utility); font-size: 1.1rem; font-weight: 800; }
+  .release-list > li { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: 1rem; padding-block: 1.5rem; border-block-end: 1px solid var(--color-line); }
+  .release-date { color: var(--color-primary); font-family: var(--font-utility); font-size: var(--text-sm); font-weight: 800; white-space: nowrap; }
   .release-list h3 { margin: 0 0 0.75rem; font-family: var(--font-display); font-size: 1.15rem; }
   .release-list ul { display: grid; gap: 0.5rem; margin: 0; padding-inline-start: 1.1rem; color: var(--color-muted); font-size: var(--text-sm); line-height: 1.8; }
   .gkd-maintenance { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem 2rem; padding-block: 1.5rem; border-block-start: 1px solid var(--color-line-strong); }
@@ -144,7 +137,7 @@ const releaseHistory = [
     .subscription-steps { border-inline-start: 0; border-block-start: 1px solid var(--color-line); }
   }
   @media (max-width: 34rem) {
-    .release-list > li { grid-template-columns: 2.5rem minmax(0, 1fr); gap: 0.75rem; }
+    .release-list > li { grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
     .gkd-maintenance { align-items: flex-start; }
   }
 </style>
