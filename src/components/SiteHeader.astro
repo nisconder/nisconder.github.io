@@ -8,7 +8,6 @@ const navItems = [
   { href: '/music/', label: '音乐' },
   { href: '/software/', label: '项目' },
   { href: '/about/', label: '关于' },
-  { href: '/subscribe/', label: 'RSS / GKD' },
 ]
 
 const isArticlePath = /^\/\d{4}\/\d{2}\/\d{2}\//.test(pathname)
@@ -28,12 +27,19 @@ const isCurrent = (href: string) =>
 
     <nav class="site-nav" aria-label="主要导航">
       {navItems.map((item) => (
-        <a href={item.href} class:list={{ 'site-subscribe-link': item.href === '/subscribe/' }} data-astro-prefetch={['/articles/', '/series/'].includes(item.href) ? 'hover' : undefined} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+        <a href={item.href} data-astro-prefetch={['/articles/', '/series/'].includes(item.href) ? 'hover' : undefined} aria-current={isCurrent(item.href) ? 'page' : undefined}>
           {item.label}
         </a>
       ))}
     </nav>
     <nav class="site-tools" aria-label="站点工具">
+      <a
+        class="site-subscribe-link"
+        href="/subscribe/"
+        data-astro-prefetch="hover"
+        aria-label="RSS 文章订阅与 GKD 规则"
+        aria-current={isCurrent('/subscribe/') ? 'page' : undefined}
+      >RSS / GKD</a>
       <a
         class="site-search-link"
         href="/search/"
@@ -136,8 +142,10 @@ const isCurrent = (href: string) =>
     font-weight: 650;
     text-decoration: none;
     text-underline-offset: 0.3em;
+    white-space: nowrap;
   }
 
+  .site-subscribe-link,
   .site-search-link {
     display: inline-flex;
     min-width: 4.85rem;
@@ -153,6 +161,10 @@ const isCurrent = (href: string) =>
     font-size: 0.8125rem;
     font-weight: 700;
     text-decoration: none;
+  }
+
+  .site-subscribe-link {
+    white-space: nowrap;
   }
 
   .site-search-mark {
@@ -203,6 +215,8 @@ const isCurrent = (href: string) =>
     text-decoration: none;
   }
 
+  .site-subscribe-link:hover,
+  .site-subscribe-link[aria-current='page'],
   .site-search-link:hover,
   .site-search-link[aria-current='page'] {
     border-color: var(--color-secondary);
@@ -267,7 +281,7 @@ const isCurrent = (href: string) =>
     background: var(--color-media-panel);
   }
 
-  @media (max-width: 44rem) {
+  @media (max-width: 48rem) {
     .site-header__inner {
       grid-template-columns: auto minmax(0, 1fr);
       gap: 0.2rem 0.5rem;
@@ -285,7 +299,7 @@ const isCurrent = (href: string) =>
       width: 100%;
       grid-column: 1 / -1;
       grid-row: 2;
-      grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 0.15rem;
       padding-block: 0.15rem;
       border-block-start: 1px solid var(--color-line);
