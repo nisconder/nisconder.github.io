@@ -12,7 +12,7 @@ const navItems = [
 
 const isArticlePath = /^\/\d{4}\/\d{2}\/\d{2}\//.test(pathname)
 const isCurrent = (href: string) =>
-  pathname === href || pathname.startsWith(href) || (href === '/articles/' && isArticlePath) || (href === '/subscribe/' && pathname.startsWith('/gkd/'))
+  pathname === href || pathname.startsWith(href) || (href === '/articles/' && isArticlePath)
 ---
 
 <header class="site-header">
@@ -34,13 +34,6 @@ const isCurrent = (href: string) =>
     </nav>
     <nav class="site-tools" aria-label="站点工具">
       <a
-        class="site-subscribe-link"
-        href="/subscribe/"
-        data-astro-prefetch="hover"
-        aria-label="RSS 文章订阅与 GKD 规则"
-        aria-current={isCurrent('/subscribe/') ? 'page' : undefined}
-      >RSS / GKD</a>
-      <a
         class="site-search-link"
         href="/search/"
         data-astro-prefetch="hover"
@@ -51,6 +44,28 @@ const isCurrent = (href: string) =>
         <span>搜索</span>
       </a>
       <ThemeToggle />
+      <a class="site-tool-link site-rss-link" href="/rss.xml" data-astro-reload aria-label="订阅文章 RSS" title="订阅文章 RSS">
+        <span class="site-tool-mark" aria-hidden="true">
+          {[0, 1].map(() => (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <circle cx="5" cy="19" r="1.5" fill="currentColor" stroke="none" />
+              <path d="M5 11a8 8 0 0 1 8 8M5 4a15 15 0 0 1 15 15" />
+            </svg>
+          ))}
+        </span>
+        <span class="site-tool-label">RSS</span>
+      </a>
+      <a class="site-tool-link site-gkd-link" href="/gkd/" data-astro-prefetch="hover"
+        aria-label="Nisconder的GKD订阅" title="Nisconder的GKD订阅" aria-current={isCurrent('/gkd/') ? 'page' : undefined}>
+        <span class="site-tool-mark" aria-hidden="true">
+          {[0, 1].map(() => (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+              <path d="M6 3v15l4-4 3 6 3-1.5-3-6 5-.5Z" />
+            </svg>
+          ))}
+        </span>
+        <span class="site-tool-label">GKD</span>
+      </a>
     </nav>
   </div>
   <div class="site-header__signal" aria-hidden="true"><span></span><span></span></div>
@@ -145,7 +160,7 @@ const isCurrent = (href: string) =>
     white-space: nowrap;
   }
 
-  .site-subscribe-link,
+  .site-tool-link,
   .site-search-link {
     display: inline-flex;
     min-width: 4.85rem;
@@ -163,8 +178,46 @@ const isCurrent = (href: string) =>
     text-decoration: none;
   }
 
-  .site-subscribe-link {
+  .site-tool-link {
     white-space: nowrap;
+  }
+
+  .site-tool-mark {
+    position: relative;
+    display: block;
+    width: 1.25rem;
+    height: 1.25rem;
+    flex: 0 0 auto;
+  }
+
+  .site-tool-mark svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transition: transform 170ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .site-tool-mark svg:first-child {
+    color: var(--color-primary);
+    transform: translate(-0.5px, -0.5px);
+  }
+
+  .site-tool-mark svg:last-child {
+    color: var(--color-secondary);
+    transform: translate(1.5px, 1.5px);
+  }
+
+  .site-tool-link:hover .site-tool-mark svg:first-child {
+    transform: translate(-2px, -2px);
+  }
+
+  .site-tool-link:hover .site-tool-mark svg:last-child {
+    transform: translate(3px, 3px);
+  }
+
+  .site-tool-link:active .site-tool-mark svg {
+    transform: translate(0, 0);
   }
 
   .site-search-mark {
@@ -215,8 +268,8 @@ const isCurrent = (href: string) =>
     text-decoration: none;
   }
 
-  .site-subscribe-link:hover,
-  .site-subscribe-link[aria-current='page'],
+  .site-tool-link:hover,
+  .site-tool-link[aria-current='page'],
   .site-search-link:hover,
   .site-search-link[aria-current='page'] {
     border-color: var(--color-secondary);
@@ -281,7 +334,7 @@ const isCurrent = (href: string) =>
     background: var(--color-media-panel);
   }
 
-  @media (max-width: 48rem) {
+  @media (max-width: 56rem) {
     .site-header__inner {
       grid-template-columns: auto minmax(0, 1fr);
       gap: 0.2rem 0.5rem;
@@ -319,11 +372,16 @@ const isCurrent = (href: string) =>
       padding-inline-start: 0.4rem;
     }
 
+  }
+
+  @media (max-width: 44rem) {
+    .site-tool-link,
     .site-search-link {
       min-width: 2.75rem;
       padding-inline: 0.45rem;
     }
 
+    .site-tool-label,
     .site-search-link > :last-child {
       position: absolute;
       width: 1px;
@@ -344,8 +402,15 @@ const isCurrent = (href: string) =>
     }
 
     .site-tools {
-      gap: 0.3rem;
+      gap: 0.2rem;
       padding-inline-start: 0.25rem;
+    }
+  }
+
+  @media (max-width: 23rem) {
+    .site-brand {
+      font-size: 0.875rem;
+      gap: 0.35rem;
     }
   }
 
@@ -359,6 +424,7 @@ const isCurrent = (href: string) =>
     :global(html[data-navigation-loading]) .site-header__signal::after {
       animation: none;
     }
+    .site-tool-mark svg,
     .site-search-mark > span {
       transition: none;
     }
