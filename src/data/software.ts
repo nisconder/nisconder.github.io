@@ -61,6 +61,19 @@ export interface SoftwareProject {
 // successful GitHub sync. Afterwards GitHub supplies existence and live facts.
 const softwareCatalog: SoftwareProject[] = [
   {
+    slug: 'gkd-subscription',
+    name: 'Nisconder的GKD订阅',
+    label: 'GKD',
+    summary: '为 GKD 维护的界面规则订阅。获取订阅地址、查看已验证的具体场景，也可以反馈漏跳或误触。',
+    kind: 'integration',
+    status: 'active',
+    tags: ['GKD', 'Android', '无障碍', '订阅规则'],
+    updatedAt: '2026-11-13',
+    sourceUrl: 'https://github.com/nisconder/gkd-subscription',
+    projectUrl: '/gkd/',
+    actionLabel: '获取订阅',
+  },
+  {
     slug: 'paste-xray',
     name: 'Paste X-Ray',
     label: 'PX',

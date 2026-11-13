@@ -9,6 +9,8 @@ on:
     # Refresh on every blog change, without recursively reacting to our snapshot commit.
     paths-ignore:
       - 'src/data/github-repositories.json'
+      - 'src/data/gkd-subscription.json'
+      - 'static/gkd/**'
 
 permissions:
   contents: write
@@ -31,14 +33,19 @@ jobs:
           node-version: 24
           package-manager-cache: false
       - name: Check sync behavior
-        run: node --test scripts/tests/software-sync.test.mjs
+        run: node --test scripts/tests/software-sync.test.mjs scripts/tests/gkd-sync.test.mjs
       - name: Fetch complete public project snapshot
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/sync-github-projects.mjs
+      - name: Sync verified GKD release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/sync-gkd-subscription.mjs
       - name: Publish changed snapshot
         run: |
           git add -- src/data/github-repositories.json
+          git add -- src/data/gkd-subscription.json static/gkd/subscription.json5 static/gkd/version.json5
           if git diff --cached --quiet; then
             echo "Project data is unchanged."
             exit 0

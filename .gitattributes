@@ -1,0 +1,2 @@
+# Subscription mirrors must retain their published byte hashes on every OS.
+static/gkd/*.json5 text eol=lf

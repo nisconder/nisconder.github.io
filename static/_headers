@@ -15,6 +15,16 @@
 /search-data/*
   Cache-Control: public, max-age=31536000, immutable
 
+/gkd/subscription.json5
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: public, max-age=0, must-revalidate
+  Access-Control-Allow-Origin: *
+
+/gkd/version.json5
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: public, max-age=0, must-revalidate
+  Access-Control-Allow-Origin: *
+
 /admin
   Cache-Control: no-store, max-age=0
   X-Robots-Tag: noindex, nofollow

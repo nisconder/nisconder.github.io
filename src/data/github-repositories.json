@@ -1,7 +1,7 @@
 {
   "version": 1,
   "owner": "nisconder",
-  "syncedAt": "2026-11-13T11:12:32.004Z",
+  "syncedAt": "2026-11-13T11:39:24.776Z",
   "repositories": [
     {
       "id": 1449359414,
@@ -44,6 +44,22 @@
       "createdAt": "2026-03-14T07:59:17Z",
       "pushedAt": "2026-10-23T13:48:03Z",
       "topics": []
+    },
+    {
+      "id": 1456524397,
+      "name": "gkd-subscription",
+      "description": "Nisconder的GKD订阅：应用规则、全局兼容说明与可复现构建。",
+      "sourceUrl": "https://github.com/nisconder/gkd-subscription",
+      "projectUrl": "https://nisconder.pages.dev/gkd/",
+      "language": "Python",
+      "stars": 0,
+      "createdAt": "2026-11-13T11:37:13Z",
+      "pushedAt": "2026-11-13T11:39:09Z",
+      "topics": [
+        "android",
+        "gkd",
+        "gkd-subscription"
+      ]
     },
     {
       "id": 1189176267,
