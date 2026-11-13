@@ -1,7 +1,7 @@
 {
   "version": 1,
   "owner": "nisconder",
-  "syncedAt": "2026-11-12T17:07:58.168Z",
+  "syncedAt": "2026-11-13T02:58:49.376Z",
   "repositories": [
     {
       "id": 1449359414,
@@ -30,7 +30,7 @@
       "language": "TypeScript",
       "stars": 4,
       "createdAt": "2026-01-27T11:29:03Z",
-      "pushedAt": "2026-11-07T13:12:19Z",
+      "pushedAt": "2026-11-13T02:41:38Z",
       "topics": []
     },
     {
@@ -78,7 +78,7 @@
       "language": "TypeScript",
       "stars": 9,
       "createdAt": "2026-07-29T10:29:10Z",
-      "pushedAt": "2026-11-12T15:32:21Z",
+      "pushedAt": "2026-11-13T02:42:13Z",
       "topics": [
         "ai-agents",
         "cli",
@@ -109,7 +109,7 @@
       "language": "TypeScript",
       "stars": 5,
       "createdAt": "2026-08-19T12:27:29Z",
-      "pushedAt": "2026-11-10T14:12:50Z",
+      "pushedAt": "2026-11-13T02:42:31Z",
       "topics": [
         "agent-tools",
         "ai",
@@ -161,7 +161,7 @@
       "language": "JavaScript",
       "stars": 4,
       "createdAt": "2026-08-29T11:39:28Z",
-      "pushedAt": "2026-11-10T13:45:10Z",
+      "pushedAt": "2026-11-13T02:42:48Z",
       "topics": [
         "bidi",
         "browser-tool",
@@ -184,7 +184,7 @@
       "language": "JavaScript",
       "stars": 4,
       "createdAt": "2026-10-23T11:47:09Z",
-      "pushedAt": "2026-11-10T13:45:31Z",
+      "pushedAt": "2026-11-13T02:43:05Z",
       "topics": [
         "cli",
         "diagnostics",
