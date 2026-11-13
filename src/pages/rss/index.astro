@@ -1,0 +1,79 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import CopySubscriptionUrl from '../../components/CopySubscriptionUrl.astro'
+
+const rssUrl = 'https://nisconder.pages.dev/rss.xml'
+---
+
+<BaseLayout title="RSS文章订阅" description="将 Nisconder 的文章订阅地址添加到 RSS 阅读器，获取博客新文章。">
+  <div class="rss-page">
+    <header class="page-intro rss-intro">
+      <p class="eyebrow">RSS / 文章更新</p>
+      <h1>RSS文章订阅</h1>
+      <p class="lede">用 RSS 阅读器获取博客新文章，不必每次回来查看。</p>
+    </header>
+
+    <div class="rss-start">
+      <section class="rss-address" aria-labelledby="rss-address-title">
+        <p class="eyebrow">提供给阅读器的地址</p>
+        <h2 id="rss-address-title">复制订阅地址</h2>
+        <CopySubscriptionUrl
+          id="rss-url"
+          url={rssUrl}
+          label="本站文章 RSS"
+          copyLabel="复制 RSS 地址"
+          copyHint="在 RSS 阅读器中添加订阅或源，粘贴这个地址。"
+          openLabel="查看原始订阅文件（XML）"
+        />
+        <p class="feed-content">订阅收录本站已发布文章，包含标题、摘要和文章正文，按发布时间从新到旧排列。</p>
+      </section>
+
+      <section class="rss-steps" aria-labelledby="rss-steps-title">
+        <h2 id="rss-steps-title">添加到阅读器</h2>
+        <ol>
+          <li><strong>复制上方地址</strong><span>使用「复制 RSS 地址」按钮。</span></li>
+          <li><strong>在 RSS 阅读器中添加订阅</strong><span>找到「添加订阅」或「添加源」入口。</span></li>
+          <li><strong>粘贴地址并确认</strong><span>添加后刷新即可获取文章；之后刷新阅读器，查看新发布的内容。</span></li>
+        </ol>
+      </section>
+    </div>
+
+    <section class="rss-help" aria-label="订阅常见问题">
+      <div>
+        <h2>还没有 RSS 阅读器？</h2>
+        <p>需要先使用一个 RSS 阅读器应用或网页服务，再添加上面的地址。也可以直接到 <a href="/articles/">文章页</a> 阅读。</p>
+      </div>
+      <div>
+        <h2>打开后看见 XML？</h2>
+        <p>这是给阅读器读取的原始文件，显示 XML 属于正常情况。返回本页复制地址，再粘贴到阅读器即可。</p>
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .rss-page { max-width: 62rem; margin-inline: auto; }
+  .rss-intro { margin-block-end: 2rem; }
+  .rss-intro h1 { font-size: clamp(2rem, 5vw, 3.2rem); }
+  .rss-start { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); border: 1px solid var(--color-line-strong); border-block-start: 0.35rem solid var(--color-secondary); border-radius: var(--card-radius); background: var(--color-card); overflow: hidden; }
+  .rss-address, .rss-steps { min-width: 0; padding: clamp(1.25rem, 3vw, 2rem); }
+  .rss-start h2 { margin: 0 0 1.25rem; font-family: var(--font-display); font-size: var(--title-card); }
+  .rss-address > .eyebrow { margin-block-end: 0.35rem; }
+  .feed-content { margin: 1rem 0 0; padding-block-start: 1rem; border-block-start: 1px solid var(--color-line); color: var(--color-muted); font-size: var(--text-sm); line-height: 1.8; }
+  .rss-steps { border-inline-start: 1px solid var(--color-line); background: var(--color-secondary-soft); }
+  .rss-steps ol { display: grid; gap: 1.25rem; margin: 0; padding-inline-start: 1.5rem; }
+  .rss-steps li { padding-inline-start: 0.35rem; }
+  .rss-steps li::marker { color: var(--color-secondary); font-family: var(--font-utility); font-weight: 800; }
+  .rss-steps strong, .rss-steps li span { display: block; }
+  .rss-steps li span { margin-block-start: 0.25rem; color: var(--color-muted); font-size: var(--text-sm); line-height: 1.8; }
+  .rss-help { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem 3rem; margin-block-start: 2.5rem; padding-block-start: 1.5rem; border-block-start: 1px solid var(--color-line-strong); }
+  .rss-help h2 { margin: 0 0 0.65rem; font-family: var(--font-display); font-size: 1.15rem; }
+  .rss-help p { margin: 0; color: var(--color-muted); font-size: var(--text-sm); line-height: 1.8; }
+  @media (max-width: 48rem) {
+    .rss-start { grid-template-columns: minmax(0, 1fr); }
+    .rss-steps { border-inline-start: 0; border-block-start: 1px solid var(--color-line); }
+  }
+  @media (max-width: 36rem) {
+    .rss-help { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>

@@ -44,7 +44,8 @@ const isCurrent = (href: string) =>
         <span>搜索</span>
       </a>
       <ThemeToggle />
-      <a class="site-tool-link site-rss-link" href="/rss.xml" data-astro-reload aria-label="订阅文章 RSS" title="订阅文章 RSS">
+      <a class="site-tool-link site-rss-link" href="/rss/" data-astro-prefetch="hover" aria-label="订阅文章 RSS" title="订阅文章 RSS"
+        aria-current={isCurrent('/rss/') ? 'page' : undefined}>
         <span class="site-tool-mark" aria-hidden="true">
           {[0, 1].map(() => (
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
