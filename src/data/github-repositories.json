@@ -1,7 +1,7 @@
 {
   "version": 1,
   "owner": "nisconder",
-  "syncedAt": "2026-11-13T11:53:52.345Z",
+  "syncedAt": "2026-11-13T11:59:18.257Z",
   "repositories": [
     {
       "id": 1449359414,
@@ -64,9 +64,9 @@
       "sourceUrl": "https://github.com/nisconder/Nisconder-GKD-Subscription",
       "projectUrl": "https://nisconder.pages.dev/gkd/",
       "language": "Python",
-      "stars": 0,
+      "stars": 1,
       "createdAt": "2026-11-13T11:37:13Z",
-      "pushedAt": "2026-11-13T11:50:55Z",
+      "pushedAt": "2026-11-13T11:57:07Z",
       "topics": [
         "android",
         "gkd",
@@ -82,7 +82,7 @@
       "language": "JavaScript",
       "stars": 3,
       "createdAt": "2025-11-15T02:08:55Z",
-      "pushedAt": "2026-11-13T11:53:26Z",
+      "pushedAt": "2026-11-13T11:58:56Z",
       "topics": []
     },
     {
