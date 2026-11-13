@@ -1,11 +1,11 @@
 {
   "id": 20261113,
   "name": "Nisconder的GKD订阅",
-  "version": 7,
+  "version": 8,
   "author": "Nisconder",
   "updateUrl": "https://nisconder.pages.dev/gkd/subscription.json5",
   "checkUpdateUrl": "https://nisconder.pages.dev/gkd/version.json5",
-  "supportUri": "https://github.com/nisconder/gkd-subscription/issues",
+  "supportUri": "https://github.com/nisconder/Nisconder-GKD-Subscription/issues",
   "categories": [
     {
       "key": 0,

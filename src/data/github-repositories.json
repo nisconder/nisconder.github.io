@@ -1,7 +1,7 @@
 {
   "version": 1,
   "owner": "nisconder",
-  "syncedAt": "2026-11-13T11:40:57.367Z",
+  "syncedAt": "2026-11-13T11:51:26.994Z",
   "repositories": [
     {
       "id": 1449359414,
@@ -46,22 +46,6 @@
       "topics": []
     },
     {
-      "id": 1456524397,
-      "name": "gkd-subscription",
-      "description": "Nisconder的GKD订阅：应用规则、全局兼容说明与可复现构建。",
-      "sourceUrl": "https://github.com/nisconder/gkd-subscription",
-      "projectUrl": "https://nisconder.pages.dev/gkd/",
-      "language": "Python",
-      "stars": 0,
-      "createdAt": "2026-11-13T11:37:13Z",
-      "pushedAt": "2026-11-13T11:39:09Z",
-      "topics": [
-        "android",
-        "gkd",
-        "gkd-subscription"
-      ]
-    },
-    {
       "id": 1189176267,
       "name": "jcli-toolkit",
       "description": "小的Java CLI工具集合",
@@ -72,6 +56,22 @@
       "createdAt": "2026-03-23T03:47:40Z",
       "pushedAt": "2026-08-01T14:09:43Z",
       "topics": []
+    },
+    {
+      "id": 1456524397,
+      "name": "Nisconder-GKD-Subscription",
+      "description": "Nisconder的GKD订阅：应用规则、全局兼容说明与可复现构建。",
+      "sourceUrl": "https://github.com/nisconder/Nisconder-GKD-Subscription",
+      "projectUrl": "https://nisconder.pages.dev/gkd/",
+      "language": "Python",
+      "stars": 0,
+      "createdAt": "2026-11-13T11:37:13Z",
+      "pushedAt": "2026-11-13T11:50:55Z",
+      "topics": [
+        "android",
+        "gkd",
+        "gkd-subscription"
+      ]
     },
     {
       "id": 1096817490,

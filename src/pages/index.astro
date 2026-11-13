@@ -90,11 +90,6 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
         <div><dt>歌曲</dt><dd>{playlist.length.toString().padStart(2, '0')}</dd></div>
       </dl>
 
-      <a class="identity-panel__gkd" href="/gkd/" data-astro-prefetch>
-        <span><strong>GKD 订阅</strong><small>获取地址与添加步骤</small></span>
-        <span class="identity-panel__gkd-arrow" aria-hidden="true">→</span>
-      </a>
-
       <nav class="identity-panel__links" aria-label="Nisconder 的个人链接">
         <a href="/about/">关于我</a>
         <a href="https://github.com/nisconder" rel="me noreferrer">GitHub</a>
@@ -327,7 +322,7 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   .identity-panel {
     display: grid;
     grid-template-columns: minmax(0, 1.2fr) minmax(15rem, 0.8fr);
-    grid-template-areas: "profile stats" "bio gkd" "links gkd";
+    grid-template-areas: "profile stats" "bio links";
     align-items: center;
     gap: 0.75rem clamp(1.5rem, 4vw, 3rem);
     padding: clamp(1.5rem, 3vw, 2rem);
@@ -431,46 +426,6 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
     color: var(--color-primary);
     font-size: 0.82rem;
     font-weight: 750;
-  }
-
-  .identity-panel__gkd {
-    grid-area: gkd;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.9rem 1rem;
-    border: 1px solid var(--color-primary);
-    border-radius: var(--card-radius);
-    background: var(--color-primary-soft);
-    text-decoration: none;
-  }
-
-  .identity-panel__gkd strong,
-  .identity-panel__gkd small {
-    display: block;
-  }
-
-  .identity-panel__gkd strong {
-    color: var(--color-primary);
-    font-size: 1rem;
-  }
-
-  .identity-panel__gkd small {
-    margin-block-start: 0.2rem;
-    color: var(--color-muted);
-    font-size: var(--text-xs);
-  }
-
-  .identity-panel__gkd-arrow {
-    color: var(--color-primary);
-    font-family: var(--font-utility);
-    font-size: 1.5rem;
-  }
-
-  .identity-panel__gkd:hover strong {
-    text-decoration: underline;
-    text-underline-offset: 0.2em;
   }
 
   .home-articles {
@@ -844,7 +799,7 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
 
     .identity-panel {
       grid-template-columns: minmax(0, 1fr);
-      grid-template-areas: "profile" "bio" "stats" "gkd" "links";
+      grid-template-areas: "profile" "bio" "stats" "links";
       gap: 1rem;
     }
 

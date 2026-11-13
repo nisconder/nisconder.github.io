@@ -19,7 +19,7 @@ const escapeXml = (value: string) =>
 export const GET: APIRoute = async ({ site, url }) => {
   const [posts, series] = await Promise.all([getPublishedPosts(), getPublishedSeries()])
   const base = site ?? new URL(url.origin)
-  const staticPaths = ['/', '/articles/', '/series/', '/about/', '/music/', '/software/', '/gkd/']
+  const staticPaths = ['/', '/articles/', '/series/', '/about/', '/music/', '/software/', '/gkd/', '/subscribe/']
 
   const staticEntries = staticPaths.map((path) =>
     `<url><loc>${escapeXml(new URL(path, base).href)}</loc></url>`,

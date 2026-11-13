@@ -1,0 +1,77 @@
+---
+interface Props {
+  id: string
+  url: string
+  label: string
+  copyLabel: string
+  copyHint: string
+  openLabel: string
+  rows?: number
+}
+
+const { id, url, label, copyLabel, copyHint, openLabel, rows = 2 } = Astro.props
+const statusId = `${id.replace(/-url$/, '')}-status`
+---
+
+<div class="address-field" data-copy-field data-copy-hint={copyHint}>
+  <label for={id}>{label}</label>
+  <textarea id={id} readonly rows={rows} spellcheck="false" wrap="soft" aria-describedby={statusId}>{url}</textarea>
+  <div class="address-actions">
+    <button class="copy-button" type="button" data-copy-url hidden>{copyLabel}</button>
+    <a href={url} data-astro-reload>{openLabel} <span aria-hidden="true">↗</span></a>
+  </div>
+  <p id={statusId} class="copy-status" role="status" aria-live="polite" data-copy-status></p>
+  <noscript><p class="copy-help">可直接选中上方地址，手动复制。</p></noscript>
+</div>
+
+<style>
+  .address-field { min-width: 0; }
+  .address-field label { display: block; margin-block-end: 0.5rem; }
+  .address-field textarea { display: block; min-height: 5.2rem; padding: 0.8rem; resize: vertical; font-family: var(--font-utility); font-size: 0.875rem; line-height: 1.65; overflow-wrap: anywhere; }
+  .address-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 1rem; margin-block-start: 0.75rem; }
+  .copy-button { min-height: 2.75rem; padding: 0.6rem 1rem; border: 1px solid var(--color-primary); border-radius: var(--card-radius); background: var(--color-primary); color: var(--color-on-primary); cursor: pointer; font-size: var(--text-sm); font-weight: 700; }
+  .copy-button[hidden] { display: none; }
+  .copy-button:disabled { cursor: progress; opacity: 0.7; }
+  .address-actions a { display: inline-flex; min-height: 2.75rem; align-items: center; gap: 0.35rem; font-size: var(--text-sm); font-weight: 650; }
+  .copy-status, .copy-help { margin: 0.5rem 0 0; color: var(--color-muted); font-size: var(--text-xs); line-height: 1.65; }
+  .copy-status { min-height: 1.65em; }
+</style>
+
+<script is:inline data-astro-rerun>
+  (() => {
+    document.querySelectorAll('[data-copy-field]').forEach((field) => {
+      if (!(field instanceof HTMLElement) || field.dataset.copyBound === 'true') return
+      const input = field.querySelector('textarea')
+      const button = field.querySelector('[data-copy-url]')
+      const status = field.querySelector('[data-copy-status]')
+      if (!(input instanceof HTMLTextAreaElement)
+        || !(button instanceof HTMLButtonElement)
+        || !(status instanceof HTMLElement)) return
+      field.dataset.copyBound = 'true'
+      const lifecycle = new AbortController()
+      const { signal } = lifecycle
+      button.hidden = false
+      button.addEventListener('click', async () => {
+        button.disabled = true
+        try {
+          if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable')
+          await navigator.clipboard.writeText(input.value)
+          if (signal.aborted || !field.isConnected) return
+          status.textContent = `已复制。${field.dataset.copyHint || ''}`
+        } catch {
+          if (signal.aborted || !field.isConnected) return
+          input.focus()
+          input.select()
+          status.textContent = '未能自动复制。链接已选中，请长按或使用 Ctrl/Cmd+C 复制。'
+        } finally {
+          if (!signal.aborted && field.isConnected) button.disabled = false
+        }
+      }, { signal })
+      document.addEventListener('astro:before-swap', () => {
+        lifecycle.abort()
+        button.disabled = false
+        delete field.dataset.copyBound
+      }, { once: true, signal })
+    })
+  })()
+</script>

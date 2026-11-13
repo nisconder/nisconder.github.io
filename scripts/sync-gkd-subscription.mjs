@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { resolve, join } from 'node:path'
 
-const repository = 'nisconder/gkd-subscription'
+const repository = 'nisconder/Nisconder-GKD-Subscription'
 const expectedId = 20261113
 const expectedName = 'Nisconder的GKD订阅'
 const blogRoot = fileURLToPath(new URL('..', import.meta.url))
