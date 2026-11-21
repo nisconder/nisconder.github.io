@@ -6,8 +6,9 @@
   var loading = document.getElementById('admin-loading');
   var decorationFrame = 0;
   var preferredViewMode = null;
+  var actionRow = null;
+  var actionRowObserver = null;
   var adminHomePath = '/admin/';
-  var commentsAdminPath = '/admin/comments/';
 
   var cleanText = function (value) {
     return String(value || '').replace(/\s+/g, ' ').trim();
@@ -72,75 +73,6 @@
     );
   };
 
-  var setNativeInputValue = function (input, value) {
-    var descriptor = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value');
-    if (descriptor && descriptor.set) descriptor.set.call(input, value);
-    else input.value = value;
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-  };
-
-  var createSearchIcon = function () {
-    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 24 24');
-    svg.setAttribute('width', '18');
-    svg.setAttribute('height', '18');
-    svg.setAttribute('aria-hidden', 'true');
-    svg.setAttribute('data-admin-mark', 'overprint-search');
-
-    [
-      { color: '#1e626b', offset: '-0.8 -0.8' },
-      { color: '#655170', offset: '0.8 0.8' }
-    ].forEach(function (ink) {
-      var layer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      layer.setAttribute('transform', 'translate(' + ink.offset + ')');
-      layer.setAttribute('fill', 'none');
-      layer.setAttribute('stroke', ink.color);
-      layer.setAttribute('stroke-width', '1.65');
-      circle.setAttribute('cx', '10');
-      circle.setAttribute('cy', '10');
-      circle.setAttribute('r', '5.75');
-      path.setAttribute('d', 'm14.2 14.2 5 5');
-      path.setAttribute('stroke-linecap', 'square');
-      layer.appendChild(circle);
-      layer.appendChild(path);
-      svg.appendChild(layer);
-    });
-    return svg;
-  };
-
-  var ensureCollectionSearch = function (toolbar, sourceInput, collectionLabel) {
-    if (!toolbar || !sourceInput) return;
-    var search = toolbar.querySelector('.admin-list-search');
-    if (!search) {
-      search = document.createElement('label');
-      search.className = 'admin-list-search';
-      search.appendChild(createSearchIcon());
-
-      var input = document.createElement('input');
-      input.type = 'search';
-      input.placeholder = '\u641c\u7d22\u6587\u7ae0';
-      input.setAttribute('aria-label', '\u641c\u7d22\u6587\u7ae0');
-      input.addEventListener('input', function () {
-        if (search.__adminSearchTarget) setNativeInputValue(search.__adminSearchTarget, input.value);
-      });
-      search.appendChild(input);
-      toolbar.insertBefore(search, toolbar.firstChild);
-    }
-
-    search.__adminSearchTarget = sourceInput;
-    var proxyInput = search.querySelector('input');
-    if (proxyInput) {
-      proxyInput.placeholder = '搜索' + collectionLabel;
-      proxyInput.setAttribute('aria-label', '搜索' + collectionLabel);
-    }
-    if (proxyInput && document.activeElement !== proxyInput && proxyInput.value !== sourceInput.value) {
-      proxyInput.value = sourceInput.value;
-    }
-  };
-
   var findFieldWrapper = function (label) {
     // Prefer the field's label/control relationship over generated class names;
     // custom checkbox labels inside the widget are not separate fields.
@@ -166,77 +98,25 @@
   };
 
   var decorateNavigation = function (root, route) {
-    var postLinks = Array.prototype.slice.call(root.querySelectorAll('a[href="#/collections/posts"]')).filter(function (link) {
-      return !link.closest('.admin-collection-tabs');
-    });
-    var mediaLink = root.querySelector('a[href="#/media"]');
-    var topPostLink = null;
-    var navGroup = null;
-
-    if (mediaLink && postLinks.length) {
-      postLinks.forEach(function (link) {
-        var common = lowestCommonAncestor([link, mediaLink]);
-        if (common && (!navGroup || elementDepth(common) > elementDepth(navGroup))) {
-          navGroup = common;
-          topPostLink = link;
-        }
-      });
+    var header = root.querySelector('header');
+    if (!header) return;
+    header.dataset.adminShell = 'header';
+    var logo = header.querySelector('[class*="AppHeaderLogo"]');
+    if (logo && !logo.querySelector('a')) {
+      var home = document.createElement('a');
+      home.href = adminHomePath;
+      home.className = 'admin-logo-link';
+      home.setAttribute('aria-label', '返回管理首页');
+      home.title = '管理首页';
+      logo.appendChild(home);
     }
-
-    if (topPostLink) {
-      topPostLink.dataset.adminNav = 'top';
-      topPostLink.dataset.adminActive = String(route.indexOf('#/collections/posts') === 0);
+    var content = header.querySelector('nav a[href="#/"]');
+    var media = header.querySelector('nav button');
+    if (content) {
+      content.dataset.adminNav = 'top';
+      content.dataset.adminActive = String(route.indexOf('#/collections/') === 0 || route === '#');
     }
-    if (mediaLink) {
-      mediaLink.dataset.adminNav = 'top';
-      mediaLink.dataset.adminActive = String(route === '#/media');
-    }
-
-    if (navGroup && !navGroup.querySelector('[data-admin-destination="home"]')) {
-      var homeLink = document.createElement('a');
-      homeLink.href = adminHomePath;
-      homeLink.textContent = '\u7ba1\u7406\u9996\u9875';
-      homeLink.title = '\u8fd4\u56de\u7edf\u4e00\u7ba1\u7406\u5165\u53e3';
-      homeLink.dataset.adminNav = 'top';
-      homeLink.dataset.adminDestination = 'home';
-      homeLink.dataset.adminActive = 'false';
-      navGroup.insertBefore(homeLink, navGroup.firstChild);
-    }
-
-    if (navGroup && !navGroup.querySelector('[data-admin-destination="comments"]')) {
-      var commentsLink = document.createElement('a');
-      commentsLink.href = commentsAdminPath;
-      commentsLink.textContent = 'Waline';
-      commentsLink.title = '\u6253\u5f00 Waline \u7ba1\u7406';
-      commentsLink.dataset.adminNav = 'top';
-      commentsLink.dataset.adminDestination = 'comments';
-      commentsLink.dataset.adminActive = 'false';
-      navGroup.appendChild(commentsLink);
-    }
-
-    // The article list hides Decap's collection sidebar. Keep every content
-    // collection reachable without applying the article form grid to series.
-    if (navGroup && !navGroup.querySelector('[data-admin-destination="series"]')) {
-      var seriesLink = document.createElement('a');
-      seriesLink.href = '#/collections/series';
-      seriesLink.textContent = '合集';
-      seriesLink.dataset.adminNav = 'top';
-      seriesLink.dataset.adminDestination = 'series';
-      navGroup.insertBefore(seriesLink, directChildWithin(navGroup, mediaLink));
-    }
-    root.querySelectorAll('a[href="#/collections/series"]').forEach(function (link) {
-      link.dataset.adminActive = String(route.indexOf('#/collections/series') === 0);
-    });
-
-    postLinks.forEach(function (link) {
-      if (link === topPostLink) return;
-      link.dataset.adminNav = 'collection';
-      link.dataset.adminActive = String(route.indexOf('#/collections/posts') === 0);
-    });
-
-    var appHeader = navGroup && navGroup.closest('header');
-    if (!appHeader) appHeader = root.querySelector('header');
-    if (appHeader) appHeader.dataset.adminShell = 'header';
+    if (media) media.dataset.adminNav = 'top';
   };
 
   var decorateActions = function (root) {
@@ -260,12 +140,10 @@
       if (label === '\u6e05\u9664') control.dataset.adminAction = 'clear-date';
     });
 
-    root.querySelectorAll('input[placeholder]').forEach(function (input) {
-      if (/(\u67e5\u627e|\u641c\u7d22).*(\u6587\u7ae0|\u6240\u6709|合集)/.test(input.placeholder)) {
-        input.dataset.adminSearch = 'posts';
-        input.placeholder = root.dataset.adminCollection === 'series' ? '搜索合集' : '搜索文章';
-      }
-    });
+    var search = root.querySelector('aside input[placeholder]');
+    if (search) {
+      search.setAttribute('aria-label', '搜索后台内容');
+    }
   };
 
   var decorateViewControls = function (toolbar) {
@@ -273,7 +151,6 @@
 
     var candidates = Array.prototype.slice.call(toolbar.querySelectorAll('button, [role="button"]')).filter(function (control) {
       return !control.closest('[data-admin-action="list-control"]') &&
-        !control.closest('.admin-list-search') &&
         Boolean(control.querySelector('svg'));
     });
     var listControl = null;
@@ -360,34 +237,15 @@
     var newPost = root.querySelector('[data-admin-action="new-post"]');
     var heading = findExactText(root, 'h1, h2, h3', collectionLabel).filter(function (element) {
       return !element.closest('aside');
-    })[0];
+    })[0] || root.querySelector('main h1, main h2');
     var controls = Array.prototype.slice.call(root.querySelectorAll('[data-admin-action="list-control"]'));
-    var toolbar = lowestCommonAncestor(controls);
+    var toolbar = root.querySelector('[class*="CollectionControlsContainer"]') || (controls.length > 1 && lowestCommonAncestor(controls));
     var entryList = lowestCommonAncestor(entryLinks);
     var collectionHeader = lowestCommonAncestor([heading, newPost]);
 
-    if (heading) heading.dataset.adminCount = entryLinks.length ? String(entryLinks.length).padStart(2, '0') + (collectionLabel === '合集' ? ' 个' : ' 篇') : '';
-    if (collectionHeader) {
-      collectionHeader.dataset.adminSection = 'collection-header';
-      var collectionTabs = collectionHeader.querySelector('.admin-collection-tabs');
-      if (!collectionTabs) {
-        collectionTabs = document.createElement('nav');
-        collectionTabs.className = 'admin-collection-tabs';
-        collectionTabs.setAttribute('aria-label', '内容类型');
-        [['posts', '文章'], ['series', '合集']].forEach(function (entry) {
-          var tab = document.createElement('a');
-          tab.href = '#/collections/' + entry[0];
-          tab.textContent = entry[1];
-          tab.dataset.adminCollectionTab = entry[0];
-          collectionTabs.appendChild(tab);
-        });
-        collectionHeader.insertBefore(collectionTabs, collectionHeader.firstChild);
-      }
-      collectionTabs.querySelectorAll('a').forEach(function (tab) {
-        if (tab.dataset.adminCollectionTab === root.dataset.adminCollection) tab.setAttribute('aria-current', 'page');
-        else tab.removeAttribute('aria-current');
-      });
-    }
+    if (heading) heading.dataset.adminCount = entryLinks.length
+      ? '已显示 ' + entryLinks.length + (collectionLabel === '合集' ? ' 个' : ' 篇') : '';
+    if (collectionHeader) collectionHeader.dataset.adminSection = 'collection-header';
     if (toolbar) {
       toolbar.dataset.adminSection = 'list-toolbar';
       decorateViewControls(toolbar);
@@ -400,36 +258,17 @@
       });
     }
 
-    var searchInput = root.querySelector('[data-admin-search="posts"]');
-    ensureCollectionSearch(toolbar, searchInput, collectionLabel);
-
-    if (collectionHeader && toolbar && entryList) {
-      var workspace = lowestCommonAncestor([collectionHeader, toolbar, entryList]);
-      if (workspace && workspace.id !== 'nc-root') {
-        workspace.dataset.adminWorkspace = 'collection';
-        var headerSlot = directChildWithin(workspace, collectionHeader);
-        var toolbarSlot = directChildWithin(workspace, toolbar);
-        var listSlot = directChildWithin(workspace, entryList);
-        if (headerSlot) headerSlot.dataset.adminWorkspaceSlot = 'header';
-        if (toolbarSlot) toolbarSlot.dataset.adminWorkspaceSlot = toolbarSlot === listSlot ? 'entries' : 'toolbar';
-        if (listSlot) listSlot.dataset.adminWorkspaceSlot = 'entries';
-      }
-
-      var collectionLink = root.querySelector('[data-admin-nav="collection"]');
-      var sidebar = searchInput && (searchInput.closest('aside') || lowestCommonAncestor([searchInput, collectionLink]));
-      if (sidebar && sidebar.id !== 'nc-root') sidebar.dataset.adminSection = 'sidebar';
-
-      if (sidebar && workspace) {
-        var layout = lowestCommonAncestor([sidebar, workspace]);
-        var sidebarSlot = layout && directChildWithin(layout, sidebar);
-        var workspaceSlot = layout && directChildWithin(layout, workspace);
-        if (layout && layout.id !== 'nc-root' && sidebarSlot && workspaceSlot && sidebarSlot !== workspaceSlot) {
-          layout.dataset.adminLayout = 'collection';
-          sidebarSlot.dataset.adminLayoutSlot = 'sidebar';
-          workspaceSlot.dataset.adminLayoutSlot = 'workspace';
-        }
-      }
-    }
+    var workspace = root.querySelector('main[class*="CollectionMain"]');
+    var sidebar = root.querySelector('aside');
+    var layout = workspace && sidebar && lowestCommonAncestor([workspace, sidebar]);
+    if (!layout || layout.id === 'nc-root') return;
+    layout.dataset.adminLayout = 'collection';
+    sidebar.dataset.adminSection = 'sidebar';
+    workspace.dataset.adminWorkspace = 'collection';
+    [collectionHeader, toolbar, entryList].forEach(function (section, index) {
+      var slot = section && directChildWithin(workspace, section);
+      if (slot) slot.dataset.adminWorkspaceSlot = ['header', 'toolbar', 'entries'][index];
+    });
   };
 
   var decorateEditor = function (root) {
@@ -688,6 +527,24 @@
   };
 
 
+  // The action row can wrap when labels, font size or viewport width change.
+  // The Markdown toolbar sticks immediately below its actual border box.
+  var observeActionRow = function (nextRow) {
+    if (actionRow === nextRow || !window.ResizeObserver) return;
+    if (actionRowObserver) {
+      actionRowObserver.disconnect();
+      actionRowObserver = null;
+    }
+    actionRow = nextRow;
+    if (!actionRow) return;
+    var shell = actionRow.closest('[data-admin-editor-shell="post"]');
+    if (!shell) return;
+    actionRowObserver = new window.ResizeObserver(function () {
+      shell.style.setProperty('--admin-action-row-height', nextRow.getBoundingClientRect().height + 'px');
+    });
+    actionRowObserver.observe(nextRow, { box: 'border-box' });
+  };
+
   var decorate = function () {
     decorationFrame = 0;
     var root = document.getElementById('nc-root');
@@ -697,16 +554,33 @@
     var routePath = route.split('?')[0].replace(/\/$/, '');
     root.dataset.adminContract = 'v6';
     root.dataset.adminCollection = routePath.indexOf('#/collections/series') === 0 ? 'series' : 'posts';
-    root.dataset.adminPage = /^#\/collections\/(posts|series)$/.test(routePath)
+    root.dataset.adminPage = /^#\/collections\/(posts|series)(?:\/search\/.*)?$/.test(routePath)
       ? 'collection'
       : (/^#\/collections\/posts\/(new|entries\/)/.test(routePath) ? 'editor'
         : (/^#\/collections\/series\/(new|entries\/)/.test(routePath) ? 'series-editor' : 'other'));
+
+    var authButton = root.querySelector('button[class*="LoginButton"]');
+    var auth = authButton && authButton.closest('section');
+    if (auth && !auth.querySelector('.admin-auth-copy')) {
+      auth.dataset.adminAuth = 'true';
+      var copy = document.createElement('div');
+      copy.className = 'admin-auth-copy';
+      var brand = document.createElement('p');
+      brand.textContent = 'Nisconder';
+      var heading = document.createElement('h1');
+      heading.textContent = '写作后台';
+      copy.append(brand, heading);
+      auth.insertBefore(copy, authButton);
+    }
 
     decorateNavigation(root, routePath);
     decorateActions(root);
     if (root.dataset.adminPage === 'collection') decorateCollection(root);
     if (root.dataset.adminPage === 'editor') decorateEditor(root);
     if (root.dataset.adminPage === 'series-editor') decorateSeriesEditor(root);
+    observeActionRow(root.dataset.adminPage === 'editor'
+      ? root.querySelector('[data-admin-shell="editor-toolbar"] > [class*="ToolbarSectionMain"]')
+      : null);
   };
 
   var scheduleDecoration = function () {

@@ -4,61 +4,43 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#245f64">
+  <meta name="theme-color" content="#f6f8f7">
   <meta name="application-name" content="Nisconder">
   <title>管理后台 — Nisconder</title>
   <link rel="icon" type="image/png" href="/img/nisconder-avatar.png">
   <link rel="manifest" href="/site.webmanifest">
-  <link rel="stylesheet" href="/admin/admin-portal.css?v=3">
-  <script>
-    if (window.location.hash) {
-      window.history.replaceState(null, '', '/admin/');
-    }
-  </script>
+  <script src="/admin/appearance.js?v=1"></script>
+  <link rel="stylesheet" href="/admin/admin-portal.css?v=4">
+  <script>if (location.hash) history.replaceState(null, '', '/admin/');</script>
 </head>
 <body>
   <header class="portal-header">
-    <a class="portal-brand" href="/" aria-label="返回 Nisconder 首页">
-      <span class="portal-brand__mark" aria-hidden="true"><span></span><span></span></span>
-      <span class="portal-brand__copy"><strong>Nisconder</strong><small>管理入口</small></span>
-    </a>
-    <a class="portal-site-link" href="/">查看主站 <span aria-hidden="true">↗</span></a>
+    <div>
+      <a class="portal-brand" href="/" aria-label="Nisconder 首页"><i aria-hidden="true"></i>Nisconder</a>
+      <a class="portal-return" href="/">查看博客 <span aria-hidden="true">↗</span></a>
+    </div>
   </header>
-
   <main class="portal-main">
-    <section class="portal-intro" aria-labelledby="portal-title">
-      <p class="portal-eyebrow">NISCONDER / ADMIN</p>
-      <h1 id="portal-title">管理后台</h1>
-      <p>选择要使用的工具。这里是统一入口，不会自动打开文章集合或留言面板。</p>
-      <p class="portal-intro__note"><span aria-hidden="true"></span> 两套工具各自保留登录状态</p>
-    </section>
-
-    <nav class="portal-destinations" aria-label="后台功能">
-      <a class="portal-card portal-card--content" href="/admin/content/">
-        <span class="portal-card__glyph" aria-hidden="true"><span></span><span></span></span>
-        <span class="portal-card__copy">
-          <span class="portal-card__label">站内内容 · Decap CMS</span>
-          <strong>写作后台</strong>
-          <small>新建、编辑和发布文章，也可管理站内图片。</small>
-        </span>
-        <span class="portal-card__action">进入 <span aria-hidden="true">→</span></span>
+    <div class="portal-intro">
+      <img src="/img/nisconder-avatar.png" alt="" width="56" height="56">
+      <div><h1>管理后台</h1><p>写文章、整理合集，也在这里照看读者的留言。</p></div>
+    </div>
+    <nav aria-label="后台功能">
+      <a class="portal-card" href="/admin/content/">
+        <svg class="portal-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 7H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-9"/><path d="m13 19 1-5L23 5a2.1 2.1 0 0 1 3 3l-9 9-4 2ZM21 7l3 3M10 22h9"/>
+        </svg>
+        <strong>写作后台</strong><small>编辑文章、管理图片和合集的阅读顺序。</small>
+        <span class="portal-card-action">进入写作后台 <b aria-hidden="true">→</b></span>
       </a>
-
-      <a class="portal-card portal-card--comments" href="/admin/comments/">
-        <span class="portal-card__glyph" aria-hidden="true"><span></span><span></span></span>
-        <span class="portal-card__copy">
-          <span class="portal-card__label">外部服务 · Waline</span>
-          <strong>Waline 管理</strong>
-          <small>查看、回复、审核和置顶全站留言；打开后将前往 Waline。</small>
-        </span>
-        <span class="portal-card__action">打开 <span aria-hidden="true">↗</span></span>
+      <a class="portal-card portal-card--discussion" href="/admin/comments/">
+        <svg class="portal-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M19 19H10l-5 4V9a3 3 0 0 1 3-3h11a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3ZM10 11h7M10 14h4"/><path d="M12 22v1a2 2 0 0 0 2 2h8l5 3V15a3 3 0 0 0-2-3"/>
+        </svg>
+        <strong>留言管理</strong><small>在 Waline 查看、回复和审核各页的留言。</small>
+        <span class="portal-card-action">打开 Waline <b aria-hidden="true">↗</b></span>
       </a>
     </nav>
   </main>
-
-  <footer class="portal-footer">
-    <span>统一入口：/admin/</span>
-    <span>写作与留言分开管理</span>
-  </footer>
 </body>
 </html>

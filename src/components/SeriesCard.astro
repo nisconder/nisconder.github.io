@@ -2,56 +2,103 @@
 import type { BlogSeries } from '../lib/series'
 import { getPostUrl } from '../lib/posts'
 
-interface Props { series: BlogSeries }
-const { series } = Astro.props
+interface Props {
+  series: BlogSeries
+  headingLevel?: 2 | 3
+}
+const { series, headingLevel = 2 } = Astro.props
+const Heading = headingLevel === 3 ? 'h3' : 'h2'
 const preview = series.posts.slice(0, 3)
+const remaining = series.posts.slice(preview.length).map(post => [post.data.title, getPostUrl(post)])
+const pages = Math.ceil(series.posts.length / 3)
 ---
 
 <article class="series-card">
-  <div class="series-card__spine" aria-hidden="true"><span>合集</span></div>
-  <div class="series-card__cover">
+  <div class="series-card__intro">
     <p class="series-card__meta">系列笔记 <span>·</span> {series.posts.length} 篇</p>
-    <h2 class="series-card__title"><a data-astro-prefetch href={series.href}>{series.data.title}</a></h2>
+    <Heading class="series-card__title"><a data-astro-prefetch href={series.href}>{series.data.title}</a></Heading>
     <p class="series-card__description">{series.data.description}</p>
     <a data-astro-prefetch class="series-card__open" href={series.href} aria-label={`查看《${series.data.title}》的完整目录`}>打开合集 <span aria-hidden="true">→</span></a>
   </div>
-  <div class="series-card__contents">
-    <p>从这里开始</p>
-    <ol>
+  <chapter-folio class="series-card__contents" data-remaining={remaining.length ? JSON.stringify(remaining) : undefined}>
+    <p>章节目录</p>
+    <div class="series-card__paper">
+    <ol aria-label="章节预览">
       {preview.map((post, index) => <li>
         <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
         <a data-astro-prefetch href={getPostUrl(post)}>{post.data.title}</a>
       </li>)}
     </ol>
-    {series.posts.length > preview.length && <a data-astro-prefetch class="series-card__more" href={series.href}>查看全部 {series.posts.length} 篇 <span aria-hidden="true">↗</span></a>}
-  </div>
+    </div>
+    {remaining.length > 0 && <div class="series-card__footer">
+      <a data-astro-prefetch class="series-card__more" href={series.href}>查看全部 {series.posts.length} 篇 <span aria-hidden="true">↗</span></a>
+      <div class="series-card__pager" data-pager hidden>
+        <button type="button" data-step="-1" aria-label="上一页章节" aria-disabled="true">←</button>
+        <output aria-live="polite" aria-atomic="true" aria-label="目录页码">1 / {pages}</output>
+        <button type="button" data-step="1" aria-label="下一页章节">→</button>
+      </div>
+    </div>}
+  </chapter-folio>
 </article>
 
+<script>
+  import { ChapterFolio } from '../lib/chapter-folio'
+  customElements.define('chapter-folio', ChapterFolio)
+</script>
+
 <style>
-  .series-card { position:relative; isolation:isolate; display:grid; grid-template-columns:2.5rem minmax(0,1fr) minmax(0,.9fr); min-width:0; margin-block-end:.55rem; border:var(--panel-border, 1px solid var(--color-line)); border-radius:var(--panel-radius, var(--card-radius)); background:var(--color-card); }
-  .series-card::after { position:absolute; z-index:-1; inset:auto .5rem -.5rem; height:.5rem; border:var(--panel-border, 1px solid var(--color-line)); border-block-start:0; border-radius:0 0 .75rem .75rem; background:var(--color-surface-soft); content:''; }
-  .series-card__spine { display:flex; justify-content:center; align-items:flex-start; padding-block:2rem; border-inline-end:1px solid var(--color-line); border-start-start-radius:var(--panel-radius, var(--card-radius)); border-end-start-radius:var(--panel-radius, var(--card-radius)); background:var(--color-panel-secondary, color-mix(in srgb,var(--color-secondary-soft) 70%,var(--color-card))); }
-  .series-card__spine span { color:var(--color-secondary); font-size:.75rem; font-weight:650; writing-mode:vertical-rl; letter-spacing:.25em; }
-  .series-card__cover { min-width:0; padding:clamp(1.25rem,3vw,2rem); background:var(--color-card); }
-  .series-card__meta { display:flex; flex-wrap:wrap; gap:.6rem; margin:0 0 .8rem; color:var(--color-secondary); font: .75rem/1.6 var(--font-utility); }
-  .series-card__title { margin:0 0 .85rem; font-family:var(--font-display); font-size:clamp(1.4rem,2.4vw,1.85rem); font-weight:600; line-height:1.45; overflow-wrap:anywhere; }
-  .series-card__title a { color:var(--color-heading); text-decoration:none; }
-  .series-card__title a:hover { color:var(--color-primary); }
-  .series-card__description { margin:0; color:var(--color-muted); font-size:.9375rem; line-height:1.85; overflow-wrap:anywhere; }
-  .series-card__open { display:inline-flex; align-items:center; gap:1rem; min-height:2.75rem; margin-block-start:1rem; color:var(--color-primary); font-size:.875rem; font-weight:650; text-underline-offset:.25em; }
-  .series-card__contents { min-width:0; margin-block:1.5rem; padding:0 clamp(1.25rem,3vw,2rem); border-inline-start:1px solid var(--color-line); border-start-end-radius:var(--panel-radius, var(--card-radius)); border-end-end-radius:var(--panel-radius, var(--card-radius)); background:var(--color-card); }
-  .series-card__contents > p { margin:0 0 .5rem; color:var(--color-muted); font: .75rem/1.6 var(--font-utility); }
-  .series-card__contents ol { padding:0; margin:0; list-style:none; }
-  .series-card__contents li { display:grid; grid-template-columns:1.5rem minmax(0,1fr); align-items:baseline; gap:.65rem; border-block-end:1px solid var(--color-line); }
-  .series-card__contents li > span { color:var(--color-secondary); font: .75rem/1.6 var(--font-utility); }
-  .series-card__contents li a { display:flex; align-items:center; min-height:2.75rem; padding-block:.65rem; color:var(--color-text); font-size:.8125rem; line-height:1.6; text-decoration:none; overflow-wrap:anywhere; }
-  .series-card__contents li a:hover { color:var(--color-primary); text-decoration:underline; text-underline-offset:.2em; }
-  .series-card__more { display:inline-flex; align-items:center; min-height:2.75rem; gap:.65rem; margin-block-start:.35rem; color:var(--color-muted); font-size:.75rem; text-underline-offset:.25em; }
-  @media (max-width:40rem) {
-    .series-card { grid-template-columns:1.75rem minmax(0,1fr); }
-    .series-card__spine { grid-row:1 / 3; padding-block:1.5rem; }
-    .series-card__cover { border-start-end-radius:var(--panel-radius, var(--card-radius)); padding:1.25rem 1.25rem .75rem; }
-    .series-card__contents { grid-column:2; margin:0; padding:0 1.25rem 1rem; border:0; }
-    .series-card__contents > p { padding-block-start:.85rem; border-block-start:1px solid var(--color-line); }
+  .series-card {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
+    border: 1px solid var(--color-line);
+    border-radius: var(--card-radius);
+    background: var(--color-card);
+  }
+  .series-card__intro {
+    min-width: 0;
+    padding: clamp(1.25rem, 3vw, 2rem);
+    border-radius: var(--card-radius) 0 0 var(--card-radius);
+    background: color-mix(in srgb, var(--color-secondary-soft) 36%, var(--color-card));
+  }
+  .series-card__meta { margin: 0 0 1rem; color: var(--color-secondary); font: 0.75rem/1.6 var(--font-utility); }
+  .series-card__meta span { margin-inline: 0.45rem; }
+  .series-card__title { margin: 0 0 0.85rem; font: 700 clamp(1.45rem, 2.6vw, 2rem)/1.4 var(--font-display); overflow-wrap: anywhere; }
+  .series-card__title a { color: var(--color-heading); text-decoration: none; }
+  .series-card__title a:hover { color: var(--color-primary); }
+  .series-card__description { margin: 0; color: var(--color-muted); font-size: 0.9375rem; line-height: 1.8; overflow-wrap: anywhere; }
+  .series-card__open, .series-card__more { display: inline-flex; align-items: center; gap: 0.55rem; min-height: 2.75rem; text-underline-offset: 0.25em; }
+  .series-card__open { margin-block-start: 0.75rem; color: var(--color-primary); font-size: 0.875rem; font-weight: 650; }
+  .series-card__contents {
+    display: block; min-width: 0; padding: clamp(1.15rem, 2.6vw, 1.85rem);
+    border-inline-start: 1px solid var(--color-line); border-radius: 0 var(--card-radius) var(--card-radius) 0;
+    background: var(--color-card);
+  }
+  .series-card__contents > p { margin: 0 0 0.4rem; color: var(--color-muted); font: 650 0.8rem/1.6 var(--font-body); }
+  .series-card__paper { position: relative; isolation: isolate; perspective: 700px; overflow: clip; }
+  .series-card__paper ol { display: grid; padding: 0; margin: 0; list-style: none; transform-origin: left center; }
+  .series-card__contents[data-remaining] ol { grid-template-rows: repeat(3, minmax(2.95rem, auto)); }
+  .series-card__paper [data-leaf-out] {
+    position: absolute; z-index: 1; inset: 0; pointer-events: none; backface-visibility: hidden;
+    background: linear-gradient(90deg, #69645613, transparent 3%, transparent 91%, #69645615), var(--color-card);
+    box-shadow: 2px 0 6px #28322c28;
+  }
+  .series-card__paper li { display: grid; grid-template-columns: 1.5rem minmax(0, 1fr); align-items: baseline; gap: 0.5rem; border-block-end: 1px solid var(--color-line); }
+  .series-card__paper li[hidden] { display: none; }
+  .series-card__paper li > span { color: var(--color-secondary); font: 0.75rem/1.6 var(--font-utility); }
+  .series-card__paper li a { display: flex; align-items: center; min-height: 2.75rem; padding-block: 0.45rem; color: var(--color-text); font-size: 0.85rem; line-height: 1.55; text-decoration: none; overflow-wrap: anywhere; }
+  .series-card__paper li a:hover { color: var(--color-primary); text-decoration: underline; text-underline-offset: 0.2em; }
+  .series-card__footer, .series-card__pager:not([hidden]) { display: flex; align-items: center; }
+  .series-card__footer { flex-wrap: wrap; justify-content: space-between; gap: 0.15rem 0.7rem; padding-block-start: 0.45rem; }
+  .series-card__more { color: var(--color-muted); font-size: 0.8rem; }
+  .series-card__pager { gap: 0.15rem; }
+  .series-card__pager output { min-width: 3.5ch; text-align: center; color: var(--color-muted); font: 0.75rem/1 var(--font-utility); }
+  .series-card__pager button { width: 2.75rem; height: 2.75rem; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--color-primary); font: 700 1.2rem/1 var(--font-body); cursor: pointer; }
+  .series-card__pager button[aria-disabled='true'] { color: var(--color-line-strong); cursor: default; }
+  .series-card__pager button[aria-disabled='false']:hover, .series-card__pager button:not([aria-disabled]):hover { background: var(--color-primary-soft); }
+  @media (max-width: 40rem) {
+    .series-card { grid-template-columns: minmax(0, 1fr); }
+    .series-card__intro { border-radius: var(--card-radius) var(--card-radius) 0 0; padding: 1.1rem 1.2rem 0.65rem; }
+    .series-card__contents { padding: 0.85rem 1.2rem; border: 0; border-block-start: 1px solid var(--color-line); border-radius: 0 0 var(--card-radius) var(--card-radius); }
   }
 </style>

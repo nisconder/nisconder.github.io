@@ -3,9 +3,11 @@ import { Image } from 'astro:assets'
 import avatar from '../../source/img/nisconder-avatar.png'
 import { featuredSoftware, softwareProjects, softwareStatusLabels } from '../data/software'
 import BaseLayout from '../layouts/BaseLayout.astro'
+import SectionMasthead from '../components/SectionMasthead.astro'
+import RecordTurntable from '../components/RecordTurntable.astro'
 import SeriesCard from '../components/SeriesCard.astro'
 import { getPublishedSeries, getStandalonePosts } from '../lib/series'
-import { getPlaylistTracks, isPlayableTrack } from '../lib/playlist'
+import { getPlaylistTracks, getTrackListeningUrl, isPlayableTrack } from '../lib/playlist'
 import {
   formatPostDate,
   getPinnedPost,
@@ -27,6 +29,11 @@ const playlistPreview = (playableTracks.length > 0 ? playableTracks : playlist).
 const musicianCount = new Set(
   playlist.flatMap((track) => track.author.split('/').map((artist) => artist.trim()).filter(Boolean)),
 ).size
+const contentLinks = [
+  { href: '/articles/', label: '文章', count: publishedPosts.length },
+  { href: '/software/', label: '项目', count: softwareProjects.length },
+  { href: '/music/', label: '歌曲', count: playlist.length },
+]
 
 const latestPost = posts[0]
 const featuredPost = await getPinnedPost(posts)
@@ -62,10 +69,9 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   commentsTitle="在首页留言"
   commentsDescription="站点建议、想讨论的话题，或简单打个招呼，都可以写在这里。"
 >
-  <header class="home-dashboard" aria-labelledby="home-title">
-    <section class="identity-panel register-panel">
-      <span class="registration-mark" aria-hidden="true"><i></i><i></i></span>
-      <div class="identity-panel__profile">
+  <SectionMasthead id="home-title" title="Nisconder" variant="home">
+    <Fragment slot="summary">
+      <div class="home-dashboard__profile">
         <Image
           src={avatar}
           width="104"
@@ -76,34 +82,27 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
           alt="Nisconder 的头像"
           decoding="async"
         />
-        <div>
-          <p class="eyebrow"><span lang="zh-Hant">個人索引</span> / PERSONAL INDEX</p>
-          <h1 id="home-title">Nisconder</h1>
-        </div>
+        <p>技术文章、个人项目、阅读与音乐记录。</p>
       </div>
 
-      <p class="identity-panel__bio">技术文章、个人项目、阅读与音乐记录。</p>
-
-      <dl class="identity-panel__stats" aria-label="站点内容统计">
-        <div><dt>文章</dt><dd>{publishedPosts.length.toString().padStart(2, '0')}</dd></div>
-        <div><dt>项目</dt><dd>{softwareProjects.length.toString().padStart(2, '0')}</dd></div>
-        <div><dt>歌曲</dt><dd>{playlist.length.toString().padStart(2, '0')}</dd></div>
-      </dl>
-
-      <nav class="identity-panel__links" aria-label="Nisconder 的个人链接">
-        <a href="/about/">关于我</a>
-        <a href="https://github.com/nisconder" rel="me noreferrer">GitHub</a>
-        <a href="mailto:72447244.wnm@gmail.com">邮箱</a>
+      <nav class="home-dashboard__index" aria-label="按内容浏览">
+        {contentLinks.map(({ href, label, count }) => (
+          <a href={href}>
+            <span>{label}</span>
+            <strong>{count}</strong>
+          </a>
+        ))}
       </nav>
-    </section>
-  </header>
+    </Fragment>
+    {playlistPreview[0] && <RecordTurntable track={playlistPreview[0]} />}
+  </SectionMasthead>
 
   <section class="home-articles" aria-label="文章入口">
     {
       homeArticles.length > 0 ? homeArticles.map(({ post, kind, label }) => (
         <article class:list={['article-panel', `article-panel--${kind}`, 'register-panel']} aria-labelledby={`home-${kind}-title`}>
           <header class="article-panel__meta">
-            <span>{label}</span>
+            <span class="article-panel__kind">{label}</span>
             <div>
               <time datetime={getPostDateTime(post.data.date)}>
                 {formatPostDate(post.data.date)}
@@ -142,69 +141,59 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   </section>
 
   {series.length > 0 && (
-    <section class="home-series" aria-labelledby="home-series-title">
+    <section class="home-series" aria-labelledby="home-series-title" data-home-reveal>
       <header class="home-series__heading">
-        <div>
-          <p class="eyebrow">沿着一个主题读下去</p>
-          <h2 id="home-series-title">系列合集</h2>
-        </div>
+        <h2 id="home-series-title">系列合集</h2>
         <a class="quiet-link" href="/series/">全部 {series.length} 个合集 <span aria-hidden="true">→</span></a>
       </header>
-      <SeriesCard series={series[0]} />
+      <SeriesCard series={series[0]} headingLevel={3} />
     </section>
   )}
 
-  <section class="home-secondary" aria-label="项目与音乐">
+  <section class="home-secondary" aria-label="项目与音乐" data-home-reveal>
     <a class="project-panel register-panel" href={featuredSoftware ? `/software/#${featuredSoftware.slug}` : '/software/'}>
       <div class="project-panel__topline">
-        <p class="eyebrow">项目 / PROJECTS</p>
+        <h2>项目与工具</h2>
         {featuredSoftware && <span>{softwareStatusLabels[featuredSoftware.status]}</span>}
       </div>
       {featuredSoftware && <div class="project-panel__featured">
         <span aria-hidden="true">{featuredSoftware.label}</span>
-        <div>
-          <small>最近维护</small>
-          <strong>{featuredSoftware.name}</strong>
-        </div>
+        <strong>{featuredSoftware.name}</strong>
       </div>}
-      <h2>项目与工具</h2>
       <p>{featuredSoftware?.summary ?? '新的公开项目会自动收录到这里。'}</p>
-      <span class="panel-action">{featuredSoftware ? `从 ${featuredSoftware.name} 进入项目页` : '查看项目目录'} <i aria-hidden="true">→</i></span>
+      <span class="panel-action">{featuredSoftware ? '查看项目' : '查看项目目录'} <i aria-hidden="true">→</i></span>
     </a>
 
-    <a class="music-panel register-panel" href="/music/">
+    <section class="music-panel register-panel" aria-labelledby="home-music-title">
       <div class="music-panel__topline">
-        <p class="eyebrow">音乐 / PLAYLIST</p>
+        <h2 id="home-music-title">音乐收藏</h2>
         <span>{playableTracks.length} 首可试听</span>
       </div>
-      <h2>最近反复播放</h2>
       <p>{playlist.length} 首 · {musicianCount} 位音乐人</p>
-      <ol aria-label="歌单预览">
-        {playlistPreview.map((track, index) => (
+      <ul aria-label="歌单预览">
+        {playlistPreview.map((track) => (
           <li>
-            <span>{(index + 1).toString().padStart(2, '0')}</span>
-            <span>
-              <strong>{track.title}</strong>
-              <small>{track.author}</small>
-            </span>
+            <a href={getTrackListeningUrl(track)}>
+              <span><strong>{track.title}</strong><small>{track.author}</small></span>
+              <i aria-hidden="true">{isPlayableTrack(track) ? '→' : '↗'}</i>
+            </a>
           </li>
         ))}
-      </ol>
-      <span class="panel-action">打开音乐页 <i aria-hidden="true">→</i></span>
-    </a>
+      </ul>
+      <a class="panel-action" href="/music/">完整歌单 <i aria-hidden="true">→</i></a>
+    </section>
   </section>
 
-  <section class="home-search register-panel" aria-labelledby="home-search-title">
+  <section class="home-search register-panel" aria-labelledby="home-search-title" data-home-reveal>
     <div class="home-search__intro">
-      <p class="eyebrow">查找 / SEARCH</p>
       <h2 id="home-search-title">搜索本站</h2>
       <p>直接检索文章正文、项目、分类与标签。</p>
     </div>
     <form class="home-search__form" action="/search/" method="get" role="search">
-      <label for="home-search-input">搜索本站</label>
       <div class="home-search__controls">
         <input
           id="home-search-input"
+          aria-label="搜索本站"
           name="q"
           type="search"
           autocomplete="off"
@@ -221,6 +210,23 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   </section>
 </BaseLayout>
 
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const sections = document.querySelectorAll('[data-home-reveal]')
+    if (!sections.length || !('IntersectionObserver' in window)) return
+
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue
+        entry.target.setAttribute('data-home-reveal', 'visible')
+        observer.unobserve(entry.target)
+      }
+    }, { rootMargin: '0px 0px -24px' })
+    sections.forEach(section => observer.observe(section))
+    document.addEventListener('astro:before-swap', () => observer.disconnect(), { once: true })
+  })
+</script>
+
 <style>
   .home-series,
   .home-secondary,
@@ -230,7 +236,7 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   }
 
   .home-series {
-    margin-block: 2.5rem;
+    margin-block: clamp(2rem, 4vw, 3rem);
   }
 
   .home-series__heading {
@@ -249,182 +255,70 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   }
 
   .register-panel {
-    position: relative;
     min-width: 0;
-    overflow: hidden;
-    border: 1px solid var(--color-line-strong);
+    border: 1px solid var(--color-line);
     border-radius: var(--card-radius);
     background: var(--color-card);
   }
 
-  .register-panel::before,
-  .register-panel::after {
-    position: absolute;
-    z-index: 1;
-    content: '';
-    pointer-events: none;
-  }
-
-  .register-panel::before {
-    inset: 0 auto auto 0;
-    width: 42%;
-    height: 0.32rem;
-    background: var(--color-primary);
-  }
-
-  .register-panel::after {
-    inset: 0 0 auto auto;
-    width: 24%;
-    height: 0.32rem;
-    background: var(--color-secondary);
-  }
-
-  .registration-mark {
-    position: absolute;
-    z-index: 2;
-    inset-block-start: 1.25rem;
-    inset-inline-end: 1.25rem;
-    width: 1.8rem;
-    height: 1.65rem;
-    pointer-events: none;
-  }
-
-  .registration-mark i {
-    position: absolute;
-    display: block;
-    width: 1.05rem;
-    height: 1.05rem;
-    transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  .registration-mark i:first-child {
-    inset: 0 auto auto 0;
-    background: var(--color-primary);
-  }
-
-  .registration-mark i:last-child {
-    inset: auto 0 0 auto;
-    background: var(--color-secondary);
-  }
-
-  .register-panel:hover .registration-mark i:first-child {
-    transform: translate(-2px, -2px);
-  }
-
-  .register-panel:hover .registration-mark i:last-child {
-    transform: translate(2px, 2px);
-  }
-
-  .home-dashboard {
-    margin-block-end: 1rem;
-  }
-
-  .identity-panel {
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(15rem, 0.8fr);
-    grid-template-areas: "profile stats" "bio links";
-    align-items: center;
-    gap: 0.75rem clamp(1.5rem, 4vw, 3rem);
-    padding: clamp(1.5rem, 3vw, 2rem);
-    background: var(--color-secondary-soft);
-  }
-
-  .identity-panel::before {
-    width: 28%;
-    background: var(--color-secondary);
-  }
-
-  .identity-panel::after {
-    width: 48%;
-    background: var(--color-primary);
-  }
-
-  .identity-panel__profile {
-    grid-area: profile;
+  .home-dashboard__profile {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding-inline-end: 2.25rem;
+    gap: 0.65rem;
+    margin-block-start: 0.8rem;
   }
 
-  .identity-panel__profile > div {
-    min-width: 0;
-  }
-
-  .identity-panel__profile img {
-    width: 5.5rem;
-    height: 5.5rem;
+  .home-dashboard__profile img {
+    width: clamp(2rem, 3vw, 2.5rem);
+    height: auto;
     flex: 0 0 auto;
-    border: 1px solid var(--color-line-strong);
-    border-radius: calc(var(--card-radius) - 0.15rem);
+    aspect-ratio: 1;
+    border: 1px solid var(--color-line);
+    border-radius: 50%;
     object-fit: cover;
   }
 
-  .identity-panel h1 {
-    margin: 0;
-    font-size: clamp(1.75rem, 3.2vw, 2.35rem);
-    letter-spacing: -0.035em;
-  }
-
-  .identity-panel .eyebrow {
-    margin-block-end: 0.25rem;
-  }
-
-  .identity-panel__bio {
-    grid-area: bio;
+  .home-dashboard__profile p {
     margin: 0;
     color: var(--color-muted);
-    font-size: 1rem;
-    line-height: 1.7;
+    font-size: clamp(0.86rem, 1.2vw, 1rem);
+    line-height: 1.55;
   }
 
-  .identity-panel__stats {
-    grid-area: stats;
+  .home-dashboard__index {
+    width: min(100%, 25rem);
+    margin-block-start: 0.85rem;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    margin: 0;
-    border-block: 1px solid var(--color-line-strong);
+    gap: 0.4rem;
+    padding: 0.2rem 0;
+    border-block: 1px solid var(--color-line);
   }
 
-  .identity-panel__stats div {
+  .home-dashboard__index a {
     display: flex;
-    min-width: 0;
-    flex-direction: column-reverse;
-    padding: 0.8rem 0;
-  }
-
-  .identity-panel__stats div + div {
-    padding-inline-start: 0.75rem;
-    border-inline-start: 1px solid var(--color-line-strong);
-  }
-
-  .identity-panel__stats dt {
-    color: var(--color-muted);
-    font-size: var(--text-xs);
-  }
-
-  .identity-panel__stats dd {
-    margin: 0;
-    color: var(--color-secondary);
-    font-family: var(--font-utility);
-    font-size: 1.05rem;
-    font-weight: 800;
-  }
-
-  .identity-panel__links {
-    grid-area: links;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0 1rem;
-    margin: 0;
-  }
-
-  .identity-panel__links a {
-    display: inline-flex;
-    min-height: 2.75rem;
+    min-block-size: 2.75rem;
     align-items: center;
+    gap: 0.5rem;
+    padding: 0.38rem 0.45rem;
+    border-radius: 0.25rem;
+    color: var(--color-muted);
+    font-size: var(--text-sm);
+    line-height: 1.4;
+    text-decoration: none;
+  }
+
+  .home-dashboard__index a:is(:hover, :focus-visible) {
+    background: var(--color-primary-soft);
     color: var(--color-primary);
-    font-size: 0.82rem;
+  }
+
+  .home-dashboard__index strong {
+    order: -1;
+    color: var(--color-primary);
+    font-family: var(--font-utility);
+    font-size: 1.35rem;
+    font-variant-numeric: tabular-nums;
     font-weight: 750;
   }
 
@@ -446,69 +340,76 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   }
 
   .article-panel {
+    --article-accent: var(--color-primary);
+    --article-accent-soft: var(--color-primary-soft);
     display: flex;
     flex-direction: column;
-    padding: 0;
+    position: relative;
+    gap: 1.05rem;
+    padding: clamp(1.05rem, 2.65vw, 2rem);
+  }
+
+  .article-panel--latest {
+    border-block-start: 3px solid var(--color-primary);
+    background: var(--feature-surface);
+  }
+  .article-panel--latest .article-panel__kind { padding-inline-start: 0; background: transparent; }
+  .article-panel--latest .article-panel__meta { border-bottom: 1px solid var(--color-line); padding-block-end: 0.7rem; }
+  .article-panel--latest .primary-link { background: var(--color-primary); color: var(--color-on-primary); }
+  .article-panel--latest .primary-link:is(:hover, :focus-visible) { background: var(--color-secondary); color: var(--color-on-secondary); }
+  .article-panel--pinned {
+    --article-accent: var(--color-secondary);
+    --article-accent-soft: var(--color-secondary-soft);
   }
 
   .article-panel__meta {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    min-height: 4.2rem;
-    padding: 1rem clamp(1.25rem, 2.5vw, 1.75rem);
-    border-block-end: 1px solid var(--color-line-strong);
-    background: var(--color-primary-soft);
-    color: var(--color-primary);
-    font-family: var(--font-utility);
+    gap: 0.35rem 0.85rem;
     font-size: var(--text-xs);
-    font-weight: 800;
-    letter-spacing: 0.06em;
   }
 
-  .article-panel--pinned::before {
-    background: var(--color-secondary);
-  }
-
-  .article-panel--pinned::after {
-    background: var(--color-primary);
-  }
-
-  .article-panel--pinned .article-panel__meta {
-    background: var(--color-secondary-soft);
-    color: var(--color-secondary);
+  .article-panel__kind {
+    padding: 0.24rem 0.6rem;
+    border-radius: 0.35rem;
+    background: var(--article-accent-soft);
+    color: var(--article-accent);
+    font-weight: 750;
   }
 
   .article-panel__meta > div {
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 0.35rem 0.8rem;
+    align-items: center;
+    gap: 0 0.65rem;
     color: var(--color-muted);
-    font-weight: 650;
-    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
   }
 
   .article-panel__meta a {
-    color: var(--color-secondary);
+    display: inline-flex;
+    min-height: 1.5rem;
+    align-items: center;
+    color: var(--article-accent);
   }
 
   .article-panel__body {
     display: flex;
     flex: 1;
     flex-direction: column;
-    padding: clamp(1.25rem, 2.5vw, 1.75rem);
   }
 
   .article-panel h2 {
-    margin: 0 0 1rem;
-    font-family: var(--font-editorial);
-    font-size: clamp(1.75rem, 3vw, 2.35rem);
+    margin: 0 0 0.7rem;
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 2.7vw, 2.2rem);
     font-weight: 650;
-    line-height: 1.3;
+    line-height: 1.36;
     letter-spacing: -0.025em;
     overflow-wrap: anywhere;
+    text-wrap: balance;
   }
 
   .article-panel h2 a {
@@ -516,8 +417,10 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
     text-decoration: none;
   }
 
-  .article-panel h2 a:hover {
-    color: var(--color-primary);
+  .article-panel h2 a:is(:hover, :focus-visible) {
+    color: var(--article-accent);
+    text-decoration: underline;
+    text-decoration-color: var(--article-accent);
   }
 
   .article-panel__body > p {
@@ -528,12 +431,8 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   }
 
   .article-panel__actions {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
     margin-block-start: auto;
-    padding-block-start: 1.25rem;
+    padding-block-start: 0.85rem;
   }
 
   .primary-link,
@@ -546,44 +445,44 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   }
 
   .primary-link {
-    gap: 1rem;
-    color: var(--color-primary);
+    gap: 0.65rem;
+    padding-inline: 0.75rem;
+    border-radius: calc(var(--card-radius) - 0.3rem);
+    background: var(--article-accent-soft);
+    color: var(--article-accent);
     text-decoration: none;
   }
 
-  .primary-link span {
-    color: var(--color-secondary);
-    transition: transform 180ms ease;
-  }
-
-  .primary-link:hover span {
-    transform: translateX(0.3rem);
+  .primary-link:is(:hover, :focus-visible) {
+    background: color-mix(in srgb, var(--article-accent-soft), var(--article-accent) 12%);
+    text-decoration: underline;
   }
 
   .quiet-link {
-    color: var(--color-secondary);
+    gap: 0.35rem;
+    color: var(--color-primary);
   }
 
   .article-panel--empty {
+    align-items: flex-start;
     justify-content: center;
-    padding: clamp(1.25rem, 2.5vw, 1.75rem);
   }
 
   .home-search {
     display: grid;
-    grid-template-columns: minmax(14rem, 0.42fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 0.55fr) minmax(0, 1fr);
     align-items: center;
     gap: clamp(1.5rem, 5vw, 4rem);
     margin-block-start: 1rem;
     padding: clamp(1.25rem, 3vw, 2rem);
-    background: var(--color-primary-soft);
+    background: var(--color-surface);
   }
 
   .home-search__intro h2,
   .project-panel h2,
   .music-panel h2 {
     margin: 0;
-    font-size: clamp(1.5rem, 2.8vw, 2rem);
+    font-size: clamp(1.2rem, 2.3vw, 1.6rem);
     letter-spacing: -0.025em;
   }
 
@@ -595,9 +494,8 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
     font-size: 0.88rem;
   }
 
-  .home-search__form label {
-    display: block;
-    margin-block-end: 0.45rem;
+  .home-search__form {
+    min-width: 0;
   }
 
   .home-search__controls {
@@ -608,7 +506,7 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
 
   .home-search__controls input,
   .home-search__controls button {
-    min-height: 3.25rem;
+    min-height: 2.75rem;
   }
 
   .home-search__controls input {
@@ -617,10 +515,8 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   }
 
   .home-search__controls button {
-    min-width: 7rem;
-    padding-inline: 1.25rem;
+    padding-inline: clamp(0.7rem, 3vw, 1.25rem);
     border: 1px solid var(--color-primary);
-    border-inline-end: 0.28rem solid var(--color-secondary);
     border-radius: var(--card-radius);
     background: var(--color-primary);
     color: var(--color-on-primary);
@@ -652,16 +548,15 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
 
   .home-secondary {
     display: grid;
-    grid-template-columns: minmax(0, 1.18fr) minmax(18rem, 0.82fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
   }
 
   .project-panel,
   .music-panel {
     display: flex;
-    min-height: 23rem;
     flex-direction: column;
-    padding: clamp(1.5rem, 3.5vw, 2.25rem);
+    padding: clamp(1.05rem, 2.8vw, 1.75rem);
     color: var(--color-text);
     text-decoration: none;
   }
@@ -669,15 +564,11 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   .project-panel__topline,
   .music-panel__topline {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    margin-block-end: 1.6rem;
-  }
-
-  .project-panel__topline .eyebrow,
-  .music-panel__topline .eyebrow {
-    margin: 0;
+    gap: 0.25rem 0.85rem;
+    margin-block-end: 0.6rem;
   }
 
   .project-panel__topline > span,
@@ -691,70 +582,61 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
     display: flex;
     align-items: center;
     gap: 0.9rem;
-    margin-block-end: 1.8rem;
+    margin-block: 0.9rem 0.25rem;
   }
 
   .project-panel__featured > span {
     display: grid;
-    width: 3.6rem;
-    height: 3.6rem;
+    width: 2.5rem;
+    height: 2.5rem;
     flex: 0 0 auto;
     place-items: center;
     border-radius: calc(var(--card-radius) - 0.1rem);
-    background: var(--color-secondary);
-    color: var(--color-on-secondary);
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
     font-family: var(--font-utility);
     font-size: var(--text-xs);
     font-weight: 900;
   }
 
-  .project-panel__featured div {
-    display: grid;
-  }
-
-  .project-panel__featured small {
-    color: var(--color-muted);
-  }
-
   .project-panel__featured strong {
-    font-size: 1.1rem;
+    font-size: clamp(1.15rem, 2vw, 1.4rem);
+    overflow-wrap: anywhere;
   }
 
   .music-panel {
-    background: var(--color-secondary-soft);
+    background: var(--color-surface);
   }
 
-  .music-panel ol {
+  .music-panel ul {
     padding: 0;
-    margin: 1.5rem 0 0;
+    margin: 0.65rem 0 0;
     list-style: none;
   }
 
   .music-panel li {
     display: grid;
-    grid-template-columns: 2rem minmax(0, 1fr);
-    gap: 0.75rem;
-    padding: 0.65rem 0;
-    border-block-start: 1px solid var(--color-line-strong);
+    border-block-start: 1px solid var(--color-line);
   }
 
-  .music-panel li > span:first-child {
-    color: var(--color-secondary);
-    font-family: var(--font-utility);
-    font-size: var(--text-xs);
-    font-weight: 800;
+  .music-panel li a {
+    display: flex;
+    min-height: 2.75rem;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.35rem 0.2rem;
+    color: var(--color-text);
+    text-decoration: none;
   }
 
-  .music-panel li > span:last-child {
-    display: grid;
-    min-width: 0;
-  }
+  .music-panel li a:is(:hover, :focus-visible) strong { color: var(--color-primary); text-decoration: underline; }
+  .music-panel li a > span { display: grid; }
+  .music-panel li i { color: var(--color-secondary); font-style: normal; }
 
-  .music-panel li strong,
-  .music-panel li small {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .music-panel li strong {
+    font-size: var(--text-sm);
+    overflow-wrap: anywhere;
   }
 
   .music-panel li small {
@@ -769,38 +651,27 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
     min-height: 2.75rem;
     margin-block-start: auto;
     padding-block-start: 1rem;
-    border-block-start: 1px solid var(--color-line-strong);
     color: var(--color-primary);
     font-size: 0.85rem;
     font-weight: 800;
   }
 
-  .panel-action i {
+  .music-panel .panel-action {
     color: var(--color-secondary);
-    font-style: normal;
-    transition: transform 180ms ease;
   }
 
-  .project-panel:hover .panel-action i,
-  .music-panel:hover .panel-action i {
-    transform: translateX(0.3rem);
+  .panel-action i {
+    font-style: normal;
+  }
+
+  :is(.project-panel, .music-panel):is(:hover, :focus-visible) .panel-action {
+    text-decoration: underline;
   }
 
   @media (max-width: 52rem) {
     .home-articles,
     .home-secondary {
       grid-template-columns: minmax(0, 1fr);
-    }
-
-    .project-panel,
-    .music-panel {
-      min-height: 0;
-    }
-
-    .identity-panel {
-      grid-template-columns: minmax(0, 1fr);
-      grid-template-areas: "profile" "bio" "stats" "links";
-      gap: 1rem;
     }
 
     .home-search {
@@ -815,69 +686,39 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
       gap: 0.75rem;
     }
 
-    .identity-panel,
-    .article-panel__body,
-    .home-search,
-    .project-panel,
-    .music-panel {
-      padding: 1.25rem;
-    }
-
-    .identity-panel__profile {
-      padding-inline-end: 1.5rem;
-    }
-
-    .identity-panel__profile img {
-      width: 4.6rem;
-      height: 4.6rem;
-    }
-
-    .article-panel__meta {
-      align-items: flex-start;
-      flex-direction: column;
-      gap: 0.5rem;
-      padding: 1rem 1.25rem;
-    }
-
-    .article-panel__meta > div {
-      justify-content: flex-start;
-    }
-
     .article-panel h2 {
-      font-size: clamp(1.75rem, 8.5vw, 2.35rem);
+      font-size: clamp(1.4rem, 5.8vw, 1.85rem);
     }
-
-    .home-search__controls {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .home-search__controls button {
-      width: 100%;
-    }
-
   }
 
-  @media (max-width: 26rem) {
-    .identity-panel__profile img {
-      width: 3.75rem;
-      height: 3.75rem;
+  @media (prefers-reduced-motion: no-preference) {
+    .article-panel {
+      animation: home-card-arrive 680ms var(--ease-settle) backwards;
     }
 
-    .identity-panel h1 {
-      font-size: 1.75rem;
+    .article-panel--pinned { animation-delay: 140ms; }
+
+    [data-home-reveal='visible'] {
+      animation: home-section-arrive 620ms var(--ease-settle) backwards;
     }
 
-    .identity-panel__stats dd {
-      font-size: 0.95rem;
-    }
-
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .registration-mark i,
     .primary-link span,
     .panel-action i {
-      transition: none;
+      transition: transform var(--motion-feedback) var(--ease-settle);
     }
+
+    .primary-link:is(:hover, :focus-visible) span,
+    :is(.project-panel, .music-panel):is(:hover, :focus-visible) .panel-action i {
+      transform: translateX(0.2rem);
+    }
+  }
+
+  @keyframes home-card-arrive {
+    from { transform: translateY(0.7rem); }
+  }
+
+  @keyframes home-section-arrive {
+    from { opacity: 0.55; transform: translateY(1.8rem); }
+    to { opacity: 1; transform: translateY(0); }
   }
 </style>

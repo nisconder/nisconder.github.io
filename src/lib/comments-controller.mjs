@@ -195,6 +195,11 @@ function bindComments() {
           path: root.dataset.walinePath,
           lang: 'zh-CN',
           login: 'enable',
+          locale: {
+            placeholder: '写下你的留言，支持 Markdown…',
+            sofa: '还没有留言，来写第一条吧。',
+            submit: '发送留言',
+          },
           dark: "html[data-theme='dark']",
         })
         root.dataset.walineState = 'ready'

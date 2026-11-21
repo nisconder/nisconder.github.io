@@ -22,6 +22,9 @@ export const getNeteaseAudioUrl = (track: Pick<PlaylistTrack, 'id'>) =>
 export const isPlayableTrack = (track: Pick<PlaylistTrack, 'fee'>) =>
   track.fee === 0 || track.fee === 8
 
+export const getTrackListeningUrl = (track: Pick<PlaylistTrack, 'id' | 'fee'>) =>
+  isPlayableTrack(track) ? `/music/?track=${track.id}` : getNeteaseTrackUrl(track)
+
 const attachAudioSource = (track: PlaylistTrackInput): PlaylistTrack => ({
   ...track,
   audio: track.audio || getNeteaseAudioUrl(track),

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
+import SectionMasthead from '../../components/SectionMasthead.astro'
 import CopySubscriptionUrl from '../../components/CopySubscriptionUrl.astro'
 import subscription from '../../data/gkd-subscription.json'
 
@@ -8,12 +9,8 @@ const gkdUrl = 'https://nisconder.pages.dev/gkd/subscription.json5'
 ---
 
 <BaseLayout title="RSS 与 GKD 订阅" description="订阅 Nisconder 的文章 RSS，或获取 GKD 规则订阅地址。">
+  <SectionMasthead title="RSS 与 GKD 订阅" description="订阅文章更新，或获取 GKD 规则。" />
   <div class="subscribe-page">
-    <header class="page-intro subscribe-intro">
-      <p class="eyebrow">RSS / GKD</p>
-      <h1>RSS 与 GKD 订阅</h1>
-      <p class="lede">订阅文章更新，或获取 GKD 规则。</p>
-    </header>
 
     <section class="subscription-row subscription-row--rss" aria-labelledby="rss-title">
       <div class="subscription-object">
@@ -61,9 +58,7 @@ const gkdUrl = 'https://nisconder.pages.dev/gkd/subscription.json5'
 </BaseLayout>
 
 <style>
-  .subscribe-page { max-width: 62rem; margin-inline: auto; }
-  .subscribe-intro { margin-block-end: 2.5rem; }
-  .subscribe-intro h1 { font-size: clamp(2.25rem, 5vw, 3.5rem); }
+  .subscribe-page { width: 100%; }
   .subscription-row { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: clamp(1.5rem, 4vw, 3rem); padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--color-line-strong); border-inline-start-width: 0.35rem; border-radius: var(--card-radius); background: var(--color-card); }
   .subscription-row + .subscription-row { margin-block-start: 1.25rem; }
   .subscription-row--rss { border-inline-start-color: var(--color-secondary); }

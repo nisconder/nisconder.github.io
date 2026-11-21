@@ -32,9 +32,9 @@ const countedLinks = (html, className) => {
 
 test('homepage article totals include published collection chapters', () => {
   const home = read('dist/index.html')
-  const stats = home.match(/<dl\b[^>]*class="[^"]*\bidentity-panel__stats\b[^"]*"[^>]*>([\s\S]*?)<\/dl>/)?.[1]
-  assert.ok(stats, 'homepage content statistics are rendered')
-  const total = stats.match(/<dt\b[^>]*>\s*文章\s*<\/dt>\s*<dd\b[^>]*>\s*(\d+)\s*<\/dd>/)?.[1]
+  const index = home.match(/<nav\b[^>]*class="[^"]*\bhome-dashboard__index\b[^"]*"[^>]*>([\s\S]*?)<\/nav>/)?.[1]
+  assert.ok(index, 'homepage content index is rendered')
+  const total = index.match(/<a\b[^>]*href="\/articles\/"[^>]*>\s*<span\b[^>]*>\s*文章\s*<\/span>\s*<strong\b[^>]*>\s*(\d+)\s*<\/strong>/)?.[1]
   assert.equal(Number(total), publishedPosts.length, 'homepage counts all published articles, including collection chapters')
 
   const archive = home.match(/<nav\b[^>]*class="[^"]*\bhome-articles__archive\b[^"]*"[^>]*>([\s\S]*?)<\/nav>/)?.[1]

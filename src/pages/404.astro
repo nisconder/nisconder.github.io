@@ -1,4 +1,5 @@
 ---
+import SectionMasthead from "../components/SectionMasthead.astro"
 import BaseLayout from "../layouts/BaseLayout.astro"
 ---
 
@@ -7,49 +8,23 @@ import BaseLayout from "../layouts/BaseLayout.astro"
   description="你访问的页面不存在，或已经移动到新的地址。"
   noindex
 >
-  <section class="not-found" aria-labelledby="not-found-title">
-    <p class="status-code" aria-hidden="true">404</p>
-    <p class="eyebrow">PAGE NOT FOUND</p>
-    <h1 id="not-found-title">没有找到这个页面</h1>
-    <p class="lede">
-      页面可能改了名字，也可能从未存在。可以回到首页，或者直接搜索站内内容。
-    </p>
+  <SectionMasthead id="not-found-title" title="没有找到这个页面" description="页面可能改了名字，也可能从未存在。可以回到首页，或者直接搜索站内内容。">
+    <span class="status-code" slot="before-title">404</span>
     <nav class="not-found__actions" aria-label="继续浏览">
       <a class="button" href="/">返回首页</a>
       <a class="text-link" href="/search/">搜索本站 →</a>
     </nav>
-  </section>
+  </SectionMasthead>
 </BaseLayout>
 
 <style>
-  .not-found {
-    padding-block: clamp(4rem, 14vw, 9rem);
-  }
-
-  .status-code {
-    margin: 0 0 1rem;
-    color: var(--color-line);
-    font-size: clamp(4.5rem, 20vw, 11rem);
-    font-weight: 720;
-    line-height: 0.78;
-    letter-spacing: -0.075em;
-  }
-
-  .not-found h1 {
-    max-width: 18ch;
-    margin-bottom: 1rem;
-  }
-
-  .not-found .lede {
-    max-width: 39rem;
-  }
-
+  .status-code { color: var(--color-primary); font: 700 0.87rem/1.7 var(--font-utility); }
   .not-found__actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.75rem;
-    margin-top: 2rem;
+    margin: 0;
   }
 
   .text-link {

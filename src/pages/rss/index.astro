@@ -1,17 +1,14 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
+import SectionMasthead from '../../components/SectionMasthead.astro'
 import CopySubscriptionUrl from '../../components/CopySubscriptionUrl.astro'
 
 const rssUrl = 'https://nisconder.pages.dev/rss.xml'
 ---
 
 <BaseLayout title="RSS文章订阅" description="将 Nisconder 的文章订阅地址添加到 RSS 阅读器，获取博客新文章。">
+  <SectionMasthead title="RSS文章订阅" description="用 RSS 阅读器获取博客新文章，不必每次回来查看。" />
   <div class="rss-page">
-    <header class="page-intro rss-intro">
-      <p class="eyebrow">RSS / 文章更新</p>
-      <h1>RSS文章订阅</h1>
-      <p class="lede">用 RSS 阅读器获取博客新文章，不必每次回来查看。</p>
-    </header>
 
     <div class="rss-start">
       <section class="rss-address" aria-labelledby="rss-address-title">
@@ -52,9 +49,7 @@ const rssUrl = 'https://nisconder.pages.dev/rss.xml'
 </BaseLayout>
 
 <style>
-  .rss-page { max-width: 62rem; margin-inline: auto; }
-  .rss-intro { margin-block-end: 2rem; }
-  .rss-intro h1 { font-size: clamp(2rem, 5vw, 3.2rem); }
+  .rss-page { width: 100%; }
   .rss-start { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); border: 1px solid var(--color-line-strong); border-block-start: 0.35rem solid var(--color-secondary); border-radius: var(--card-radius); background: var(--color-card); overflow: hidden; }
   .rss-address, .rss-steps { min-width: 0; padding: clamp(1.25rem, 3vw, 2rem); }
   .rss-start h2 { margin: 0 0 1.25rem; font-family: var(--font-display); font-size: var(--title-card); }

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro"
+import SectionMasthead from '../../components/SectionMasthead.astro'
 import { getInterestJourney } from "../../lib/interests"
 
 const interestPoints = await getInterestJourney('about')
@@ -13,72 +14,64 @@ const interestPoints = await getInterestJourney('about')
   commentsDescription="可以介绍自己、提出问题，或留下对本站的反馈。"
   interestPoints={interestPoints}
 >
-  <header class="page-intro">
-    <p class="eyebrow">ABOUT / NISCONDER</p>
-    <h1>关于 Nisconder</h1>
-    <p class="lede">
-      我在这里记录代码、阅读、音乐与生活观察，也公开自己持续维护的项目。
-    </p>
+  <SectionMasthead title="关于 Nisconder" description="我在这里记录代码、阅读、音乐与生活观察，也公开自己持续维护的项目。">
     <nav class="about-compass" aria-label="关于页章节">
       <a href="#writing">正在写什么</a>
       <a href="#site">这个站如何运作</a>
       <a href="#contact">联系方式</a>
     </nav>
-  </header>
+  </SectionMasthead>
 
-  <section id="writing" class="axis-section about-copy" data-note="我在写什么">
-    <h2>我记录的内容</h2>
-    <dl class="about-list">
-      <div>
-        <dt>技术笔记</dt>
-        <dd>写代码时踩过的坑、搭过的服务和折腾过的工具。这个博客本身也是一路实践留下的结果。</dd>
-      </div>
-      <div>
-        <dt>随笔与思考</dt>
-        <dd>关于哲学、社会和文化现象的零碎想法。它们不一定给出答案，但会尽量把问题讲明白。</dd>
-      </div>
-      <div>
-        <dt>音乐收藏</dt>
-        <dd>用歌单保存某个阶段反复听过的音乐，偶尔也写几句与音乐有关的记忆。</dd>
-      </div>
-      <div>
-        <dt>生活观察</dt>
-        <dd>日常里突然冒出来的感受。没有宏大的主题，只因为当时觉得值得记下一笔。</dd>
-      </div>
-    </dl>
-  </section>
+  <div class="about-sections">
+    <section id="writing" class="about-copy" data-note="我在写什么">
+      <h2>我记录的内容</h2>
+      <dl class="about-list">
+        <div>
+          <dt>技术笔记</dt>
+          <dd>写代码时踩过的坑、搭过的服务和折腾过的工具。这个博客本身也是一路实践留下的结果。</dd>
+        </div>
+        <div>
+          <dt>随笔与思考</dt>
+          <dd>关于哲学、社会和文化现象的零碎想法。它们不一定给出答案，但会尽量把问题讲明白。</dd>
+        </div>
+        <div>
+          <dt>音乐收藏</dt>
+          <dd>用歌单保存某个阶段反复听过的音乐，偶尔也写几句与音乐有关的记忆。</dd>
+        </div>
+        <div>
+          <dt>生活观察</dt>
+          <dd>日常里突然冒出来的感受。没有宏大的主题，只因为当时觉得值得记下一笔。</dd>
+        </div>
+      </dl>
+    </section>
 
-  <section id="site" class="axis-section about-copy about-copy--offset" data-note="关于本站">
-    <h2>这个网站</h2>
-    <p>
-      站点由 Astro 生成静态页面并部署在 Cloudflare Pages。文章保存在仓库中，页面尽量少依赖客户端脚本，让阅读本身保持直接、稳定。
-    </p>
-    <p>
-      这里不会追求高频更新。比起填满时间线，我更在意一篇文字过一段时间再看，仍然说得通。
-    </p>
-  </section>
+    <section id="site" class="about-copy" data-note="关于本站">
+      <h2>这个网站</h2>
+      <p>
+        站点由 Astro 生成静态页面并部署在 Cloudflare Pages。文章保存在仓库中，页面尽量少依赖客户端脚本，让阅读本身保持直接、稳定。
+      </p>
+      <p>
+        这里不会追求高频更新。比起填满时间线，我更在意一篇文字过一段时间再看，仍然说得通。
+      </p>
+    </section>
 
-  <section id="contact" class="axis-section about-copy" data-note="联系">
-    <h2>找到我</h2>
-    <ul class="contact-list">
-      <li>
-        <span>GitHub</span>
-        <a href="https://github.com/nisconder" rel="me noreferrer">github.com/nisconder</a>
-      </li>
-      <li>
-        <span>邮箱</span>
-        <a href="mailto:72447244.wnm@gmail.com">72447244.wnm@gmail.com</a>
-      </li>
-    </ul>
-  </section>
-
+    <section id="contact" class="about-copy" data-note="联系">
+      <h2>找到我</h2>
+      <ul class="contact-list">
+        <li>
+          <span>GitHub</span>
+          <a href="https://github.com/nisconder" rel="me noreferrer">github.com/nisconder</a>
+        </li>
+        <li>
+          <span>邮箱</span>
+          <a href="mailto:72447244.wnm@gmail.com">72447244.wnm@gmail.com</a>
+        </li>
+      </ul>
+    </section>
+  </div>
 </BaseLayout>
 
 <style>
-  .page-intro h1 {
-    max-width: 17ch;
-  }
-
   .about-list {
     margin: 1.5rem 0 0;
   }
@@ -88,8 +81,6 @@ const interestPoints = await getInterestJourney('about')
     flex-wrap: wrap;
     gap: 0 1.25rem;
     max-width: 39rem;
-    margin-top: 1.65rem;
-    border-block: 1px solid var(--color-line);
   }
 
   .about-compass a {
@@ -109,9 +100,20 @@ const interestPoints = await getInterestJourney('about')
     text-underline-offset: 0.25em;
   }
 
+  .about-sections { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); gap: 1rem; }
   .about-copy {
-    max-width: var(--content-width);
+    min-width: 0;
+    padding: clamp(1.15rem, 2.9vw, 2rem);
+    border: 1px solid var(--color-line);
+    border-radius: var(--card-radius);
+    background: var(--color-card);
   }
+  .about-copy:first-child {
+    grid-row: span 2;
+    border-block-start: 3px solid var(--color-primary);
+    background: var(--feature-surface);
+  }
+  .about-copy > :last-child { margin-block-end: 0; }
 
   .about-copy h2 {
     margin-bottom: 1rem;
@@ -175,19 +177,12 @@ const interestPoints = await getInterestJourney('about')
     text-underline-offset: 0.25em;
   }
 
-  @media (min-width: 52rem) {
-    .about-copy--offset {
-      width: calc(100% - 2.5rem);
-      margin-inline-start: 2.5rem;
-    }
-
+  @media (max-width: 54rem) {
+    .about-sections { grid-template-columns: minmax(0, 1fr); }
+    .about-copy:first-child { grid-row: auto; }
   }
 
   @media (max-width: 38rem) {
-    .page-intro h1 br {
-      display: none;
-    }
-
     .about-list > div,
     .contact-list li {
       grid-template-columns: 1fr;
@@ -195,13 +190,7 @@ const interestPoints = await getInterestJourney('about')
     }
 
     .about-compass {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0;
-    }
-
-    .about-compass a + a {
-      border-block-start: 1px solid var(--color-line);
+      gap: 0 0.85rem;
     }
 
   }

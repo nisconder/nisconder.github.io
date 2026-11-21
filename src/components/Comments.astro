@@ -1,4 +1,6 @@
 ---
+import '../styles/waline.css'
+
 interface Props {
   path?: string | URL
   title?: string
@@ -22,6 +24,7 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
   data-site-comments
 >
   <header class="site-comments__header">
+    <span class="site-comments__icon" aria-hidden="true"><i></i><i></i></span>
     <div class="site-comments__heading">
       <h2 id="comments-title">{title}</h2>
       <p>{description}</p>
@@ -50,179 +53,100 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
 
 <style>
   .site-comments {
-    position: relative;
     width: min(100%, var(--discussion-width));
-    margin: clamp(2.5rem, 5vw, 4.5rem) auto 0;
-    padding-block-start: clamp(1.5rem, 2.5vw, 2rem);
-    overflow: visible;
-    border-block-start: 1px solid var(--color-line-strong);
+    margin: clamp(2rem, 5vw, 4rem) auto 0;
+    border: 1px solid var(--masthead-line);
+    border-radius: var(--card-radius);
+    background: var(--color-card);
+    scroll-margin-block-start: 1rem;
   }
-
   .site-comments__header {
     display: flex;
-    align-items: end;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-block-end: clamp(1.25rem, 2.5vw, 1.75rem);
-  }
-
-  .site-comments__heading {
-    display: grid;
-    min-width: 0;
-    flex: 1 1 auto;
-    grid-template-columns: minmax(14rem, 0.7fr) minmax(22rem, 1.3fr);
-    align-items: end;
-    gap: 1rem clamp(2rem, 7vw, 6rem);
-  }
-
-  .site-comments__heading h2,
-  .site-comments__heading p {
-    margin: 0;
-  }
-
-  .site-comments__heading h2 {
-    font-size: clamp(1.6rem, 2.7vw, 2.15rem);
-    line-height: 1.25;
-  }
-
-  .site-comments__heading > p:last-child {
-    max-width: 50ch;
-  }
-
-  .site-comments__heading > p:last-child,
-  .site-comments__status {
-    color: var(--color-muted);
-    font-size: var(--text-sm);
-    line-height: 1.65;
-  }
-
-  .site-comments__toggle {
-    display: inline-grid;
-    min-width: 7.75rem;
-    min-height: 2.75rem;
-    flex: 0 0 auto;
-    grid-template-columns: auto 1.4rem;
     align-items: center;
-    gap: 0.55rem;
-    padding-inline: 1rem;
-    border: 1px solid var(--color-primary);
-    border-inline-end: 0.3rem solid var(--color-secondary);
-    border-radius: var(--card-radius);
-    background: var(--color-reading-panel);
-    color: var(--color-on-reading-panel);
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 750;
-    transition:
-      background-color var(--motion-feedback) ease,
-      border-color var(--motion-feedback) ease,
-      color var(--motion-feedback) ease;
+    gap: clamp(.75rem, 2vw, 1.2rem);
+    padding: clamp(1rem, 2.7vw, 1.8rem);
+    border-radius: var(--card-radius) var(--card-radius) 0 0;
+    background: var(--masthead-surface);
   }
-
-  .site-comments__toggle-mark {
+  .site-comments__icon {
     position: relative;
-    display: block;
-    width: 1.25rem;
-    height: 1.25rem;
+    flex: none;
+    width: 2.8rem;
+    height: 2.8rem;
+    color: var(--color-primary);
   }
-
-  .site-comments__toggle-mark::before,
-  .site-comments__toggle-mark::after {
+  .site-comments__icon i {
     position: absolute;
-    inset-block-start: 50%;
-    inset-inline-start: 50%;
-    width: 0.9rem;
-    height: 0.1rem;
-    border-radius: 999px;
-    background: currentColor;
+    width: 1.85rem;
+    height: 1.45rem;
+    border: 1.8px solid currentColor;
+    border-radius: .55rem .55rem .55rem .12rem;
+  }
+  .site-comments__icon i:first-child {
+    right: .15rem;
+    bottom: .34rem;
+    color: var(--color-secondary);
+    background: var(--color-secondary-soft);
+    transform: scaleX(-1);
+  }
+  .site-comments__icon i:last-child {
+    top: .28rem;
+    left: .12rem;
+    background: var(--color-primary-soft);
+  }
+  .site-comments__icon i:last-child::after {
+    position: absolute;
+    inset: .45rem .38rem auto;
+    border-top: 2px solid currentColor;
     content: '';
-    transition: transform 220ms ease;
   }
-
-  .site-comments__toggle-mark::before {
-    transform: translate(-50%, -50%);
+  .site-comments__heading { flex: 1; min-width: 0; }
+  .site-comments__heading h2 {
+    margin: 0;
+    color: var(--color-heading);
+    font: 720 clamp(1.4rem, 2.6vw, 1.95rem)/1.22 var(--font-display);
+    letter-spacing: -.035em;
   }
-
-  .site-comments__toggle-mark::after {
-    transform: translate(-50%, -50%) rotate(90deg);
+  .site-comments__heading p, .site-comments__status, .site-comments noscript {
+    color: var(--color-muted);
+    font: 400 var(--text-sm)/1.65 var(--font-body);
   }
-
-  .site-comments__toggle[aria-expanded='true'] .site-comments__toggle-mark::before {
-    transform: translate(-50%, -50%) rotate(45deg);
+  .site-comments__heading p { margin: .32rem 0 0; }
+  .site-comments__status { margin: 0; padding: .8rem 0; }
+  .site-comments__status[hidden], .site-comments__toggle[hidden], .site-comments__body[hidden] { display: none; }
+  .site-comments__toggle {
+    display: inline-flex;
+    flex: none;
+    min-height: 2.75rem;
+    align-items: center;
+    gap: .62rem;
+    padding: .35rem .75rem;
+    border: 1px solid var(--masthead-line);
+    border-radius: var(--control-radius);
+    background: var(--color-surface);
+    color: var(--color-primary);
+    font: 650 .83rem/1.2 var(--font-body);
+    cursor: pointer;
   }
-
-  .site-comments__toggle[aria-expanded='true'] .site-comments__toggle-mark::after {
-    transform: translate(-50%, -50%) rotate(135deg);
+  .site-comments__toggle-mark {
+    width: .48rem;
+    height: .48rem;
+    border-bottom: 1.7px solid currentColor;
+    border-right: 1.7px solid currentColor;
+    transform: translateY(-.1rem) rotate(45deg);
+    transition: transform var(--motion-feedback) ease;
   }
-
-  .site-comments__body {
-    min-width: 0;
-  }
-
-  .site-comments :global(.wl-editor) {
-    height: 7.25rem !important;
-    min-height: 7.25rem !important;
-    max-height: 18rem !important;
-    resize: vertical !important;
-  }
-
-  .site-comments :global(.wl-actions a[href*='markdown' i]),
-  .site-comments :global(.wl-actions [aria-label*='markdown' i]),
-  .site-comments :global(.wl-actions [title*='markdown' i]) {
-    display: none !important;
-  }
-
+  .site-comments__toggle[aria-expanded='true'] .site-comments__toggle-mark { transform: translateY(.1rem) rotate(225deg); }
+  .site-comments__body { min-width: 0; padding: clamp(.85rem, 2.6vw, 1.75rem); }
   @media (max-width: 44rem) {
-    .site-comments {
-      margin-block-start: 2rem;
-      padding-block-start: 1.5rem;
-    }
-
-    .site-comments__header {
-      align-items: center;
-      gap: 0.75rem;
-      margin-block-end: 0;
-    }
-
-    .site-comments__heading {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 0.35rem;
-    }
-
-    .site-comments__heading h2 {
-      font-size: 1.35rem;
-    }
-
-    .site-comments__heading > p:last-child {
-      display: none;
-    }
-
-    .site-comments__body {
-      margin-block-start: 1rem;
-    }
-
-    .site-comments :global(.wl-header) {
-      grid-template-columns: minmax(0, 1fr) !important;
-      gap: 0.6rem !important;
-    }
-
-    .site-comments :global(.wl-editor) {
-      height: 6.75rem !important;
-      min-height: 6.75rem !important;
-      max-height: 14rem !important;
-    }
-
-    .site-comments:not([data-comments-bound]) .site-comments__body {
-      display: none;
-    }
+    .site-comments__header { flex-wrap: wrap; gap: .65rem; }
+    .site-comments[data-comments-expanded='false'] .site-comments__header { border-radius: var(--card-radius); }
+    .site-comments__heading p { display: none; }
+    .site-comments__icon { width: 2.1rem; height: 2.1rem; }
+    .site-comments__icon i { width: 1.45rem; height: 1.1rem; }
+    .site-comments__icon i:last-child::after { inset: .33rem .25rem auto; }
   }
-
-  @media (prefers-reduced-motion: reduce) {
-    .site-comments__toggle-mark::before,
-    .site-comments__toggle-mark::after {
-      transition: none;
-    }
-  }
+  @media (prefers-reduced-motion: reduce) { .site-comments__toggle-mark { transition: none; } }
 </style>
 
 <script>

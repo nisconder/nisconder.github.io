@@ -1,0 +1,305 @@
+---
+import ListeningAudio from './ListeningAudio.astro'
+import { getTrackListeningUrl, isPlayableTrack, type PlaylistTrack } from '../lib/playlist'
+
+interface Props {
+  track: PlaylistTrack
+  mode?: 'preview' | 'player'
+}
+
+const { track, mode = 'preview' } = Astro.props
+const studio = mode === 'player'
+const playable = isPlayableTrack(track)
+---
+
+<record-turntable
+  class:list={['turntable', { 'turntable--studio': studio }]}
+  data-mode={mode}
+  data-track-id={track.id}
+  data-preview-src={!studio && playable ? track.audio : undefined}
+>
+  <div class="turntable__deck">
+    <div class="turntable__chassis" aria-hidden="true">
+      <div class="turntable__platter">
+        <div class="turntable__record" data-record>
+          <span class="turntable__label" data-record-label></span>
+        </div>
+      </div>
+      <span class="turntable__arm"></span>
+      <span class="turntable__lamp"></span>
+    </div>
+    {playable && <button class="turntable__surface" type="button" data-disc-surface aria-label={`播放《${track.title}》`} hidden={!studio}></button>}
+  </div>
+  <div class="turntable__notes">
+    <p>{studio ? '当前曲目' : <span data-preview-status role="status">歌单选曲</span>}{studio && <span class="turntable__position" data-disc-position></span>}</p>
+    {studio ? (
+      <h2 class="turntable__track" data-disc-title>{track.title}</h2>
+    ) : (
+      <strong class="turntable__track" data-disc-title>{track.title}</strong>
+    )}
+    <small data-disc-artist>{track.author}</small>
+    {!studio && <div class="turntable__actions">
+      {playable && <button type="button" class="turntable__control" data-preview-toggle hidden>
+        <span class="turntable__icon" aria-hidden="true"></span>
+        <span data-control-label>试听</span>
+      </button>}
+      <a class="turntable__listen" href={getTrackListeningUrl(track)}>{playable ? '打开歌单' : '在网易云打开'} <span aria-hidden="true">→</span></a>
+    </div>}
+  </div>
+  {!studio && playable && <ListeningAudio />}
+  {studio && <slot />}
+</record-turntable>
+
+<script>
+  import { bindRecordPreview } from '../lib/record-preview'
+  import { bindDeckTilt } from '../lib/deck-tilt'
+  import { getRecordPrintPosition } from '../lib/record-prints'
+
+  customElements.define('record-turntable', class extends HTMLElement {
+    static observedAttributes = ['data-track-id']
+    private events?: AbortController
+
+    private showPrint() {
+      const label = this.querySelector<HTMLElement>('[data-record-label]')
+      if (label && this.dataset.trackId) label.style.backgroundPositionY = getRecordPrintPosition(this.dataset.trackId)
+    }
+
+    attributeChangedCallback() { this.showPrint() }
+
+    connectedCallback() {
+      this.events = new AbortController()
+      const { signal } = this.events
+      const stage = this.querySelector<HTMLElement>('.turntable__deck')
+      const chassis = this.querySelector<HTMLElement>('.turntable__chassis')
+      if (stage && chassis) bindDeckTilt(stage, chassis, signal)
+      let inView = false
+      const syncVisibility = () => this.toggleAttribute('data-in-view', inView && !document.hidden)
+      const observer = new IntersectionObserver(([entry]) => {
+        inView = entry.isIntersecting
+        syncVisibility()
+      })
+      observer.observe(this)
+      document.addEventListener('visibilitychange', syncVisibility, { signal })
+      signal.addEventListener('abort', () => observer.disconnect(), { once: true })
+
+      // Astro replaces newly inserted media after connectedCallback during a page swap.
+      queueMicrotask(() => {
+        if (signal.aborted) return
+        this.showPrint()
+        const audio = this.querySelector<HTMLAudioElement>('[data-native-audio]')
+        if (audio && this.dataset.previewSrc) bindRecordPreview(this, audio, signal)
+      })
+    }
+
+    disconnectedCallback() {
+      this.events?.abort()
+    }
+  })
+</script>
+
+<style>
+  .turntable {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.27fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(0.55rem, 1.6vw, 1.3rem);
+    padding: clamp(0.8rem, 1.8vw, 1.45rem);
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--card-radius);
+    background: var(--color-surface);
+  }
+  .turntable[data-mode='preview'] {
+    --color-heading: #fff7dd;
+    --color-text: #f1eddb;
+    --color-muted: #c1cfc6;
+    --color-primary: var(--deck-key);
+    --color-on-primary: var(--deck-key-ink);
+    border-color: var(--deck-edge);
+    background: var(--deck-finish);
+    box-shadow: inset 0 1px #ffffff24, 0 3px 0 #1a2e2d, 0 9px 18px -12px #071a16aa;
+  }
+  .turntable__deck { position: relative; aspect-ratio: 1.28; perspective: 560px; }
+  .turntable__chassis {
+    position: absolute;
+    inset: 4% 3% 9%;
+    border: 1px solid #cad6c0;
+    border-radius: 7% / 9%;
+    background: linear-gradient(135deg, #d0d5be, #aabbb0 45%, #879c93);
+    box-shadow: inset 0 1px #f5f2d9, 0 2px #8b9c90, 0 5px #61776f, 0 8px #425952, 0 14px 13px -6px #101e20aa;
+    transform: rotateX(10deg) rotateY(-5deg) rotateZ(-2deg);
+    transform-style: preserve-3d;
+  }
+  .turntable__platter {
+    position: absolute;
+    inset: 3.5% auto auto 4%;
+    width: 69%;
+    aspect-ratio: 1;
+    border: 1px solid #10191e;
+    border-radius: 50%;
+    background: #4a5861;
+    box-shadow: 0 1px #e0e4ce, 0 3px #53615a, 0 5px 5px #1021257d, inset 0 0 0 1px #a5b1b0;
+    transform: translateZ(4px);
+  }
+  .turntable__record {
+    position: absolute;
+    inset: 1.5%;
+    border-radius: 50%;
+    background:
+      repeating-radial-gradient(circle closest-side, transparent 0 2.6px, #abbfbd30 2.8px 3.6px, transparent 3.8px 4.8px),
+      conic-gradient(from -32deg, #182128, #3e505c 15%, #152027 29%, #11191e 49%, #435661 64%, #172127 79%, #182128);
+    animation: vinyl-rotation 3.6s linear infinite paused;
+  }
+  @keyframes vinyl-rotation { to { transform: rotate(1turn); } }
+  .turntable__label {
+    position: absolute;
+    inset: 31%;
+    overflow: hidden;
+    border: 1px solid #17212a;
+    border-radius: 50%;
+    background: #e9d9b7 url('../assets/record-labels.webp') center top / 100% auto no-repeat;
+  }
+  @media (min-resolution: 1.5dppx) {
+    .turntable__label { background-image: url('../assets/record-labels-hd.webp'); }
+  }
+  .turntable__label::before {
+    position: absolute;
+    inset: 4%;
+    border: 1px solid #3937353b;
+    border-radius: 50%;
+    content: '';
+  }
+  .turntable__label::after {
+    position: absolute;
+    inset: 46%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 34%, #f1e9d1, #9aa7a3 56%, #283d42 70%);
+    box-shadow: 0 0 0 1px #27353980;
+    content: '';
+  }
+
+  .turntable__arm {
+    position: absolute;
+    inset: 15% auto auto 82%;
+    width: 4px;
+    height: 61%;
+    border-radius: 3px;
+    background: linear-gradient(to right, #455861, #eff2e9 48%, #617079);
+    box-shadow: 1px 2px 2px #0b1a2259;
+    transform: translateZ(10px) rotate(-7deg);
+    transform-origin: 50% 0;
+  }
+
+  .turntable__arm::before,
+  .turntable__arm::after {
+    position: absolute;
+    content: '';
+  }
+
+  .turntable__arm::before {
+    inset: -6px auto auto -5px;
+    width: 14px;
+    height: 14px;
+    border: 1px solid #40515a;
+    border-radius: 50%;
+    background: radial-gradient(circle, #29373e 0 20%, #cbd0c7 21% 55%, #788b91 56%);
+  }
+
+  .turntable__arm::after {
+    inset: auto auto -4px -4px;
+    width: 10px;
+    height: 18%;
+    border: 1px solid #182a30;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #647b80, #d7d7bb);
+    transform: rotate(12deg);
+  }
+
+  .turntable[data-playing] .turntable__arm { transform: translateZ(10px) rotate(30deg); }
+  .turntable__lamp {
+    position: absolute;
+    inset: auto 9% 11% auto;
+    width: 5px;
+    height: 5px;
+    border: 1px solid #405751;
+    border-radius: 50%;
+    background: #697a70;
+  }
+  .turntable[data-playing] .turntable__lamp { background: #fbe197; box-shadow: 0 0 4px #ffe6a4; }
+
+  .turntable__surface:not([hidden]) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 0.75rem;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  .turntable__surface:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+  .turntable--studio .turntable__surface:focus-visible { outline-color: #f4d6a8; }
+
+  .turntable__notes { min-width: 0; }
+  .turntable__notes p, .turntable__notes small { display: block; margin: 0; color: var(--color-muted); font-size: var(--text-xs); }
+  .turntable__track {
+    display: block;
+    margin: 0.3rem 0 0.2rem;
+    color: var(--color-heading);
+    font-size: clamp(0.96rem, 1.35vw, 1.18rem);
+    font-weight: 700;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .turntable__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.15rem 0.8rem; margin-block-start: 0.5rem; }
+  .turntable__listen { display: inline-flex; min-height: 2.75rem; align-items: center; gap: 0.3rem; color: var(--color-primary); font-size: var(--text-xs); font-weight: 650; }
+  .turntable__control:not([hidden]) {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
+    min-height: 2.75rem; padding: 0 0.9rem; border: 1px solid transparent; border-radius: 2rem;
+    background: var(--color-primary); color: var(--color-on-primary, var(--color-surface)); font: 700 var(--text-xs)/1 var(--font-body); cursor: pointer;
+  }
+  .turntable__control:is(:hover, :focus-visible) { box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 3px var(--color-primary); }
+  .turntable__icon { width: 0.55rem; height: 0.63rem; background: currentColor; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+  .turntable[data-playing] .turntable__icon { border-inline: 3px solid currentColor; background: transparent; clip-path: none; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .turntable__arm { transition: transform 480ms var(--ease-settle); }
+    .turntable[data-playing][data-in-view] .turntable__record { animation-play-state: running; }
+    .turntable__chassis { transition: transform 320ms var(--ease-settle); }
+    .turntable__deck[data-tilting] .turntable__chassis { transition-duration: 85ms; }
+    .turntable__deck:has(.turntable__surface:active) .turntable__chassis { translate: 0 2px; }
+  }
+
+  .turntable--studio {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'disc controls' 'notes notes';
+    gap: 1.2rem 0.85rem;
+    padding: clamp(1.25rem, 3vw, 2rem);
+    border: 0; border-radius: inherit; background: transparent;
+  }
+  .turntable--studio .turntable__deck { grid-area: disc; width: min(100%, 20rem); justify-self: center; }
+  .turntable--studio .turntable__notes { grid-area: notes; }
+  .turntable--studio > :global(.studio-transport) { grid-area: controls; flex-direction: column; }
+  .turntable--studio .turntable__track {
+    margin: 0.35rem 0 0.2rem; color: #fff6e5;
+    font: 700 clamp(1.3rem, 2.6vw, 2rem)/1.22 var(--font-display);
+    letter-spacing: -0.03em; text-wrap: balance;
+  }
+  .turntable--studio .turntable__notes :is(p, small) { color: #c0d0cc; }
+  .turntable--studio .turntable__notes small { font-size: var(--text-sm); }
+  .turntable__position { margin-inline-start: 0.7rem; font-family: var(--font-utility); }
+  @media (max-width: 30rem) {
+    .turntable[data-mode='preview'] {
+      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+      padding: 0.65rem 1rem;
+      gap: 0.65rem;
+    }
+    .turntable[data-mode='preview'] .turntable__actions { gap: 0 0.5rem; margin-block-start: 0.25rem; }
+    .turntable[data-mode='preview'] .turntable__control { padding-inline: 0.65rem; }
+  }
+  @media (max-width: 43rem) {
+    .turntable--studio { grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); grid-template-areas: 'disc notes' 'controls controls'; gap: 1rem; }
+    .turntable--studio > :global(.studio-transport) { flex-direction: row; }
+  }
+</style>

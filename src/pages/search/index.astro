@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro"
+import SectionMasthead from '../../components/SectionMasthead.astro'
 import { softwareProjects } from "../../data/software"
 import { getInterestJourney } from "../../lib/interests"
 import { getPostCategory, getPostTags, getPublishedPosts } from "../../lib/posts"
@@ -33,17 +34,12 @@ const compactJson = JSON.stringify({
   noindex
   interestPoints={interestPoints}
 >
-  <header class="page-intro search-intro">
-    <p class="eyebrow">SEARCH / ARCHIVE</p>
-    <h1>搜索文章、合集与项目</h1>
-    <p class="lede">
-      文章正文与合集目录已纳入索引，也可以按项目、分类或标签查找。
-    </p>
+  <SectionMasthead title="站内搜索" description="查找文章正文、系列目录和项目说明，也可以按分类或标签浏览。">
     <nav class="query-seeds" aria-label="常用搜索主题">
       <span>常见标签</span>
       {querySeeds.map((seed) => <a href={`/search/?q=${encodeURIComponent(seed)}`}>{seed}</a>)}
     </nav>
-  </header>
+  </SectionMasthead>
 
   <section class="axis-section" data-note="搜索" aria-label="搜索">
     <form class="search-form" action="/search/" method="get" role="search" data-search-form>
@@ -110,18 +106,12 @@ const compactJson = JSON.stringify({
 </script>
 
 <style>
-  .search-intro h1 {
-    max-width: 17ch;
-  }
-
   .query-seeds {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.2rem 1rem;
     max-width: 39rem;
-    margin-top: 1.65rem;
-    border-block: 1px solid var(--color-line);
   }
 
   .query-seeds span {
@@ -402,9 +392,6 @@ const compactJson = JSON.stringify({
   }
 
   @media (max-width: 38rem) {
-    .search-intro h1 br {
-      display: none;
-    }
 
     .query-seeds {
       gap-inline: 0.75rem;

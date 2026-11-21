@@ -6,10 +6,11 @@ interface Props {
   startIndex?: number
   indexes?: number[]
   playerIndexes?: number[]
+  previewCount?: number
   label: string
 }
 
-const { tracks, startIndex = 0, indexes, playerIndexes, label } = Astro.props
+const { tracks, startIndex = 0, indexes, playerIndexes, previewCount, label } = Astro.props
 ---
 
 <ol class="track-list" start={startIndex + 1} aria-label={label}>
@@ -22,7 +23,7 @@ const { tracks, startIndex = 0, indexes, playerIndexes, label } = Astro.props
       const neteaseUrl = getNeteaseTrackUrl(track)
 
       return (
-        <li class:list={{ "track-row": true, "track-row--external": !playable }}>
+        <li class:list={{ "track-row": true, "track-row--external": !playable }} data-playlist-extra={previewCount !== undefined && localIndex >= previewCount ? '' : undefined}>
           {
             playable ? (
               <button
@@ -56,6 +57,13 @@ const { tracks, startIndex = 0, indexes, playerIndexes, label } = Astro.props
               </a>
             )
           }
+          {playable && <noscript>
+            <a class="track-row__control" href={neteaseUrl} target="_blank" rel="noreferrer">
+              <span class="track-row__number">{number}</span>
+              <span class="track-row__copy"><strong>{track.title}</strong><small>{track.author}</small></span>
+              <span class="track-row__state">网易云 ↗</span>
+            </a>
+          </noscript>}
         </li>
       )
     })
@@ -103,8 +111,9 @@ const { tracks, startIndex = 0, indexes, playerIndexes, label } = Astro.props
   }
 
   .track-row__control[aria-current='true'] {
-    background: var(--color-reading-panel);
-    color: var(--color-on-reading-panel);
+    background: var(--color-primary-soft);
+    box-shadow: inset 3px 0 var(--color-primary);
+    color: var(--color-text);
   }
 
   .track-row__control[data-track-error='true'] {

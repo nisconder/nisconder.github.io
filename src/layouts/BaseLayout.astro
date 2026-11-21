@@ -112,7 +112,7 @@ const articleStructuredDataJson = articleStructuredData
     <meta name="application-name" content={siteName} />
     <meta name="apple-mobile-web-app-title" content={siteName} />
     <meta name="description" content={description} />
-    <meta id="theme-color" name="theme-color" content="#e8f0f2" />
+    <meta id="theme-color" name="theme-color" content="#f6f8f7" />
     {noindex && <meta name="robots" content="noindex, follow" />}
 
     <link rel="canonical" href={canonicalUrl} />
@@ -171,7 +171,7 @@ const articleStructuredDataJson = articleStructuredData
 
         root.dataset.theme = theme
         root.style.colorScheme = theme
-        document.querySelector('#theme-color')?.setAttribute('content', theme === 'dark' ? '#0b1114' : '#e8f0f2')
+        document.querySelector('#theme-color')?.setAttribute('content', theme === 'dark' ? '#0b1114' : '#f6f8f7')
       })()
     </script>
   </head>

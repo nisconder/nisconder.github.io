@@ -77,6 +77,7 @@ const isCurrent = (href: string) =>
   .site-header {
     background: var(--color-surface);
   }
+  .site-brand__word { font: 680 1.36rem/1 var(--font-display); letter-spacing: -0.045em; }
 
   .site-header__inner {
     display: grid;
@@ -110,6 +111,7 @@ const isCurrent = (href: string) =>
     width: 1.35rem;
     height: 1.2rem;
     flex: 0 0 auto;
+    perspective: 75px;
   }
 
   .site-brand__mark span {
@@ -129,6 +131,11 @@ const isCurrent = (href: string) =>
     inset-inline-end: 0;
     background: var(--color-secondary);
   }
+  @media (prefers-reduced-motion: no-preference) {
+    .site-brand__mark span { transition: transform 260ms var(--ease-settle); }
+    .site-brand:is(:hover, :focus-visible) .site-brand__mark span:first-child { transform: translate(-1px,-1px) rotateY(-24deg); }
+    .site-brand:is(:hover, :focus-visible) .site-brand__mark span:last-child { transform: translate(2px,1px) rotateY(24deg); }
+  }
 
   .site-nav {
     display: flex;
@@ -147,12 +154,12 @@ const isCurrent = (href: string) =>
   }
 
   .site-nav > a {
+    position: relative;
     display: inline-flex;
     min-height: 2.75rem;
     align-items: center;
     padding-inline: clamp(0.45rem, 1.1vw, 0.7rem);
-    border-block-end: 2px solid transparent;
-    border-radius: var(--card-radius);
+    border-radius: 0.45rem;
     color: var(--color-muted);
     font-size: 0.875rem;
     font-weight: 650;
@@ -171,7 +178,7 @@ const isCurrent = (href: string) =>
     gap: 0.4rem;
     padding-inline: 0.65rem;
     border: 1px solid var(--color-line-strong);
-    border-radius: var(--card-radius);
+    border-radius: var(--control-radius);
     background: var(--color-surface);
     color: var(--color-text);
     font-size: 0.8125rem;
@@ -205,6 +212,7 @@ const isCurrent = (href: string) =>
   }
 
   .site-tool-mark svg:last-child {
+    opacity: 0.32;
     color: var(--color-secondary);
     transform: translate(1.5px, 1.5px);
   }
@@ -257,18 +265,32 @@ const isCurrent = (href: string) =>
   }
 
   .site-search-mark > span:last-child {
+    opacity: 0.32;
     color: var(--color-secondary);
     transform: translate(1.5px, 1.5px);
   }
 
-  .site-nav > a:hover,
-  .site-nav > a[aria-current='page'] {
+  .site-nav > a:is(:hover, :focus-visible, [aria-current='page']) {
     color: var(--color-primary);
-    border-block-end-color: var(--color-secondary);
     background: var(--color-primary-soft);
     text-decoration: none;
   }
 
+  .site-nav > a::after {
+    position: absolute;
+    inset: auto 24% 0.28rem;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--color-primary);
+    content: '';
+    transform: scaleX(0);
+  }
+
+  .site-nav > a[aria-current='page']::after { transform: scaleX(1); }
+  @media (prefers-reduced-motion: no-preference) {
+    .site-nav > a[aria-current='page']::after { animation: nav-current-in 260ms var(--ease-settle); }
+    @keyframes nav-current-in { from { transform: scaleX(0); } }
+  }
   .site-tool-link:hover,
   .site-tool-link[aria-current='page'],
   .site-search-link:hover,
@@ -295,7 +317,7 @@ const isCurrent = (href: string) =>
   .site-header__signal {
     position: relative;
     display: grid;
-    height: 2px;
+    height: 1px;
     grid-template-columns: minmax(2rem, 38%) 1fr;
     overflow: hidden;
   }
@@ -327,13 +349,7 @@ const isCurrent = (href: string) =>
     white-space: nowrap;
   }
 
-  .site-header__signal span:first-child {
-    background: var(--color-reading-panel);
-  }
-
-  .site-header__signal span:last-child {
-    background: var(--color-media-panel);
-  }
+  .site-header__signal span { background: var(--color-line); }
 
   @media (max-width: 56rem) {
     .site-header__inner {
@@ -416,9 +432,8 @@ const isCurrent = (href: string) =>
   }
 
   @media (max-width: 22rem) {
-    .site-brand__word {
-      display: none;
-    }
+    .site-brand__word { font-size: 1.12rem; }
+    .site-brand__mark { display: none; }
   }
 
   @media (prefers-reduced-motion: reduce) {

@@ -3,6 +3,9 @@ import { readFileSync } from 'node:fs'
 import { setImmediate as nextTurn } from 'node:timers/promises'
 import test from 'node:test'
 import vm from 'node:vm'
+import { bindRecordPreview } from '../../src/lib/record-preview.ts'
+import { getRecordPrintPosition } from '../../src/lib/record-prints.ts'
+import prints from '../../src/data/record-prints.json' with { type: 'json' }
 
 const source = readFileSync(new URL('../../src/pages/music/index.astro', import.meta.url), 'utf8')
 const script = source.match(/<script is:inline data-astro-rerun>([\s\S]*?)<\/script>/)?.[1]
@@ -24,6 +27,8 @@ class Element extends EventTarget {
 
   setAttribute(key, value) { this.attributes.set(key, String(value)) }
   getAttribute(key) { return this.attributes.get(key) ?? null }
+  hasAttribute(key) { return this.attributes.has(key) }
+  removeAttribute(key) { this.attributes.delete(key) }
   toggleAttribute(key, value) {
     if (value) this.setAttribute(key, '')
     else this.attributes.delete(key)
@@ -53,7 +58,7 @@ class Element extends EventTarget {
   }
 }
 
-const setup = () => {
+const setup = (search = '') => {
   const head = new Element('head')
   const siteStyle = new Element('link')
   siteStyle.href = '/_astro/music.css'
@@ -72,7 +77,8 @@ const setup = () => {
     nodes = new Map(['music-studio', 'aplayer-mount', 'player-shell', 'player-status', 'player-tracks']
       .map((name) => [`[data-${name}]`, new Element()]))
     nodes.get('[data-player-tracks]').textContent = JSON.stringify([
-      { name: 'Test track', artist: 'Test artist', url: 'https://example.test/audio.mp3', cover: '/cover.png' },
+      { id: '11', name: 'Test track', artist: 'Test artist', url: 'https://example.test/audio.mp3' },
+      { id: '22', name: 'Second track', artist: 'Second artist', url: 'https://example.test/second.mp3' },
     ])
   }
   makePage()
@@ -90,7 +96,7 @@ const setup = () => {
   class Player {
     constructor(options) {
       this.options = options
-      this.list = { index: 0 }
+      this.list = { index: 0, switch: index => { this.list.index = index } }
       this.audio = { paused: true, duration: Number.NaN, pause() { this.paused = true }, removeAttribute() {}, load() {} }
       this.destroyed = false
       instances.push(this)
@@ -100,6 +106,7 @@ const setup = () => {
     destroy() { this.destroyed = true }
   }
   const window = Object.assign(new EventTarget(), {
+    location: { search },
     matchMedia: () => ({ matches: true }),
     setTimeout: (callback, delay) => {
       const id = ++timerId
@@ -109,7 +116,7 @@ const setup = () => {
     clearTimeout: (id) => timers.delete(id),
   })
   const context = vm.createContext({
-    window, document, HTMLElement: Element, AbortController, DOMException,
+    window, document, HTMLElement: Element, AbortController, DOMException, URLSearchParams,
     requestAnimationFrame: () => 0,
     cancelAnimationFrame() {},
   })
@@ -159,6 +166,83 @@ test('the destination HTML does not contain a render-blocking APlayer stylesheet
   const markup = source.slice(0, source.indexOf('<script is:inline data-astro-rerun>'))
   assert.ok(!markup.includes(cssUrl))
   assert.ok(source.includes(jsUrl), 'APlayer remains pinned to 1.10.1')
+})
+
+test('the home selection opens the same record on the music page', () => {
+  const readBuiltPage = name => readFileSync(new URL('../../dist/' + name, import.meta.url), 'utf8')
+  const home = readBuiltPage('index.html')
+  const music = readBuiltPage('music/index.html')
+  assert.match(music, /<record-turntable\b[^>]*\bdata-mode="player"/)
+  const featured = home.match(/<record-turntable\b[^>]*\bdata-mode="preview"[^>]*>([\s\S]*?)<\/record-turntable>/)
+  assert.ok(featured, 'featured song has a turntable')
+  const id = featured[1].match(/href="\/music\/\?track=(\d+)"/)?.[1]
+  const catalog = JSON.parse(music.match(/<script\b[^>]*\bdata-player-tracks[^>]*>([\s\S]*?)<\/script>/)[1])
+  const selected = catalog.find(track => track.id === id)
+  assert.ok(selected, 'featured song resolves to a playable entry')
+  assert.ok(featured[0].includes('data-preview-src="' + selected.url + '"'))
+  assert.match(featured[0], /<span\b[^>]*\bdata-record-label\b/)
+  assert.doesNotMatch(featured[1], /<img\b/)
+  assert.ok(catalog.every(track => !Object.hasOwn(track, 'cover') && !Object.hasOwn(track, 'labelPosition')))
+  const homeAudio = featured[0].match(/<audio\b[^>]*>/)[0]
+  assert.doesNotMatch(homeAudio, /\s(?:src|autoplay)[\s=>]/)
+  const persist = homeAudio.match(/data-astro-transition-persist="[^"]+"/)[0]
+  assert.ok(music.match(/<audio\b[^>]*>/)[0].includes(persist), 'the same audio can continue into the playlist')
+})
+
+test('records share a shuffled pool and retain their first assigned print when revisited', () => {
+  const tracks = Array.from({ length: prints.length * 3 }, (_, index) => 'test-' + index)
+  const draws = tracks.map(getRecordPrintPosition)
+  for (let i = 0; i < draws.length; i += prints.length) {
+    assert.equal(new Set(draws.slice(i, i + prints.length)).size, prints.length)
+    if (i) assert.notEqual(draws[i], draws[i - 1], 'rounds start with a different print')
+  }
+  assert.equal(new Set(draws).size, prints.length)
+  assert.deepEqual(tracks.toReversed().map(getRecordPrintPosition), draws.toReversed())
+})
+
+test('the home record starts on actual playback and stops on buffering, pause and failure', () => {
+  const deck = new Element()
+  deck.dataset.previewSrc = '/example.mp3'
+  deck.ownerDocument = new EventTarget()
+  const nodes = new Map(['preview-toggle', 'disc-surface', 'control-label', 'preview-status', 'disc-title']
+    .map(key => ['[data-' + key + ']', new Element()]))
+  deck.querySelector = selector => nodes.get(selector)
+  const audio = new Element('audio')
+  audio.paused = true
+  audio.currentTime = 0
+  audio.play = () => { audio.paused = false; return Promise.resolve() }
+  audio.pause = () => { audio.paused = true; audio.dispatchEvent(new Event('pause')) }
+  bindRecordPreview(deck, audio, new AbortController().signal)
+  const spinning = () => deck.hasAttribute('data-playing')
+  const tap = selector => nodes.get(selector).dispatchEvent(new Event('click'))
+  assert.equal(audio.src, undefined)
+  assert.equal(spinning(), false)
+  tap('[data-disc-surface]')
+  assert.equal(audio.src, deck.dataset.previewSrc)
+  assert.equal(spinning(), false, 'a play request alone does not start the animation')
+  audio.dispatchEvent(new Event('playing'))
+  assert.equal(spinning(), true)
+  audio.dispatchEvent(new Event('waiting'))
+  assert.equal(spinning(), false)
+  audio.dispatchEvent(new Event('playing'))
+  tap('[data-preview-toggle]')
+  assert.equal(audio.paused, true)
+  assert.equal(spinning(), false)
+  audio.dispatchEvent(new Event('error'))
+  assert.equal(spinning(), false)
+  assert.equal(nodes.get('[data-control-label]').textContent, '重试')
+})
+
+test('deep links select the requested record without autoplay and tolerate stale song ids', async () => {
+  for (const [search, expected] of [['?track=22', 1], ['?track=missing', 0]]) {
+    const env = setup(search)
+    env.run()
+    env.finishJs()
+    env.finishCss()
+    await nextTurn()
+    assert.equal(env.instances[0].list.index, expected)
+    assert.equal(env.instances[0].audio.paused, true)
+  }
 })
 
 test('JS alone does not mount the player; CSS stays before all site/Waline overrides', async () => {

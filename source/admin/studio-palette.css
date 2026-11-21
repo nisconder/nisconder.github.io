@@ -1,0 +1,24 @@
+:root {
+  color-scheme: light dark;
+  --admin-canvas: light-dark(#f6f8f7, #0b1114);
+  --admin-surface: light-dark(#fff, #182329);
+  --admin-field: light-dark(#fff, #10191c);
+  --admin-surface-muted: light-dark(#edf2ef, #202e30);
+  --admin-heading: light-dark(#172d29, #edf2f2);
+  --admin-text: light-dark(#293933, #d5dee0);
+  --admin-muted: light-dark(#53655e, #a2b1ae);
+  --admin-line: light-dark(#ced9d3, #384a49);
+  --admin-line-strong: light-dark(#9aafa3, #647b74);
+  --admin-brand-600: light-dark(#1e6552, #a2cab1);
+  --admin-brand-700: light-dark(#184d40, #c0e1cb);
+  --admin-on-brand: light-dark(#fff, #10251c);
+  --admin-brand-050: light-dark(#dcece4, #253c33);
+  --admin-secondary: light-dark(#685677, #d3b8d8);
+  --admin-secondary-soft: light-dark(#ebe6f0, #382e3c);
+  --admin-masthead: linear-gradient(112deg, light-dark(#e5f0ea, #1c302b), light-dark(#f1f5f2, #172725) 67%, light-dark(#e8eef0, #1d2a2e));
+  --admin-radius-control: 8px;
+  --admin-radius-panel: 14px;
+  --admin-font: Inter, "Segoe UI Variable Text", "Segoe UI", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
+  --admin-display: Inter, "Segoe UI Variable Display", "Segoe UI", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
+  --admin-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}

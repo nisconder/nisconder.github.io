@@ -7,6 +7,11 @@ import { resolve } from 'node:path'
 const root = resolve(import.meta.dirname, '..')
 const port = Number(process.env.ADMIN_PREVIEW_PORT || 4341)
 const files = new Map([
+  ['/admin/', ['source/admin/index.html', 'text/html; charset=utf-8']],
+  ['/admin/admin-portal.css', ['source/admin/admin-portal.css', 'text/css']],
+  ['/admin/comments/', ['source/admin/comments/index.html', 'text/html; charset=utf-8']],
+  ['/admin/studio-palette.css', ['source/admin/studio-palette.css', 'text/css']],
+  ['/admin/appearance.js', ['source/admin/appearance.js', 'text/javascript']],
   ['/admin/admin-theme.css', ['source/admin/admin-theme.css', 'text/css']],
   ['/admin/admin-ui.js', ['source/admin/admin-ui.js', 'text/javascript']],
   ['/admin/series-cards.js', ['source/admin/series-cards.js', 'text/javascript']],
@@ -48,7 +53,7 @@ createServer(async (request, response) => {
   try {
     let content
     let type
-    if (pathname === '/' || pathname === '/admin/content/' || pathname === '/admin/') {
+    if (pathname === '/' || pathname === '/admin/content/') {
       content = await readFile(resolve(root, 'source/admin/content/index.html'), 'utf8')
       const seed = await seedPreviewRepository()
       // A callback keeps $&, $' and other literal assembly text out of

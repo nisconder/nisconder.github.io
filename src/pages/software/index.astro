@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
+import SectionMasthead from '../../components/SectionMasthead.astro'
 import { getInterestJourney } from '../../lib/interests'
 import {
   softwareKindLabels,
@@ -40,46 +41,14 @@ const interestPoints = await getInterestJourney('software')
   commentsDescription="使用问题、功能建议、合作想法，或者你希望我继续做什么，都可以直接留在这里。"
   interestPoints={interestPoints}
 >
-  <header class="page-intro software-intro">
-    <div class="software-intro__copy">
-      <p class="eyebrow">PROJECTS / INDEX</p>
-      <h1>项目与小实验</h1>
-      <p class="lede">
-        一些解决日常问题的小工具，也有课程里的尝试和做着玩的作品。能直接打开的先试试看，感兴趣再翻翻源码。
-      </p>
-      <p class="software-sync-note" data-project-sync={softwareSyncInfo.status}>
-        项目数据定期更新
-        {softwareSyncInfo.syncedAt ? (
-          <> · 数据更新于 <time datetime={softwareSyncInfo.syncedAt}>{dataUpdated}</time></>
-        ) : (
-          <> · 首次同步完成前，展示已收录项目</>
-        )}
-      </p>
-    </div>
-    <dl class="software-intro__facts" aria-label="项目概况">
-      <div>
-        <dt>公开项目</dt>
-        <dd>{softwareProjects.length.toString().padStart(2, '0')}</dd>
-      </div>
-      <div>
-        <dt>主要方向</dt>
-        <dd>工具 · 安全 · 学习</dd>
-      </div>
-      <div>
-        <dt>从哪里开始</dt>
-        <dd>在线体验 · 源码</dd>
-      </div>
-    </dl>
-  </header>
-
-  <section class="axis-section" data-note="项目" aria-labelledby="software-list-title">
-    <div class="section-head section-head--split">
-      <div>
-        <p class="eyebrow">PROJECT INDEX</p>
-        <h2 id="software-list-title">项目清单</h2>
-      </div>
-      <p>从一个具体问题，看看这些代码能做什么。</p>
-    </div>
+  <SectionMasthead title="项目与小实验" description={`${softwareProjects.length} 个公开项目，可按名称、用途或技术栈查找。`}>
+    <p class="software-sync-note" data-project-sync={softwareSyncInfo.status}>
+      {softwareSyncInfo.syncedAt
+        ? <>更新于 <time datetime={softwareSyncInfo.syncedAt}>{dataUpdated}</time></>
+        : '已收录的项目'}
+    </p>
+  </SectionMasthead>
+  <section class="software-index" aria-label="项目清单" id="software-list-title">
 
     <form
       class="software-filter"
@@ -153,7 +122,7 @@ const interestPoints = await getInterestJourney('software')
                 <span>{softwareStatusLabels[project.status]}</span>
                 {project.featured && <strong>重点维护</strong>}
               </p>
-              <h3>{project.name}</h3>
+              <h2>{project.name}</h2>
             </div>
           </header>
 
@@ -194,64 +163,11 @@ const interestPoints = await getInterestJourney('software')
 
 <style>
   .software-sync-note {
-    margin-block: 1rem 0;
-    color: var(--color-muted);
-    font-size: var(--text-xs);
-    line-height: 1.7;
-  }
-
-  .software-intro {
-    display: grid;
-    max-width: none;
-    grid-template-columns: minmax(0, 1.45fr) minmax(15rem, 0.55fr);
-    overflow: hidden;
-    padding: 0;
-    border: 1px solid var(--color-line-strong);
-    border-radius: var(--card-radius);
-    background: var(--color-card);
-  }
-
-  .software-intro__copy {
-    min-width: 0;
-    padding: clamp(1.75rem, 5vw, 3.5rem);
-  }
-
-  .software-intro h1 {
-    max-width: 16ch;
-  }
-
-  .software-intro__facts {
-    display: grid;
-    align-content: center;
-    gap: 0;
     margin: 0;
-    padding: clamp(1.5rem, 4vw, 2.5rem);
-    border-inline-start: 1px solid var(--color-line-strong);
-    background: var(--color-media-soft);
-  }
-
-  .software-intro__facts > div {
-    padding-block: 1rem;
-    border-block-start: 1px solid var(--color-line-strong);
-  }
-
-  .software-intro__facts > div:last-child {
-    border-block-end: 1px solid var(--color-line-strong);
-  }
-
-  .software-intro__facts dt {
     color: var(--color-muted);
-    font-family: var(--font-utility);
-    font-size: var(--text-xs);
-    letter-spacing: 0.07em;
+    font: 500 var(--text-xs)/1.7 var(--font-utility);
   }
-
-  .software-intro__facts dd {
-    margin: 0.2rem 0 0;
-    color: var(--color-heading);
-    font-size: 1rem;
-    font-weight: 700;
-  }
+  .software-index { margin-block-end: clamp(2rem, 5vw, 3.5rem); }
 
   .software-filter {
     display: grid;
@@ -350,7 +266,7 @@ const interestPoints = await getInterestJourney('software')
     flex-direction: column;
     padding: 1.25rem;
     border: 1px solid var(--color-line-strong);
-    border-block-start: 0.4rem solid var(--project-accent);
+    border-block-start: 3px solid var(--project-accent);
     border-radius: var(--card-radius);
     background: var(--color-card);
   }
@@ -370,7 +286,7 @@ const interestPoints = await getInterestJourney('software')
   .software-card--featured:first-child {
     min-height: 0;
     grid-column: 1 / -1;
-    background: var(--color-reading-soft);
+    background: var(--feature-surface);
   }
 
   .software-card__head {
@@ -414,7 +330,7 @@ const interestPoints = await getInterestJourney('software')
     color: var(--color-reading);
   }
 
-  .software-card h3 {
+  .software-card h2 {
     margin: 0.1rem 0 0;
     font-size: var(--title-card);
     overflow-wrap: anywhere;
@@ -529,27 +445,6 @@ const interestPoints = await getInterestJourney('software')
     .software-card--featured:first-child .software-card__actions { grid-area: actions; }
   }
 
-  @media (max-width: 52rem) {
-    .software-intro {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .software-intro__facts {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      border-block-start: 1px solid var(--color-line-strong);
-      border-inline-start: 0;
-    }
-
-    .software-intro__facts > div,
-    .software-intro__facts > div:last-child {
-      padding: 0.75rem;
-      border-block: 0;
-    }
-
-    .software-intro__facts > div + div {
-      border-inline-start: 1px solid var(--color-line-strong);
-    }
-  }
 
   @media (max-width: 46rem) {
     .software-filter {
@@ -573,27 +468,8 @@ const interestPoints = await getInterestJourney('software')
   }
 
   @media (max-width: 34rem) {
-    .software-intro h1 br {
-      display: none;
-    }
-
-    .software-intro__facts {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .software-intro__facts > div + div {
-      border-block-start: 1px solid var(--color-line-strong);
-      border-inline-start: 0;
-    }
-
-    .software-filter {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .software-filter > * {
-      grid-column: 1;
-    }
-
+    .software-filter { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+    .software-filter__search, .software-filter__footer { grid-column: 1/-1; }
   }
 </style>
 

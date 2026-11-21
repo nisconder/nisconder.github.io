@@ -1,0 +1,17 @@
+<audio
+  class="native-audio"
+  transition:persist="nisconder-listening-audio"
+  data-native-audio
+  aria-label="歌曲试听与播放进度"
+  controls
+  preload="none"
+  hidden
+></audio>
+
+<style>
+  .native-audio:not([hidden]) {
+    display: block;
+    width: calc(100% - 2.5rem);
+    margin: 0 auto 0.8rem;
+  }
+</style>

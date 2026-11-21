@@ -1,0 +1,85 @@
+---
+interface Props {
+  title: string
+  description?: string
+  id?: string
+  anchor?: string
+  variant?: 'home' | 'section' | 'story'
+}
+const { title, description, id, anchor, variant = 'section' } = Astro.props
+---
+
+<header id={anchor} aria-labelledby={id} class:list={['section-masthead', { 'home-dashboard': variant === 'home', 'section-masthead--story': variant === 'story' }]}>
+  <div class="section-masthead__copy">
+    <slot name="before-title" />
+    <h1 id={id}>{title}</h1>
+    {description && <p>{description}</p>}
+    <slot name="summary" />
+  </div>
+  {Astro.slots.has('default') && <div class="section-masthead__tools"><slot /></div>}
+</header>
+
+<style>
+  .section-masthead {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1rem clamp(1.5rem, 4vw, 3.5rem);
+    min-height: clamp(8.5rem, 12vw, 10.5rem);
+    padding: clamp(1.25rem, 3vw, 2.35rem);
+    margin-block-end: var(--section-gap);
+    border-radius: var(--card-radius);
+    border: 1px solid var(--masthead-line);
+    background: var(--masthead-surface);
+  }
+  .section-masthead::after {
+    position: absolute;
+    inset: auto auto -1px 0;
+    margin-inline-start: clamp(1.25rem, 3vw, 2.35rem);
+    width: 3.25rem;
+    height: 2px;
+    background: linear-gradient(to right, var(--color-primary) 64%, var(--color-secondary) 64%);
+    content: '';
+    transform-origin: left;
+  }
+  .section-masthead__copy { min-width: 0; }
+  .section-masthead h1 {
+    margin: 0;
+    color: var(--color-heading);
+    font: 650 clamp(2.05rem, 4.2vw, 3.65rem)/1.16 var(--font-display);
+    letter-spacing: -0.04em;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+  }
+  .section-masthead__copy > p {
+    max-width: 42rem;
+    margin: 0.75rem 0 0;
+    color: var(--color-muted);
+    font-size: var(--text-sm);
+    line-height: 1.7;
+  }
+  .section-masthead__tools { justify-self: end; max-width: min(27rem, 100%); min-width: 0; }
+  .home-dashboard { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+  .home-dashboard h1 { font-size: clamp(2.9rem, 6.2vw, 5.4rem); line-height: 0.98; letter-spacing: -0.06em; }
+  .home-dashboard .section-masthead__tools { width: 100%; max-width: none; }
+  .section-masthead--story { grid-template-columns: minmax(0, 1fr); }
+  .section-masthead--story h1 { max-width: 40ch; font-size: clamp(1.75rem, 3.25vw, 2.95rem); line-height: 1.28; }
+  @media (prefers-reduced-motion: no-preference) {
+    .section-masthead::after { animation: index-underline-in 460ms var(--ease-settle) backwards; }
+  }
+  @keyframes index-underline-in { from { transform: scaleX(0.15); } }
+  @media (max-width: 45rem) {
+    .section-masthead { grid-template-columns: minmax(0, 1fr); min-height: auto; }
+    .section-masthead__tools { width: 100%; max-width: none; justify-self: stretch; }
+  }
+  @media (max-width: 30rem) {
+    .home-dashboard { gap: 0.65rem; padding: 1rem 1rem 0; }
+    .home-dashboard .section-masthead__tools { width: auto; margin-inline: -1rem; }
+    .home-dashboard :global(record-turntable) {
+      border-inline: 0; border-block-end: 0;
+      border-radius: 0 0 var(--card-radius) var(--card-radius);
+      box-shadow: none;
+    }
+  }
+</style>

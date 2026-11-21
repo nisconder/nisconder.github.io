@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
+import SectionMasthead from '../../components/SectionMasthead.astro'
 import CopySubscriptionUrl from '../../components/CopySubscriptionUrl.astro'
 import subscription from '../../data/gkd-subscription.json'
 
@@ -23,12 +24,8 @@ const releaseHistory = [
   title={subscription.name}
   description="获取 Nisconder 的 GKD 订阅地址，查看添加步骤、更新历史和问题反馈入口。"
 >
+  <SectionMasthead title={subscription.name} description="在 GKD 中添加订阅地址，获取规则与后续更新。" />
   <div class="gkd-page" data-gkd-subscription>
-    <header class="page-intro gkd-intro">
-      <p class="eyebrow">GKD / 规则订阅</p>
-      <h1>{subscription.name}</h1>
-      <p class="lede">在 GKD 中添加订阅地址，获取规则与后续更新。</p>
-    </header>
 
     <div class="gkd-start">
       <section class="subscription-address" aria-labelledby="subscription-address-title">
@@ -102,9 +99,7 @@ const releaseHistory = [
 </BaseLayout>
 
 <style>
-  .gkd-page { max-width: 62rem; margin-inline: auto; }
-  .gkd-intro { margin-block-end: 2rem; }
-  .gkd-intro h1 { max-width: 19ch; font-size: clamp(2rem, 5vw, 3.2rem); overflow-wrap: anywhere; }
+  .gkd-page { width: 100%; }
   .gkd-start { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); border: 1px solid var(--color-line-strong); border-block-start: 0.35rem solid var(--color-primary); border-radius: var(--card-radius); background: var(--color-card); overflow: hidden; }
   .subscription-address, .subscription-steps { min-width: 0; padding: clamp(1.25rem, 3vw, 2rem); }
   .gkd-start h2, .gkd-maintenance h2 { margin: 0 0 1.25rem; font-family: var(--font-display); font-size: var(--title-card); }

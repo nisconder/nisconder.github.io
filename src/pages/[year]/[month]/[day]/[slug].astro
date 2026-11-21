@@ -2,6 +2,7 @@
 import { render } from 'astro:content'
 import type { GetStaticPaths } from 'astro'
 import BaseLayout from '../../../../layouts/BaseLayout.astro'
+import SectionMasthead from '../../../../components/SectionMasthead.astro'
 import SeriesNavigation from '../../../../components/SeriesNavigation.astro'
 import { getPublishedSeries, getSeriesForPost, getStandalonePosts } from '../../../../lib/series'
 import { getInterestJourney } from '../../../../lib/interests'
@@ -82,77 +83,72 @@ const interestPoints = await getInterestJourney('article', post)
     <span data-reading-progress-bar></span>
   </div>
 
-  <div class="article-page" data-reading-root>
-    <aside class="reading-guide reading-guide--desktop" aria-label="文章阅读导航">
-      <div class="reading-guide__sticky">
-        <div
-          class="reading-meter"
-          role="progressbar"
-          aria-label="正文阅读进度"
-          aria-valuemin="0"
-          aria-valuemax="100"
-          aria-valuenow="0"
-          data-reading-meter
-        >
-          <div class="reading-meter__label">
-            <span>已读</span>
-            <output data-reading-output>0%</output>
-          </div>
-          <span class="reading-meter__track" aria-hidden="true">
-            <span data-reading-progress-bar></span>
-          </span>
-        </div>
-
-        {
-          tableOfContents.length > 0 && (
-            <nav class="reading-toc" aria-label="本文目录">
-              <p>本文目录</p>
-              <ol>
-                {tableOfContents.map((heading) => (
-                  <li data-depth={heading.depth}>
-                    <a data-toc-link href={`#${heading.slug}`}>{heading.text}</a>
-                  </li>
-                ))}
-              </ol>
-            </nav>
-          )
-        }
-
-        <a class="reading-guide__back" href="/articles/">全部文章</a>
+  <article data-reading-root aria-labelledby="article-title">
+    <SectionMasthead title={post.data.title} id="article-title" anchor="article-start" variant="story">
+      <div slot="before-title" class="article-kicker">
+        <a href="/articles/">文章</a>
+        {category && <><span aria-hidden="true"> / </span><a href={categoryHref(category)}>{category}</a></>}
       </div>
-    </aside>
+      <div slot="summary" class="article-publication">
+        <div class="article-meta">
+          <time datetime={publishedTime}>{formatPostDate(post.data.date)}</time>
+          {post.data.updated && <span>更新于 <time datetime={getPostDateTime(post.data.updated)}>{formatPostDate(post.data.updated)}</time></span>}
+          <span>约 {readingMinutes} 分钟</span>
+        </div>
+        {tags.length > 0 && (
+          <nav class="article-tags" aria-label="文章标签">
+            {tags.map((tag) => <a href={searchHref(tag)}>#{tag}</a>)}
+          </nav>
+        )}
+      </div>
+    </SectionMasthead>
 
-    <div class="article-page__content">
-      <article>
-        <header class="article-header" id="article-start">
-          <p class="article-kicker">
-            {category ? <a href={categoryHref(category)}>{category}</a> : 'Article'}
-          </p>
-          <h1>{post.data.title}</h1>
-          <div class="article-meta">
-            <time datetime={publishedTime}>
-              {formatPostDate(post.data.date)}
-            </time>
-            {post.data.updated && (
-              <span>
-                更新于 <time datetime={getPostDateTime(post.data.updated)}>
-                  {formatPostDate(post.data.updated)}
-                </time>
-              </span>
-            )}
-            <span>约 {readingMinutes} 分钟</span>
+    <div class="article-page">
+      <aside class="reading-guide reading-guide--desktop" aria-label="文章阅读导航">
+        <div class="reading-guide__sticky">
+          <div
+            class="reading-meter"
+            role="progressbar"
+            aria-label="正文阅读进度"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            data-reading-meter
+          >
+            <div class="reading-meter__label">
+              <span>已读</span>
+              <output data-reading-output aria-live="off">0%</output>
+            </div>
+            <span class="reading-meter__track" aria-hidden="true">
+              <span data-reading-progress-bar></span>
+            </span>
           </div>
-          {tags.length > 0 && (
-            <nav class="article-tags" aria-label="文章标签">
-              {tags.map((tag) => <a href={searchHref(tag)}>#{tag}</a>)}
-            </nav>
-          )}
-        </header>
+
+          {
+            tableOfContents.length > 0 && (
+              <nav class="reading-toc" aria-label="本文目录">
+                <p>本文目录</p>
+                <ol>
+                  {tableOfContents.map((heading) => (
+                    <li data-depth={heading.depth}>
+                      <a data-toc-link href={`#${heading.slug}`}>{heading.text}</a>
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            )
+          }
+
+          <a class="reading-guide__back" href="/articles/">全部文章</a>
+        </div>
+      </aside>
+
+      <div class="article-page__content">
 
         {postSeries.map(series => <SeriesNavigation series={series} postId={post.id} />)}
 
         <aside
-          class="reading-guide-mobile-shell"
+          class:list={['reading-guide-mobile-shell', { 'reading-guide-mobile-shell--toc': tableOfContents.length > 0 }]}
           aria-label="文章阅读导航"
           data-reader-exclude
           data-nosnippet
@@ -163,7 +159,7 @@ const interestPoints = await getInterestJourney('article', post)
                 <summary>
                   <span class="reading-guide__mobile-label">目录</span>
                   <span class="reading-guide__current" data-current-heading>正文开始</span>
-                  <output data-reading-output>0%</output>
+                  <output data-reading-output aria-live="off">0%</output>
                 </summary>
                 <nav aria-label="本文目录">
                   <ol>
@@ -178,7 +174,7 @@ const interestPoints = await getInterestJourney('article', post)
             ) : (
               <div class="reading-guide reading-guide--mobile reading-guide--status">
                 <span>阅读进度</span>
-                <output data-reading-output>0%</output>
+                <output data-reading-output aria-live="off">0%</output>
               </div>
             )
           }
@@ -210,10 +206,9 @@ const interestPoints = await getInterestJourney('article', post)
           )}
           <a class="article-footer__archive" href="/articles/">全部文章索引 <span aria-hidden="true">→</span></a>
         </footer>
-      </article>
-
+      </div>
     </div>
-  </div>
+  </article>
 </BaseLayout>
 
 <style>
@@ -333,6 +328,11 @@ const interestPoints = await getInterestJourney('article', post)
     overflow: visible;
   }
 
+  .article-kicker { margin: 0 0 0.25rem; }
+  .article-publication { margin-block-start: 0.85rem; }
+  .article-publication .article-tags { margin-block-start: 0.2rem; }
+  .article-page__content > .prose { margin-block-start: 0; }
+
   .article-page__content {
     min-width: 0;
     padding: clamp(1.25rem, 5vw, 4rem);
@@ -348,9 +348,9 @@ const interestPoints = await getInterestJourney('article', post)
     max-height: calc(100vh - 2.5rem);
     overflow: hidden;
     border: 1px solid var(--color-line-strong);
-    border-inline-end: 0.35rem solid var(--color-secondary);
+    border-block-start: 3px solid var(--color-primary);
     border-radius: var(--card-radius);
-    background: var(--color-primary-soft);
+    background: var(--color-card);
   }
 
   .reading-guide__sticky {
@@ -471,7 +471,7 @@ const interestPoints = await getInterestJourney('article', post)
     content: '→';
   }
 
-  .reading-guide--mobile {
+  .reading-guide-mobile-shell {
     display: none;
   }
 
@@ -484,15 +484,21 @@ const interestPoints = await getInterestJourney('article', post)
       display: none;
     }
 
-    .reading-guide--mobile {
+    .reading-guide-mobile-shell {
+      display: block;
+      margin-block: 1rem 1.35rem;
+    }
+
+    .reading-guide-mobile-shell--toc {
       position: sticky;
       z-index: 20;
-      inset-block-start: 4px;
-      display: block;
-      margin-block: 1.5rem 2.5rem;
-      border-block: 1px solid var(--color-line-strong);
+      inset-block-start: 0.5rem;
+    }
+
+    .reading-guide--mobile {
+      border: 1px solid var(--color-line-strong);
       border-radius: var(--card-radius);
-      background: var(--color-primary-soft);
+      background: var(--color-surface);
     }
 
     .reading-guide--mobile summary,
@@ -500,7 +506,7 @@ const interestPoints = await getInterestJourney('article', post)
       min-height: 2.75rem;
       align-items: center;
       gap: 0.75rem;
-      padding: 0.65rem 0.8rem;
+      padding: 0.55rem 0.75rem;
       color: var(--color-text);
       cursor: pointer;
       font-size: 0.8125rem;
@@ -509,7 +515,27 @@ const interestPoints = await getInterestJourney('article', post)
 
     .reading-guide--mobile summary {
       display: grid;
-      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-columns: auto minmax(0, 1fr) auto auto;
+      border-radius: inherit;
+      list-style: none;
+    }
+
+    .reading-guide--mobile summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .reading-guide--mobile summary::after {
+      width: 0.48rem;
+      height: 0.48rem;
+      margin-inline: 0.1rem;
+      border-inline-end: 1.5px solid var(--color-secondary);
+      border-block-end: 1.5px solid var(--color-secondary);
+      content: '';
+      transform: rotate(45deg);
+    }
+
+    .reading-guide--mobile[open] summary::after {
+      transform: rotate(225deg);
     }
 
     .reading-guide--mobile[open] summary {
@@ -530,7 +556,7 @@ const interestPoints = await getInterestJourney('article', post)
     }
 
     .reading-guide--mobile nav {
-      max-height: 60svh;
+      max-height: min(55svh, 22rem);
       padding: 0.45rem;
       overflow-y: auto;
       overscroll-behavior: contain;
@@ -541,9 +567,36 @@ const interestPoints = await getInterestJourney('article', post)
       justify-content: space-between;
       cursor: default;
     }
+
+    .prose :is(h2, h3, h4)[id] {
+      scroll-margin-block-start: 5rem;
+    }
+  }
+
+  @media (max-width: 60rem) and (prefers-reduced-motion: no-preference) {
+    .reading-guide--mobile summary::after {
+      transition: transform var(--motion-feedback) var(--ease-settle);
+    }
+
+    .reading-guide--mobile[open] nav {
+      animation: toc-unfold 340ms var(--ease-settle) backwards;
+    }
+  }
+
+  @keyframes toc-unfold {
+    from { opacity: 0.35; clip-path: inset(0 0 88%); }
+    to { opacity: 1; clip-path: inset(0); }
   }
 
   @media (max-width: 42rem) {
+    .article-page__content {
+      padding: clamp(0.85rem, 4vw, 1.3rem);
+    }
+
+    .prose {
+      margin-block-start: 1.35rem;
+    }
+
     .article-pagination {
       grid-template-columns: minmax(0, 1fr);
       gap: 0.75rem;
