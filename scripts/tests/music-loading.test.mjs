@@ -189,6 +189,10 @@ test('the home selection opens the same record on the music page', () => {
   assert.ok(music.match(/<audio\b[^>]*>/)[0].includes(persist), 'the same audio can continue into the playlist')
 })
 
+test('record center labels use only the site avatar and masthead mark', () => {
+  assert.deepEqual(prints, ['nisconder-avatar', 'nisconder-mark'])
+})
+
 test('records share a shuffled pool and retain their first assigned print when revisited', () => {
   const tracks = Array.from({ length: prints.length * 3 }, (_, index) => 'test-' + index)
   const draws = tracks.map(getRecordPrintPosition)
