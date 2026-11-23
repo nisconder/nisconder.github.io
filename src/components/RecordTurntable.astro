@@ -153,7 +153,7 @@ const playable = isPlayableTrack(track)
   @keyframes vinyl-rotation { to { transform: rotate(1turn); } }
   .turntable__label {
     position: absolute;
-    inset: 31%;
+    inset: 29%;
     overflow: hidden;
     border: 1px solid #17212a;
     border-radius: 50%;
@@ -290,6 +290,7 @@ const playable = isPlayableTrack(track)
   .turntable--studio .turntable__notes small { font-size: var(--text-sm); }
   .turntable__position { margin-inline-start: 0.7rem; font-family: var(--font-utility); }
   @media (max-width: 30rem) {
+    .turntable__label { inset: 27%; }
     .turntable[data-mode='preview'] {
       grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
       padding: 0.65rem 1rem;

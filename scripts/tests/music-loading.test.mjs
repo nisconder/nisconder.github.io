@@ -189,8 +189,12 @@ test('the home selection opens the same record on the music page', () => {
   assert.ok(music.match(/<audio\b[^>]*>/)[0].includes(persist), 'the same audio can continue into the playlist')
 })
 
-test('record center labels use only the site avatar and masthead mark', () => {
-  assert.deepEqual(prints, ['nisconder-avatar', 'nisconder-mark'])
+test('record center labels use the three combined portrait and masthead illustrations', () => {
+  assert.deepEqual(prints, ['overprint', 'cutout', 'window'])
+  for (const print of prints) {
+    const artwork = readFileSync(new URL(`../../src/assets/record-prints/${print}.webp`, import.meta.url))
+    assert.equal(artwork.toString('ascii', 8, 12), 'WEBP', print)
+  }
 })
 
 test('records share a shuffled pool and retain their first assigned print when revisited', () => {

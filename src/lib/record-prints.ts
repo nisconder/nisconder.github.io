@@ -1,6 +1,7 @@
 import prints from '../data/record-prints.json' with { type: 'json' }
 
-const key = 'nisconder-record-prints-v2'
+// Stored indices refer to this exact set and order of illustrations.
+const key = 'nisconder-record-prints:' + prints.join(',')
 let assigned: Map<string, number> | undefined
 
 function restore() {
