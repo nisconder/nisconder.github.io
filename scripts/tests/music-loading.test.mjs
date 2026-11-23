@@ -190,11 +190,32 @@ test('the home selection opens the same record on the music page', () => {
 })
 
 test('record center labels include all six local illustrations', () => {
-  assert.deepEqual(prints, ['overprint', 'cutout', 'window', 'pixel', 'clay', 'glass'])
+  assert.deepEqual(prints, ['overprint', 'cutout', 'window', 'pixel', 'clay', 'riverbend'])
   for (const print of prints) {
     const artwork = readFileSync(new URL(`../../src/assets/record-prints/${print}.webp`, import.meta.url))
     assert.equal(artwork.toString('ascii', 8, 12), 'WEBP', print)
   }
+})
+
+test('a session from before the riverbend artwork keeps its track assignments', async t => {
+  const previousKey = 'nisconder-record-prints:overprint,cutout,window,pixel,clay,glass'
+  const keysRead = []
+  const originalStorage = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage')
+  Object.defineProperty(globalThis, 'sessionStorage', {
+    configurable: true,
+    value: { getItem(key) {
+      keysRead.push(key)
+      return JSON.stringify([['portrait-track', 5], ['window-track', 2]])
+    } },
+  })
+  t.after(() => {
+    if (originalStorage) Object.defineProperty(globalThis, 'sessionStorage', originalStorage)
+    else Reflect.deleteProperty(globalThis, 'sessionStorage')
+  })
+  const { getRecordPrintPosition: position } = await import('../../src/lib/record-prints.ts?returning-session')
+  assert.equal(position('portrait-track'), '100%')
+  assert.equal(position('window-track'), '40%')
+  assert.deepEqual(keysRead, [previousKey])
 })
 
 test('records share a shuffled pool and retain their first assigned print when revisited', () => {

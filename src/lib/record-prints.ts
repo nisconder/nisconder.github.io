@@ -1,7 +1,8 @@
 import prints from '../data/record-prints.json' with { type: 'json' }
 
-// Stored indices refer to this exact set and order of illustrations.
-const key = 'nisconder-record-prints:' + prints.join(',')
+// Riverbend replaces the artwork in the old glass slot. Existing tracks keep their slots.
+const slotIds = prints.map(print => print === 'riverbend' ? 'glass' : print)
+const key = 'nisconder-record-prints:' + slotIds.join(',')
 let assigned: Map<string, number> | undefined
 
 function restore() {
