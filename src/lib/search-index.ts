@@ -8,11 +8,15 @@ import {
 
 export async function getSearchIndexData() {
   const [posts, series] = await Promise.all([getPublishedPosts(), getPublishedSeries()])
+  const parents = new Map<string, string[]>()
+  for (const collection of series) for (const post of collection.posts) {
+    parents.set(post.id, [...(parents.get(post.id) ?? []), collection.href])
+  }
   const items = [
     ...posts.map(post => ({
       kind: '文章', title: post.data.title, description: getPostDescription(post),
       content: getPostPlainText(post), date: formatPostDate(post.data.date),
-      category: getPostCategory(post), tags: getPostTags(post), url: getPostUrl(post),
+      category: getPostCategory(post), tags: getPostTags(post), url: getPostUrl(post), seriesUrls: parents.get(post.id),
     })),
     ...series.map(item => ({
       kind: '合集', title: item.data.title, description: `共 ${item.posts.length} 篇。${item.data.description}`,

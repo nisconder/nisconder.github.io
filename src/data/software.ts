@@ -52,6 +52,7 @@ export interface SoftwareProject {
   sourceUrl?: string
   projectUrl?: string
   actionLabel?: string
+  reviewPost?: string
   featured?: boolean
   fork?: boolean
   archived?: boolean
@@ -102,6 +103,7 @@ const softwareCatalog: SoftwareProject[] = [
     sourceUrl: 'https://github.com/nisconder/npm-safe',
     projectUrl: 'https://github.com/nisconder/npm-safe/releases',
     actionLabel: '下载版本',
+    reviewPost: '2026-08-26-blog1',
     featured: true,
   },
   {

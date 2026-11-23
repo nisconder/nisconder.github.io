@@ -27,7 +27,7 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
     <span class="site-comments__icon" aria-hidden="true"><i></i><i></i></span>
     <div class="site-comments__heading">
       <h2 id="comments-title">{title}</h2>
-      <p>{description}</p>
+      <p data-comments-caption>{description}</p>
     </div>
     <button
       class="site-comments__toggle"
@@ -41,14 +41,14 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
       <span class="site-comments__toggle-mark" aria-hidden="true"></span>
     </button>
   </header>
-  <div id="site-comments-body" class="site-comments__body" data-comments-body>
+  <div id="site-comments-body" class="site-comments__body" data-comments-body hidden>
     <p class="site-comments__status" data-waline-status aria-live="polite">
-      滚动到这里时自动载入留言。
+      正在准备留言区…
     </p>
     <div data-waline-root data-waline-path={commentPath}></div>
     <p class="site-comments__status" data-waline-login-status role="status" hidden></p>
-    <noscript>留言区需要启用 JavaScript；其他内容不受影响。</noscript>
   </div>
+  <noscript>启用 JavaScript 后可以查看或写下留言。</noscript>
 </section>
 
 <style>
@@ -138,9 +138,9 @@ const commentPath = pathname === '/' ? '/' : `${pathname.replace(/\/+$/, '')}/`
   }
   .site-comments__toggle[aria-expanded='true'] .site-comments__toggle-mark { transform: translateY(.1rem) rotate(225deg); }
   .site-comments__body { min-width: 0; padding: clamp(.85rem, 2.6vw, 1.75rem); }
+  .site-comments[data-comments-expanded='false'] .site-comments__header { border-radius: var(--card-radius); padding-block: .85rem; }
   @media (max-width: 44rem) {
     .site-comments__header { flex-wrap: wrap; gap: .65rem; }
-    .site-comments[data-comments-expanded='false'] .site-comments__header { border-radius: var(--card-radius); }
     .site-comments__heading p { display: none; }
     .site-comments__icon { width: 2.1rem; height: 2.1rem; }
     .site-comments__icon i { width: 1.45rem; height: 1.1rem; }

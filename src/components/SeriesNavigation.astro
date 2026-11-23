@@ -1,6 +1,7 @@
 ---
 import type { BlogSeries } from '../lib/series'
 import { getPostUrl } from '../lib/posts'
+import { chapterLabel } from '../lib/chapter-label'
 interface Props { series: BlogSeries; postId: string; pagination?: boolean }
 const { series, postId, pagination = false } = Astro.props
 const index = series.posts.findIndex(post => post.id === postId)
@@ -19,7 +20,10 @@ const next = series.posts[index + 1]
   <details>
     <summary><span>第 {index + 1} / {series.posts.length} 篇</span><span class="series-navigation__expand">展开合集目录</span><span class="series-navigation__collapse">收起合集目录</span></summary>
     <ol>
-      {series.posts.map((post, position) => <li><span aria-hidden="true">{String(position + 1).padStart(2,'0')}</span><a data-astro-prefetch href={getPostUrl(post)} aria-current={post.id === postId ? 'page' : undefined}>{post.data.title}</a></li>)}
+      {series.posts.map(post => {
+        const chapter = chapterLabel(post.data.title)
+        return <li><span aria-hidden="true">{chapter.number}</span><a data-astro-prefetch href={getPostUrl(post)} aria-label={post.data.title} aria-current={post.id === postId ? 'page' : undefined}>{chapter.title}</a></li>
+      })}
     </ol>
   </details>
 </aside>}

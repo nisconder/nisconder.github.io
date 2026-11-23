@@ -112,9 +112,9 @@ test('ordinary article rows and year archives exclude ICS chapters while retaini
 
 test(`ICS collection retains all ${chapters.length} configured chapters in order and their existing article pages`, () => {
   const collectionPage = read('dist/series/ics-8086/index.html')
-  const chapterList = collectionPage.match(/<ol\b[^>]*class="[^"]*\bseries-chapters\b[^"]*"[^>]*>([\s\S]*?)<\/ol>/)?.[1]
-  assert.ok(chapterList, 'the public collection still has a chapter list')
-  assert.deepEqual(hrefs(chapterList), chapters.map(chapter => chapter.url), 'the collection keeps every chapter in the configured order')
+  const stages = [...collectionPage.matchAll(/<ol\b[^>]*class="[^"]*\bseries-chapters\b[^"]*"[^>]*>([\s\S]*?)<\/ol>/g)]
+  assert.equal(stages.length, 4)
+  assert.deepEqual(stages.flatMap(([, list]) => hrefs(list)), chapters.map(chapter => chapter.url), 'stages preserve the authored order')
 
   for (const chapter of chapters) {
     const file = `dist${chapter.url}index.html`
@@ -126,15 +126,17 @@ test(`ICS collection retains all ${chapters.length} configured chapters in order
   }
 })
 
-test('chapter recommendations follow the collection reading order and link to its lab', () => {
+test('chapter pagination keeps the linear path and recommendations show the overview and lab', () => {
   for (const [i, chapter] of chapters.entries()) {
     const html = read(`dist${chapter.url}index.html`)
     const navigation = html.match(/<section\b[^>]*class="[^"]*\bcontinue-path\b[^"]*"[^>]*>([\s\S]*?)<\/section>/)?.[1]
     assert.ok(navigation, chapter.id)
     assert.deepEqual(hrefs(navigation), [
-      chapters[i + 1]?.url ?? '/series/ics-8086/',
+      '/series/ics-8086/#series-chapters-title',
       'https://nisconder.github.io/8086-step-lab/',
     ], chapter.id)
+    const next = html.match(/<a\b(?=[^>]*rel="next")[^>]*href="([^"]+)"/)?.[1]
+    assert.equal(next, chapters[i + 1]?.url)
   }
 })
 

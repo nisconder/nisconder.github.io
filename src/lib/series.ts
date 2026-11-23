@@ -9,6 +9,24 @@ export interface BlogSeries {
   href: string
 }
 
+export function getReadingStages(series: BlogSeries) {
+  const starts = new Map(series.data.stages?.map(stage => [stage.start, stage.title]))
+  const published = new Map(series.posts.map(post => [post.id, post]))
+  const groups: { title: string; posts: PostEntry[] }[] = []
+  let group = { title: '', posts: [] as PostEntry[] }
+  groups.push(group)
+  for (const { post: id } of series.data.chapters) {
+    const title = starts.get(id)
+    if (title) {
+      group = { title, posts: [] }
+      groups.push(group)
+    }
+    const post = published.get(id)
+    if (post) group.posts.push(post)
+  }
+  return groups.filter(stage => stage.posts.length)
+}
+
 // Collection chapters remain published at their original URLs, but are browsed
 // through their collection instead of appearing again in chronological lists.
 export function getStandalonePosts(

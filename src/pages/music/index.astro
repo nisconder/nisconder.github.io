@@ -13,22 +13,12 @@ import {
 } from '../../lib/playlist'
 
 const playlist = await getPlaylistTracks()
-const playableEntries = playlist.flatMap((track, index) =>
-  isPlayableTrack(track) ? [{ track, index }] : [],
-)
-const externalEntries = playlist.flatMap((track, index) =>
-  isPlayableTrack(track) ? [] : [{ track, index }],
-)
-const playableTracks = playableEntries.map(({ track }) => track)
-const playableIndexes = playableEntries.map(({ index }) => index)
-const externalTracks = externalEntries.map(({ track }) => track)
-const externalIndexes = externalEntries.map(({ index }) => index)
-const playerIndexes = playableEntries.map((_, index) => index)
+const playableTracks = playlist.filter(isPlayableTrack)
+const externalTracks = playlist.filter(track => !isPlayableTrack(track))
 const initialTrack = playableTracks[0]
 const previewCount = 5
-const audioPayload = playableEntries.map(({ track, index }) => ({
+const audioPayload = playableTracks.map(track => ({
   id: String(track.id),
-  playlistIndex: index,
   name: track.title,
   artist: track.author,
   url: track.audio,
@@ -78,13 +68,13 @@ const interestPoints = await getInterestJourney('music')
         <section class="studio-group" aria-labelledby="playable-tracks-title">
           <h3 id="playable-tracks-title"><strong data-playable-heading>站内试听</strong><span data-playable-count>{playableTracks.length} 首</span></h3>
           {playableTracks.length ? (
-            <MusicTrackList tracks={playableTracks} indexes={playableIndexes} playerIndexes={playerIndexes} previewCount={previewCount} label="可站内播放的曲目" />
+            <MusicTrackList tracks={playableTracks} previewCount={previewCount} label="可站内播放的曲目" />
           ) : <p class="studio-empty">暂无可试听曲目。</p>}
         </section>
         {externalTracks.length > 0 && (
           <section class="studio-group studio-group--external" aria-labelledby="external-tracks-title">
             <h3 id="external-tracks-title">在网易云听 <span>{externalTracks.length}</span></h3>
-            <MusicTrackList tracks={externalTracks} indexes={externalIndexes} label="仅能在网易云打开的曲目" />
+            <MusicTrackList tracks={externalTracks} label="仅能在网易云打开的曲目" />
           </section>
         )}
       </div>
@@ -348,7 +338,7 @@ const interestPoints = await getInterestJourney('music')
         }
         updateListCount()
         if (discArtist) discArtist.textContent = track.artist
-        if (discPosition) discPosition.textContent = String(track.playlistIndex + 1).padStart(2, '0') + ' / ' + studio.dataset.total
+        if (discPosition) discPosition.textContent = String(activeIndex() + 1).padStart(2, '0') + ' / ' + tracks.length
         if (updateUrl && window.location) {
           const url = new URL(window.location.href)
           if (url.searchParams.get('track') !== track.id) {
@@ -561,9 +551,29 @@ const interestPoints = await getInterestJourney('music')
           refreshTime()
         }
         const volume = mount.querySelector('.aplayer-volume-wrap button')
-        const labelVolume = () => volume?.setAttribute('aria-label', player.audio.muted || player.audio.volume === 0 ? '取消静音' : '静音')
-        labelVolume()
-        onPlayer('volumechange', labelVolume)
+        if (volume) {
+          const slider = document.createElement('input')
+          slider.type = 'range'
+          slider.min = '0'
+          slider.max = '100'
+          slider.className = 'music-volume-slider'
+          slider.setAttribute('aria-label', '音量')
+          volume.parentElement.after(slider)
+          const syncVolume = () => {
+            const level = player.audio.muted ? 0 : Math.round(player.audio.volume * 100)
+            slider.value = String(level)
+            slider.setAttribute('aria-valuetext', level + '%')
+            volume.setAttribute('aria-label', level ? '静音' : '取消静音')
+          }
+          slider.addEventListener('input', () => {
+            player.audio.muted = false
+            player.volume(Number(slider.value) / 100)
+            syncVolume()
+          }, options)
+          slider.addEventListener('keydown', event => event.stopPropagation(), options)
+          syncVolume()
+          onPlayer('volumechange', syncVolume)
+        }
         mount.querySelector('.aplayer-icon-loop')?.setAttribute('aria-label', '切换循环模式')
 
         onPlayer('play', () => {
@@ -860,8 +870,17 @@ const interestPoints = await getInterestJourney('music')
   .music-engine:global(.aplayer) :global(.aplayer-time .aplayer-icon:is(:hover, :focus-visible)) {
     background: #496052; color: #fff; outline: 2px solid #e4e6b8; outline-offset: -2px;
   }
-  .music-engine :global(.aplayer-bar), .music-engine :global(.aplayer-played), .music-engine :global(.aplayer-loaded) { min-height: 4px; }
-  .music-engine :global(.aplayer-played), .music-engine :global(.aplayer-thumb) { background: #b5dacf !important; }
+  .music-engine:global(.aplayer) :global(.aplayer-info .aplayer-controller) { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .music-engine:global(.aplayer) :global(.aplayer-controller .aplayer-bar-wrap) { padding: .75rem .3rem; margin: 0; }
+  .music-engine :global(.aplayer-bar), .music-engine :global(.aplayer-played), .music-engine :global(.aplayer-loaded) { min-height: 4px; border-radius: 1rem; }
+  .music-engine :global(.aplayer-bar) { background: rgb(255 255 255 / 16%) !important; }
+  .music-engine :global(.aplayer-loaded) { background: rgb(255 255 255 / 9%) !important; }
+  .music-engine :global(.aplayer-played) { background: #b5dacf !important; }
+  .music-engine :global(.aplayer-thumb) { background: #e4e6b8 !important; transform: scale(1) !important; box-shadow: 0 0 0 2px #304941; }
+  .music-engine:global(.aplayer) :global(.aplayer-controller .aplayer-time) { display: flex; align-items: center; gap: .3rem; margin: 0; line-height: 1.3; }
+  .music-engine :global(.aplayer-time-inner) { margin-inline-end: auto; }
+  .music-engine :global(.aplayer-volume-bar-wrap) { display: none !important; }
+  .music-engine :global(input.music-volume-slider) { width: clamp(3rem, 8vw, 5rem); min-width: 0; height: 2.75rem; margin: 0; padding: 0; border: 0; background: transparent; accent-color: #e4e6b8; cursor: pointer; }
 
   .studio-library { overflow: clip; background: var(--color-card); }
   .studio-library__head, .studio-group h3, .library-more {

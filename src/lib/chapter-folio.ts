@@ -1,3 +1,5 @@
+import { chapterLabel } from './chapter-label'
+
 type Chapter = [title: string, href: string]
 
 export class ChapterFolio extends HTMLElement {
@@ -16,7 +18,7 @@ export class ChapterFolio extends HTMLElement {
       row, number: row.querySelector('span')!, link: row.querySelector('a')!,
     }))
     this.chapters ??= [
-      ...rows.map(({ link }): Chapter => [link.textContent || '', link.getAttribute('href')!]),
+      ...rows.map(({ link }): Chapter => [link.getAttribute('aria-label') || link.textContent || '', link.getAttribute('href')!]),
       ...JSON.parse(spare) as Chapter[],
     ]
     const chapters = this.chapters
@@ -40,8 +42,10 @@ export class ChapterFolio extends HTMLElement {
         const chapter = chapters[index]
         row.hidden = !chapter
         if (!chapter) return
-        number.textContent = String(index + 1).padStart(2, '0')
-        link.textContent = chapter[0]
+        const label = chapterLabel(chapter[0])
+        number.textContent = label.number
+        link.textContent = label.title
+        link.setAttribute('aria-label', chapter[0])
         link.setAttribute('href', chapter[1])
       })
       output.textContent = (destination + 1) + ' / ' + (lastPage + 1)

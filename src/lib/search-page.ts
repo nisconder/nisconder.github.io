@@ -5,6 +5,7 @@ type SearchView = {
   state: SearchState
   matches: { item: SearchRecord; score: number }[]
   total: number
+  foldable?: number
   pending: boolean
   error: boolean
 }
@@ -55,6 +56,8 @@ export function initialiseSearch() {
   const categoryButtons = Array.from(form.querySelectorAll<HTMLButtonElement>('[data-category]'))
   const typeButtons = form.querySelectorAll<HTMLButtonElement>('[data-search-type]')
   const categories = form.querySelector<HTMLElement>('[data-category-filter]')
+  const foldControl = document.querySelector<HTMLElement>('[data-fold-control]')
+  const fold = document.querySelector<HTMLInputElement>('[data-fold-chapters]')
   let activeCategory = ''
   let activeType = ''
   let composing = false
@@ -74,9 +77,11 @@ export function initialiseSearch() {
     return element
   }
 
-  const render = ({ state, matches, total, pending, error }: SearchView) => {
+  const render = ({ state, matches, total, foldable = 0, pending, error }: SearchView) => {
     if (!isActive()) return
     const { query, category, type } = state
+    const folded = state.collapseChapters ? foldable : 0
+    if (foldControl) foldControl.hidden = Boolean(type) || !(foldable || state.collapseChapters)
     const hasSearch = Boolean(query || category || type)
     const scopeNames: Record<string, string> = { article: '文章', project: '项目', series: '合集' }
     const scope = category ? `“${category}”分类` : (scopeNames[type] ?? '全站')
@@ -92,7 +97,7 @@ export function initialiseSearch() {
       retry.addEventListener('click', executeCurrent, { signal })
       status.append(retry)
     } else status.textContent = total
-      ? `在${scope}中找到 ${total} 条${query ? `与“${query}”匹配的内容` : '内容'}。${total > matches.length ? `先显示前 ${matches.length} 条。` : ''}`
+      ? `在${scope}中找到 ${total} 条${query ? `与“${query}”匹配的内容` : '内容'}。${folded ? `已折叠 ${folded} 篇合集章节。` : ''}${total - folded > matches.length ? `先显示前 ${matches.length} 条。` : ''}`
       : `在${scope}中没有找到${query ? `与“${query}”匹配的内容` : '公开内容'}。可以减少关键词或切换分类。`
 
     // Full text often confirms the same metadata matches. Keep those DOM nodes
@@ -173,7 +178,7 @@ export function initialiseSearch() {
   }
   const syncUrl = (state: SearchState) => {
     const url = new URL(window.location.href)
-    for (const [key, value] of Object.entries({ q: state.query, category: state.category, type: state.category ? '' : state.type })) {
+    for (const [key, value] of Object.entries({ q: state.query, category: state.category, type: state.category ? '' : state.type, chapters: state.collapseChapters ? 'fold' : '' })) {
       if (value) url.searchParams.set(key, value)
       else url.searchParams.delete(key)
     }
@@ -183,7 +188,7 @@ export function initialiseSearch() {
     cancelAnimationFrame(frame)
     frame = 0
     if (!isActive() || composing) return
-    const state = { query: input!.value.trim(), category: activeCategory, type: activeType }
+    const state = { query: input!.value.trim(), category: activeCategory, type: activeType, collapseChapters: !activeType && Boolean(fold?.checked) }
     syncUrl(state)
     void session.run(state)
   }
@@ -195,11 +200,20 @@ export function initialiseSearch() {
     const state = readSearchState(new URLSearchParams(window.location.search))
     activeCategory = state.category
     activeType = state.type
+    if (fold) fold.checked = Boolean(state.collapseChapters)
     input.value = state.query
     updateFilters()
     void session.run(state)
   }
 
+  fold?.addEventListener('change', executeCurrent, { signal })
+  input.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || composing || event.isComposing) return
+    event.preventDefault()
+    if (!input.value) { input.blur(); return }
+    input.value = ''
+    executeCurrent()
+  }, { signal })
   input.addEventListener('compositionstart', () => {
     composing = true
     cancelAnimationFrame(frame)

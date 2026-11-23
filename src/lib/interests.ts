@@ -116,22 +116,18 @@ export async function getInterestJourney(section: InterestSection, post?: PostEn
   if (section === 'article') {
     const slug = post ? getPostSlug(post) : ''
     if (series && post) {
-      const next = series.posts[series.posts.findIndex(chapter => chapter.id === post.id) + 1]
       const overview = {
-        section: '合集', relation: '返回合集总览', title: series.data.title,
-        description: `按阅读顺序查看全部 ${series.posts.length} 篇。`, href: series.href,
+        section: '合集目录', relation: '回到完整阅读路线', title: series.data.title,
+        description: `浏览全部 ${series.posts.length} 篇，选择想复习的章节。`, href: series.href + '#series-chapters-title',
       }
       const project = softwareProjects.find(project => project.slug === series.data.relatedProject)
       return uniquePoints([
-        next ? {
-          section: '下一章', relation: series.data.title, title: next.data.title,
-          description: `约 ${getPostReadingMinutes(next)} 分钟`, href: getPostUrl(next),
-        } : overview,
+        overview,
         project ? {
           section: '配套工具', relation: project.actionLabel ?? '打开配套项目', title: project.name,
           description: shorten(project.summary), href: project.projectUrl ?? `/software/#${project.slug}`,
           external: project.projectUrl?.startsWith('https://'),
-        } : overview,
+        } : catalog.articleIndex,
       ])
     }
 

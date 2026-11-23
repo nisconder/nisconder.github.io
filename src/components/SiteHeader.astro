@@ -16,7 +16,7 @@ const isCurrent = (href: string) =>
   pathname === href || pathname.startsWith(href) || (href === '/articles/' && isArticlePath)
 ---
 
-<header class="site-header">
+<header class="site-header" id="site-top" tabindex="-1">
   <div class="site-header__inner">
     <a class="site-brand" href="/" data-astro-prefetch="hover" aria-label="Nisconder 首页">
       <span class="site-brand__mark" aria-hidden="true">
@@ -39,10 +39,11 @@ const isCurrent = (href: string) =>
         href="/search/"
         data-astro-prefetch="hover"
         aria-label="搜索本站"
+        aria-keyshortcuts="/ Control+k Meta+k"
         aria-current={isCurrent('/search/') ? 'page' : undefined}
       >
         <span class="site-search-mark" aria-hidden="true"><span></span><span></span></span>
-        <span>搜索</span>
+        <span class="site-tool-label">搜索</span><kbd class="search-shortcut" aria-hidden="true">/</kbd>
       </a>
       <ThemeToggle />
       <a class="site-tool-link site-rss-link" href="/rss/" data-astro-prefetch="hover" aria-label="订阅文章 RSS" title="订阅文章 RSS"
@@ -66,6 +67,20 @@ const isCurrent = (href: string) =>
   <div class="site-header__signal" aria-hidden="true"><span></span><span></span></div>
   <span class="site-header__loading-message" data-navigation-status role="status" aria-live="polite"></span>
 </header>
+
+<script>
+  import { navigate } from 'astro:transitions/client'
+  document.addEventListener('keydown', async event => {
+    const modifiedK = (event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 'k'
+    const slash = event.key === '/' && !event.ctrlKey && !event.metaKey && !event.shiftKey
+    if ((!slash && !modifiedK) || event.altKey || event.defaultPrevented || event.repeat || event.isComposing) return
+    if (event.composedPath().some(node => node instanceof HTMLElement &&
+      (node.isContentEditable || node.matches('input, textarea, select, [role="textbox"], [role="slider"], dialog')))) return
+    event.preventDefault()
+    if (!document.querySelector('[data-search-input]')) await navigate('/search/#site-search')
+    document.querySelector<HTMLInputElement>('[data-search-input]')?.focus()
+  })
+</script>
 
 <style>
   .site-header {
@@ -148,6 +163,7 @@ const isCurrent = (href: string) =>
     padding-inline-start: clamp(0.45rem, 1vw, 0.8rem);
     border-inline-start: 1px solid var(--color-line);
   }
+  .search-shortcut { padding: .06rem .24rem; border: 1px solid var(--color-line); border-radius: .2rem; color: var(--color-muted); font: .68rem/1.15 var(--font-utility); }
 
   .site-nav > a {
     position: relative;
@@ -358,7 +374,7 @@ const isCurrent = (href: string) =>
 
     .site-gkd-link :global(.site-tool-mark) { display: none; }
     .site-tool-link:not(.site-gkd-link) .site-tool-label,
-    .site-search-link > :last-child {
+    .site-search-link .site-tool-label {
       position: absolute;
       width: 1px;
       height: 1px;
@@ -369,6 +385,7 @@ const isCurrent = (href: string) =>
       white-space: nowrap;
       border: 0;
     }
+    .search-shortcut { display: none; }
   }
 
   @media (max-width: 30rem) {

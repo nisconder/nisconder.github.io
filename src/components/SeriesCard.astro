@@ -1,6 +1,7 @@
 ---
 import type { BlogSeries } from '../lib/series'
 import { getPostUrl } from '../lib/posts'
+import { chapterLabel } from '../lib/chapter-label'
 
 interface Props {
   series: BlogSeries
@@ -24,9 +25,9 @@ const pages = Math.ceil(series.posts.length / 3)
     <p>章节目录</p>
     <div class="series-card__paper">
     <ol aria-label="章节预览">
-      {preview.map((post, index) => <li>
-        <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-        <a data-astro-prefetch href={getPostUrl(post)}>{post.data.title}</a>
+      {preview.map(post => <li>
+        <span aria-hidden="true">{chapterLabel(post.data.title).number}</span>
+        <a data-astro-prefetch href={getPostUrl(post)} aria-label={post.data.title}>{chapterLabel(post.data.title).title}</a>
       </li>)}
     </ol>
     </div>

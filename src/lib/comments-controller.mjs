@@ -93,6 +93,8 @@ function bindComments() {
     const body = section.querySelector('[data-comments-body]')
     const toggle = section.querySelector('[data-comments-toggle]')
     const toggleLabel = section.querySelector('[data-comments-toggle-label]')
+    const caption = section.querySelector('[data-comments-caption]')
+    const description = caption?.textContent
     if (
       !(root instanceof HTMLElement)
       || !(status instanceof HTMLElement)
@@ -115,16 +117,25 @@ function bindComments() {
     let bodyHideTimer
     let scrollFrame
     let disclosureRevision = 0
+    let commentCount
+    let countRequested = false
+    let userToggled = false
     const active = () => !disposed && section.isConnected && root.isConnected
+
+    const labelDisclosure = expanded => {
+      if (toggleLabel) toggleLabel.textContent = expanded ? '收起留言' : commentCount === 0 ? '写第一条留言' : '展开留言'
+      if (caption) caption.textContent = expanded || commentCount === undefined ? description :
+        commentCount === 0 ? '还没有留言，欢迎写下第一条。' : '已有 ' + commentCount + ' 条留言。'
+    }
 
     const setExpanded = (expanded, animate = false) => {
       if (!active()) return
       const revision = ++disclosureRevision
       window.clearTimeout(bodyHideTimer)
       bodyAnimation?.cancel()
-      toggle.hidden = !mobileQuery.matches
+      toggle.hidden = false
       toggle.setAttribute('aria-expanded', String(expanded))
-      if (toggleLabel) toggleLabel.textContent = expanded ? '收起留言' : '展开留言'
+      labelDisclosure(expanded)
       section.dataset.commentsExpanded = String(expanded)
 
       if (!animate || reducedMotion.matches) {
@@ -220,18 +231,38 @@ function bindComments() {
       }
     }
 
+    const showExisting = () => {
+      if (!userToggled && !mobileQuery.matches && root.dataset.walinePath !== '/' && commentCount > 0) {
+        setExpanded(true)
+        loadComments()
+      }
+    }
+    const checkCount = async () => {
+      if (!active() || countRequested) return
+      countRequested = true
+      try {
+        const response = await fetch(serverURL + '/api/comment?type=count&url=' + encodeURIComponent(root.dataset.walinePath), { signal: lifecycle.signal })
+        if (!response.ok) return
+        const result = await response.json()
+        const count = Array.isArray(result.data) ? result.data[0] : result.data
+        if (!active() || result.errno !== 0 || !Number.isSafeInteger(count) || count < 0) return
+        commentCount = count
+        labelDisclosure(section.dataset.commentsExpanded === 'true')
+        showExisting()
+      } catch { /* The disclosure still opens when a count is unavailable. */ }
+    }
     const observeComments = () => {
-      if (!active() || body.hidden || root.dataset.walineState === 'ready') return
+      if (!active() || mobileQuery.matches || countRequested) return
       if ('IntersectionObserver' in window) {
         observer?.disconnect()
         observer = new IntersectionObserver((entries) => {
           if (!active() || !entries.some((entry) => entry.isIntersecting)) return
           observer.disconnect()
-          loadComments()
+          checkCount()
         }, { rootMargin: '150px 0px' })
         observer.observe(section)
       } else {
-        loadComments()
+        checkCount()
       }
     }
 
@@ -262,14 +293,19 @@ function bindComments() {
       }
     }, { signal: lifecycle.signal })
 
-    if (mobileQuery.matches) {
-      setExpanded(false)
-    } else {
+    const openLinkedThread = () => {
+      if (!/^#(?:comments$|waline|wl-)/.test(window.location?.hash ?? '')) return
+      userToggled = true
       setExpanded(true)
-      observeComments()
+      loadComments()
     }
+    setExpanded(false)
+    openLinkedThread()
+    observeComments()
+    window.addEventListener('hashchange', openLinkedThread, { signal: lifecycle.signal })
 
     toggle.addEventListener('click', () => {
+      userToggled = true
       const expanded = toggle.getAttribute('aria-expanded') !== 'true'
       setExpanded(expanded, true)
       if (expanded) {
@@ -280,15 +316,22 @@ function bindComments() {
         })
       } else {
         observer?.disconnect()
+        if (!mobileQuery.matches && commentCount !== undefined && root.dataset.walineState === 'ready') {
+          commentCount = undefined
+          countRequested = false
+          labelDisclosure(false)
+          checkCount()
+        }
       }
     }, { signal: lifecycle.signal })
 
     mobileQuery.addEventListener?.('change', (event) => {
+      if (userToggled || body.contains(document.activeElement)) return
       if (event.matches) {
         setExpanded(false)
         observer?.disconnect()
       } else {
-        setExpanded(true)
+        showExisting()
         observeComments()
       }
     }, { signal: lifecycle.signal })

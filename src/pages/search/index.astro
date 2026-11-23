@@ -97,6 +97,7 @@ const compactJson = JSON.stringify({
 
   <section class="axis-section" data-note="结果" aria-label="搜索结果">
     <div class="search-output" data-search-output>
+      <label class="fold-chapters" data-fold-control hidden><input type="checkbox" data-fold-chapters />折叠合集单章</label>
       <p id="search-status" class="search-status" aria-live="polite" data-search-status>
         输入关键词，或按内容类型和文章分类浏览。
       </p>
@@ -114,6 +115,8 @@ const compactJson = JSON.stringify({
 </script>
 
 <style>
+  .fold-chapters:not([hidden]) { display: inline-flex; align-items:center; gap:.5rem; min-height:2.75rem; color:var(--color-text); font-size:var(--text-sm); cursor:pointer; }
+  .fold-chapters input { width:1rem; height:1rem; margin:0; accent-color:var(--color-primary); }
   .query-seeds {
     display: flex;
     flex-wrap: wrap;

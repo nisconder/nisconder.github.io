@@ -3,6 +3,7 @@ import { render } from 'astro:content'
 import type { GetStaticPaths } from 'astro'
 import BaseLayout from '../../../../layouts/BaseLayout.astro'
 import SectionMasthead from '../../../../components/SectionMasthead.astro'
+import ArticleProse from '../../../../components/ArticleProse.astro'
 import SeriesNavigation from '../../../../components/SeriesNavigation.astro'
 import { getPublishedSeries, getSeriesForPost, getStandalonePosts } from '../../../../lib/series'
 import { getInterestJourney } from '../../../../lib/interests'
@@ -140,6 +141,7 @@ const interestPoints = await getInterestJourney('article', post, postSeries[0])
           }
 
           <a class="reading-guide__back" href="/articles/">全部文章</a>
+          <a class="reading-top" data-reading-top href="#site-top" hidden>↑ 返回顶部</a>
         </div>
       </aside>
 
@@ -180,11 +182,11 @@ const interestPoints = await getInterestJourney('article', post, postSeries[0])
           }
         </aside>
 
-        <div class="prose" data-reading-body>
+        <ArticleProse>
           <Content />
-        </div>
+        </ArticleProse>
 
-        <footer class="article-footer">
+        <div class="article-footer">
           {postSeries.map(series => <SeriesNavigation series={series} postId={post.id} pagination />)}
           {postSeries.length === 0 && (previousPost || nextPost) && (
             <nav class="article-pagination" aria-label="上一篇和下一篇文章">
@@ -205,7 +207,7 @@ const interestPoints = await getInterestJourney('article', post, postSeries[0])
             </nav>
           )}
           <a class="article-footer__archive" href="/articles/">全部文章索引 <span aria-hidden="true">→</span></a>
-        </footer>
+        </div>
       </div>
     </div>
   </article>
@@ -332,7 +334,7 @@ const interestPoints = await getInterestJourney('article', post, postSeries[0])
   .article-kicker { margin: 0 0 0.25rem; }
   .article-publication { margin-block-start: 0.85rem; }
   .article-publication .article-tags { margin-block-start: 0.2rem; }
-  .article-page__content > .prose { margin-block-start: 0; }
+  .article-page__content > :global(.prose) { margin-block-start: 0; }
 
   .article-page__content {
     min-width: 0;
@@ -356,7 +358,7 @@ const interestPoints = await getInterestJourney('article', post, postSeries[0])
 
   .reading-guide__sticky {
     display: grid;
-    gap: 2rem;
+    gap: 1rem;
     max-height: inherit;
     padding: 1.5rem 1.15rem 1.5rem 1.25rem;
     overflow: hidden;
@@ -471,6 +473,9 @@ const interestPoints = await getInterestJourney('article', post, postSeries[0])
     color: var(--color-secondary);
     content: '→';
   }
+
+  .reading-top { display: inline-flex; min-height: 2.75rem; align-items: center; color: var(--color-primary); font-size: .85rem; font-weight: 650; }
+  .reading-top[hidden] { display: none; }
 
   .reading-guide-mobile-shell {
     display: none;
@@ -638,6 +643,7 @@ const interestPoints = await getInterestJourney('article', post, postSeries[0])
     const headings = [...body.querySelectorAll('h2[id], h3[id]')]
     const currentLabels = [...root.querySelectorAll('[data-current-heading]')]
     const mobileToc = root.querySelector('[data-mobile-toc]')
+    const topLink = root.querySelector('[data-reading-top]')
 
     let bodyStart = 0
     let bodyEnd = 1
@@ -678,6 +684,7 @@ const interestPoints = await getInterestJourney('article', post, postSeries[0])
       const scrollY = window.scrollY
       const viewportHeight = window.innerHeight
       const nextWidth = window.innerWidth
+      if (topLink) topLink.hidden = scrollY <= viewportHeight
       if (nextWidth !== viewportWidth) {
         viewportWidth = nextWidth
         measurementPending = true

@@ -8,7 +8,7 @@ import { runInNewContext } from 'node:vm'
 const source = (await readFile(new URL('../../src/lib/comments-controller.mjs', import.meta.url), 'utf8'))
   .replace(/^import[^\n]*\n/, '').replace('export function ', 'function ')
 
-function fixture({ mobile = false, prerendering = false } = {}) {
+function fixture({ mobile = false, prerendering = false, count = 2, path = '/sample-article/' } = {}) {
   const document = Object.assign(new EventTarget(), { prerendering })
   const styles = []
   const observers = []
@@ -37,7 +37,7 @@ function fixture({ mobile = false, prerendering = false } = {}) {
   }
   const section = new HTMLElement()
   const root = new HTMLElement()
-  root.dataset.walinePath = '/sample-article/'
+  root.dataset.walinePath = path
   const status = new HTMLElement()
   const loginStatus = new HTMLElement()
   const body = new HTMLElement()
@@ -64,6 +64,7 @@ function fixture({ mobile = false, prerendering = false } = {}) {
     } }),
   })
   const context = { document, window, HTMLElement, HTMLButtonElement, HTMLLinkElement,
+    fetch: async () => ({ ok: true, json: async () => ({ errno: 0, data: [count] }) }),
     IntersectionObserver, AbortController, DOMException,
     requestAnimationFrame: () => 1, cancelAnimationFrame() {},
     bindWalineLoginFeedback() {
@@ -98,6 +99,7 @@ test('prerender delays all binding and Waline loading until activation, then ini
   f.intersect(false)
   assert.equal(f.styles.length, 0)
   f.intersect()
+  await f.flush()
   f.loadStyle()
   await f.flush()
   assert.equal(f.calls.init, 1)
@@ -149,6 +151,7 @@ test('a failed stylesheet offers retry and a fresh successful load', async () =>
 test('Astro cleanup waits for the actual swap and disposes the combined login binding', async () => {
   const f = fixture()
   f.intersect()
+  await f.flush()
   f.loadStyle()
   await f.flush()
   let swapped = false
@@ -165,6 +168,7 @@ test('Astro cleanup waits for the actual swap and disposes the combined login bi
 test('leaving before the stylesheet finishes cannot initialize a detached comment widget', async () => {
   const f = fixture()
   f.intersect()
+  await f.flush()
   const event = Object.assign(new Event('astro:before-swap'), { swap() {} })
   f.document.dispatchEvent(event)
   event.swap()
@@ -173,4 +177,18 @@ test('leaving before the stylesheet finishes cannot initialize a detached commen
   assert.equal(f.calls.init, 0)
   assert.equal(f.styles[0].isConnected, false)
   assert.equal(f.calls.loginDispose, 1)
+})
+
+test('empty discussions and the homepage defer the desktop editor until explicitly opened', async () => {
+  for (const options of [{ count: 0 }, { path: '/', count: 3 }]) {
+    const f = fixture(options)
+    f.intersect()
+    await f.flush()
+    assert.equal(f.body.hidden, true)
+    assert.equal(f.styles.length, 0)
+    f.emit(f.toggle, 'click')
+    f.loadStyle()
+    await f.flush()
+    assert.equal(f.calls.init, 1)
+  }
 })

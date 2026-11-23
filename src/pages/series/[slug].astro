@@ -2,7 +2,8 @@
 import SectionMasthead from '../../components/SectionMasthead.astro'
 import type { GetStaticPaths } from 'astro'
 import BaseLayout from '../../layouts/BaseLayout.astro'
-import { getPublishedSeries, type BlogSeries } from '../../lib/series'
+import { getPublishedSeries, getReadingStages, type BlogSeries } from '../../lib/series'
+import { chapterLabel } from '../../lib/chapter-label'
 import { getPostDescription, getPostReadingMinutes, getPostUrl } from '../../lib/posts'
 
 interface Props { series: BlogSeries }
@@ -10,6 +11,7 @@ export const getStaticPaths = (async () => (await getPublishedSeries()).map(seri
 const { series } = Astro.props
 const firstPost = series.posts[0]
 const feedHref = `${series.href}rss.xml`
+const stages = getReadingStages(series)
 ---
 
 <BaseLayout title={series.data.title} description={series.data.description} canonical={series.href} rssFeed={{ title: `${series.data.title} RSS`, href: feedHref }}>
@@ -23,16 +25,22 @@ const feedHref = `${series.href}rss.xml`
   <div class="series-detail">
     <section aria-labelledby="series-chapters-title">
       <div class="series-detail__heading"><h2 id="series-chapters-title">阅读目录</h2><span>按章节顺序阅读</span></div>
-      <ol class="series-chapters">
-        {series.posts.map((post,index) => <li>
-          <span class="series-chapters__number" aria-hidden="true">{String(index + 1).padStart(2,'0')}</span>
+      {stages.map(stage => <div class="reading-stage">
+        {stage.title && <h3 class="stage-heading">{stage.title}<small>{stage.posts.length} 篇</small></h3>}
+        <ol class="series-chapters" aria-label={stage.title || '合集章节'}>
+        {stage.posts.map(post => {
+          const chapter = chapterLabel(post.data.title)
+          const Heading = stage.title ? 'h4' : 'h3'
+          return <li>
+          <span class="series-chapters__number" aria-hidden="true">{chapter.number}</span>
           <div>
-            <h3><a data-astro-prefetch href={getPostUrl(post)}>{post.data.title}<span aria-hidden="true">↗</span></a></h3>
+            <Heading><a data-astro-prefetch href={getPostUrl(post)} aria-label={post.data.title}>{chapter.title}<span aria-hidden="true">→</span></a></Heading>
             <p>{getPostDescription(post)}</p>
             <small>约 {getPostReadingMinutes(post)} 分钟</small>
           </div>
-        </li>)}
-      </ol>
+        </li>})}
+        </ol>
+      </div>)}
     </section>
     <a data-astro-prefetch class="series-detail__back" href="/series/">← 返回全部合集</a>
   </div>
@@ -52,10 +60,12 @@ const feedHref = `${series.href}rss.xml`
   .series-chapters { padding:0; margin:0; list-style:none; }
   .series-chapters > li { display:grid; grid-template-columns:2.5rem minmax(0,1fr); gap:clamp(1rem,4vw,2rem); padding-block:1.5rem; border-block-end:1px solid var(--color-line); }
   .series-chapters__number { padding-block-start:.55rem; color:var(--color-secondary); font: .875rem/1.6 var(--font-utility); }
-  .series-chapters h3 { margin:0 0 .35rem; font-family:var(--font-display); font-size:clamp(1.05rem,2vw,1.25rem); font-weight:600; line-height:1.6; }
-  .series-chapters h3 a { display:flex; align-items:baseline; justify-content:space-between; gap:1rem; min-height:2.75rem; padding-block:.3rem; color:var(--color-text); text-decoration:none; overflow-wrap:anywhere; }
-  .series-chapters h3 a:hover { color:var(--color-primary); }
-  .series-chapters h3 a > span { flex-shrink:0; color:var(--color-primary); font-size:.875rem; }
+  .stage-heading { display:flex; align-items:baseline; justify-content:space-between; gap:.75rem; margin:1.5rem 0 0; padding:.65rem .8rem; border-inline-start:3px solid var(--color-primary); background:var(--color-surface-soft); color:var(--color-heading); font-size:1.12rem; }
+  .stage-heading small { color:var(--color-muted); font:500 .78rem var(--font-utility); white-space:nowrap; }
+  .series-chapters :is(h3,h4) { margin:0 0 .35rem; font-family:var(--font-display); font-size:clamp(1.05rem,2vw,1.25rem); font-weight:600; line-height:1.6; }
+  .series-chapters a { display:flex; align-items:baseline; justify-content:space-between; gap:1rem; min-height:2.75rem; padding-block:.3rem; color:var(--color-text); text-decoration:none; overflow-wrap:anywhere; }
+  .series-chapters a:hover { color:var(--color-primary); }
+  .series-chapters a > span { flex-shrink:0; color:var(--color-primary); font-size:.875rem; }
   .series-chapters p { margin:0 0 .5rem; color:var(--color-muted); font-size:.875rem; line-height:1.85; overflow-wrap:anywhere; }
   .series-chapters small { color:var(--color-muted); font-size:.75rem; }
   .series-detail__back { display:inline-flex; align-items:center; min-height:2.75rem; margin-block-start:1.5rem; font-size:.875rem; text-underline-offset:.25em; }

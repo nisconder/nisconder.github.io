@@ -189,11 +189,12 @@ const interestPoints = await getInterestJourney('articles')
         <h2 id="articles-topics-title">主题索引</h2>
         <span data-topic-count>{topics.length} 个主题</span>
       </header>
-      <nav class="topic-index" aria-label="按主题浏览文章">
+      <nav class="topic-index" id="article-topic-list" aria-label="按主题浏览文章">
         {topics.map(([topic, count]) => (
-          <a href={topicHref(topic)} data-archive-topic={topic}><span>{topic}</span> <small>{count} 篇</small></a>
+          <a href={topicHref(topic)} data-archive-topic={topic} data-frequent={count > 1 ? '' : undefined}><span>{topic}</span> <small>{count} 篇</small></a>
         ))}
       </nav>
+      <button class="topics-toggle" type="button" data-topics-toggle aria-controls="article-topic-list" aria-expanded="false" hidden>展开全部标签</button>
     </section>
   )}
   <script type="application/json" data-archive-views set:html={JSON.stringify(archiveViews).replace(/</g, '\\u003c')} />
@@ -209,10 +210,18 @@ const interestPoints = await getInterestJourney('articles')
     const links = [...catalog.querySelectorAll('[data-archive-category]')]
     const lifecycle = new AbortController()
     const options = { signal: lifecycle.signal }
+    const topicNav = catalog.querySelector('.topic-index')
+    const topicLinks = [...catalog.querySelectorAll('[data-archive-topic]')]
+    const topicToggle = catalog.querySelector('[data-topics-toggle]')
+    const topicCount = catalog.querySelector('[data-topic-count]')
+    const limit = 18
+    let lastCategory
+    let expanded = false
     const apply = () => {
       const requested = new URL(location.href).searchParams.get('category') || ''
       const category = Object.hasOwn(views, requested) ? requested : ''
       const view = views[category]
+      if (lastCategory !== category) { expanded = false; lastCategory = category }
       catalog.querySelector('[data-archive-summary]').textContent = view.summary
       for (const link of links) {
         if (link.dataset.archiveCategory === category) link.setAttribute('aria-current', 'page')
@@ -238,15 +247,23 @@ const interestPoints = await getInterestJourney('articles')
         note.hidden = !category || !count
         note.textContent = note.hidden ? '' : category + '分类收录本合集中的 ' + count + ' 篇。'
       }
-      const topicLinks = [...catalog.querySelectorAll('[data-archive-topic]')]
-      for (const link of topicLinks) {
+      const countFor = link => Object.hasOwn(view.topics, link.dataset.archiveTopic) ? view.topics[link.dataset.archiveTopic] : 0
+      const ranked = [...topicLinks].sort((a, b) => countFor(b) - countFor(a) || a.dataset.archiveTopic.localeCompare(b.dataset.archiveTopic, 'zh-CN'))
+      const totalTopics = ranked.filter(link => countFor(link) > 0).length
+      for (const [index, link] of ranked.entries()) {
         const topic = link.dataset.archiveTopic
         const count = Object.hasOwn(view.topics, topic) ? view.topics[topic] : 0
-        link.hidden = !count
+        link.hidden = !count || (!expanded && index >= limit)
+        link.toggleAttribute('data-frequent', count > 1)
         link.querySelector('small').textContent = count + ' 篇'
+        topicNav.append(link)
       }
-      const topicCount = catalog.querySelector('[data-topic-count]')
-      if (topicCount) topicCount.textContent = topicLinks.filter(link => !link.hidden).length + ' 个主题'
+      if (topicCount) topicCount.textContent = totalTopics + ' 个主题'
+      if (topicToggle) {
+        topicToggle.hidden = totalTopics <= limit
+        topicToggle.textContent = expanded ? '收起标签' : '展开全部 ' + totalTopics + ' 个标签'
+        topicToggle.setAttribute('aria-expanded', String(expanded))
+      }
       for (const [id, selector] of [['archive', '[data-archive-year]'], ['collections', '[data-archive-series]'], ['topics', '[data-archive-topic]']]) {
         const section = catalog.querySelector('#' + id)
         if (section) section.hidden = !section.querySelector(selector + ':not([hidden])')
@@ -254,6 +271,7 @@ const interestPoints = await getInterestJourney('articles')
         if (jump) jump.hidden = !section || section.hidden
       }
     }
+    topicToggle?.addEventListener('click', () => { expanded = !expanded; apply() }, options)
     for (const link of links) {
       link.addEventListener('click', event => {
         if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
@@ -463,5 +481,8 @@ const interestPoints = await getInterestJourney('articles')
     min-width: 0;
     overflow-wrap: anywhere;
   }
+  .topic-index a[hidden] { display: none; }
+  .topic-index a[data-frequent] { font-weight: 700; background: var(--color-primary-soft); }
+  .topics-toggle { margin-block-start: .8rem; min-height: 2.75rem; padding: .4rem .8rem; border: 1px solid var(--color-line-strong); border-radius: var(--control-radius); background: var(--color-card); color: var(--color-primary); cursor: pointer; }
 
 </style>

@@ -64,6 +64,22 @@ test('true result count is separate from the display cap and ties use date then 
   assert.equal(results([item('/old/'), item('/new/', { date: '2026-12-01' })], '笔记').matches[0].item.href, '/new/')
 })
 
+test('folding keeps the collection, projects and isolated chapter matches before applying the result limit', () => {
+  const records = prepareSearchRecords([
+    item('/series/', { kind: '合集', title: '8086 汇编' }),
+    item('/first/', { title: '8086 汇编', seriesUrls: ['/series/'] }),
+    item('/second/', { title: '8086 寻址', seriesUrls: ['/series/'] }),
+    item('/lab/', { kind: '项目', title: '8086 实验工具' }),
+  ])
+  const folded = readSearchState(new URLSearchParams('q=8086&chapters=fold'))
+  const result = searchRecords(records, folded, 2)
+  assert.equal(result.total, 4)
+  assert.equal(result.foldable, 2)
+  assert.deepEqual(new Set(result.matches.map(({item}) => item.href)), new Set(['/series/', '/lab/']))
+  const exact = searchRecords(records, { ...folded, query: '汇编' })
+  assert.ok(exact.matches.some(({item}) => item.href === '/first/'))
+})
+
 test('invalid remote links are rejected and index normalization is reused by content URL', () => {
   for (const url of ['javascript:alert(1)', '//other.example/', 'https://example.org/', '/\\example.org']) {
     assert.throws(() => prepareSearchRecords([item(url)]), /URL/)

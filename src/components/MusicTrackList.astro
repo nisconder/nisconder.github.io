@@ -3,23 +3,18 @@ import { getNeteaseTrackUrl, isPlayableTrack, type PlaylistTrack } from '../lib/
 
 interface Props {
   tracks: PlaylistTrack[]
-  startIndex?: number
-  indexes?: number[]
-  playerIndexes?: number[]
   previewCount?: number
   label: string
 }
 
-const { tracks, startIndex = 0, indexes, playerIndexes, previewCount, label } = Astro.props
+const { tracks, previewCount, label } = Astro.props
 ---
 
-<ol class="track-list" start={startIndex + 1} aria-label={label}>
+<ol class="track-list" aria-label={label}>
   {
     tracks.map((track, localIndex) => {
-      const index = indexes?.[localIndex] ?? startIndex + localIndex
-      const playerIndex = playerIndexes?.[localIndex] ?? localIndex
       const playable = isPlayableTrack(track)
-      const number = (index + 1).toString().padStart(2, "0")
+      const number = (localIndex + 1).toString().padStart(2, "0")
       const neteaseUrl = getNeteaseTrackUrl(track)
 
       return (
@@ -30,7 +25,7 @@ const { tracks, startIndex = 0, indexes, playerIndexes, previewCount, label } = 
                 class="track-row__control"
                 type="button"
                 data-track-control
-                data-track-index={playerIndex}
+                data-track-index={localIndex}
                 aria-label={`播放 ${track.title}，${track.author}`}
               >
                 <span class="track-row__number" aria-hidden="true">{number}</span>

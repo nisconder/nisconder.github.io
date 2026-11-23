@@ -71,9 +71,7 @@ const headingId = `continue-path-${Astro.url.pathname.replace(/[^a-z0-9]+/gi, '-
 
   .continue-path__header {
     display: grid;
-    grid-template-columns: minmax(12rem, 0.7fr) minmax(18rem, 1.3fr);
-    align-items: end;
-    gap: 1rem clamp(2rem, 7vw, 6rem);
+    gap: .35rem;
     margin-block-end: 1.25rem;
   }
 
@@ -96,7 +94,7 @@ const headingId = `continue-path-${Astro.url.pathname.replace(/[^a-z0-9]+/gi, '-
 
   .continue-path__list {
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(14rem, 0.65fr);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
     padding: 0;
     margin: 0;
     border-block: 1px solid var(--color-line-strong);
@@ -117,6 +115,7 @@ const headingId = `continue-path-${Astro.url.pathname.replace(/[^a-z0-9]+/gi, '-
     position: relative;
     display: grid;
     min-height: 10.5rem;
+    height: 100%;
     align-content: start;
     gap: 0.6rem;
     padding: 1.25rem 3.25rem 1.25rem 1.35rem;
@@ -156,7 +155,7 @@ const headingId = `continue-path-${Astro.url.pathname.replace(/[^a-z0-9]+/gi, '-
   }
 
   .continue-path__item strong {
-    max-width: 28ch;
+    text-wrap: balance;
     font-family: var(--font-display);
     font-size: clamp(1.05rem, 2vw, 1.3rem);
     line-height: 1.4;
@@ -164,7 +163,7 @@ const headingId = `continue-path-${Astro.url.pathname.replace(/[^a-z0-9]+/gi, '-
   }
 
   .continue-path__description {
-    max-width: 46ch;
+    text-wrap: pretty;
     color: var(--color-muted);
     font-size: var(--text-sm);
     line-height: 1.6;
@@ -175,10 +174,6 @@ const headingId = `continue-path-${Astro.url.pathname.replace(/[^a-z0-9]+/gi, '-
     font-size: var(--text-sm);
     font-weight: 700;
     line-height: 1.5;
-  }
-
-  .continue-path__item + .continue-path__item strong {
-    font-size: clamp(1rem, 1.7vw, 1.18rem);
   }
 
   .continue-path__item a[href='/music/'] strong {

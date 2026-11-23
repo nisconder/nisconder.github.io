@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import SectionMasthead from '../../components/SectionMasthead.astro'
 import { getInterestJourney } from '../../lib/interests'
+import { getPublishedPosts, getPostUrl } from '../../lib/posts'
 import {
   softwareKindLabels,
   softwareKindOrder,
@@ -31,6 +32,7 @@ const searchText = (project: (typeof softwareProjects)[number]) => [
   ...project.tags,
 ].filter(Boolean).join(' ').toLocaleLowerCase('zh-CN')
 const interestPoints = await getInterestJourney('software')
+const reviews = new Map((await getPublishedPosts()).map(post => [post.id, getPostUrl(post)]))
 ---
 
 <BaseLayout
@@ -151,9 +153,10 @@ const interestPoints = await getInterestJourney('software')
             )}
             {project.sourceUrl && (
               <a href={project.sourceUrl} target="_blank" rel="noopener noreferrer">
-                源码与说明 <span aria-hidden="true">↗</span>
+                GitHub 仓库 <span aria-hidden="true">↗</span>
               </a>
             )}
+            {project.reviewPost && reviews.has(project.reviewPost) && <a href={reviews.get(project.reviewPost)}>开发复盘 <span aria-hidden="true">→</span></a>}
           </div>
         </article>
       ))}
@@ -399,8 +402,11 @@ const interestPoints = await getInterestJourney('software')
   }
 
   .software-card__actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .35rem 1rem;
+    padding-block-start: .7rem;
     margin-block-start: auto;
     border-block-start: 1px solid var(--color-line-strong);
   }
@@ -418,15 +424,8 @@ const interestPoints = await getInterestJourney('software')
     text-decoration: none;
   }
 
-  .software-card__actions a + a {
-    padding-inline-start: 0.75rem;
-    border-inline-start: 1px solid var(--color-line);
-    color: var(--color-media);
-  }
-
-  .software-card__actions a:only-child {
-    grid-column: 1 / -1;
-  }
+  .software-card__actions a:first-child { padding-inline: .85rem; border-radius: var(--control-radius); background: var(--color-primary); color: var(--color-on-primary); }
+  .software-card__actions a + a { color: var(--color-media); font-weight: 600; text-decoration: underline; text-underline-offset: .22em; }
 
   .software-card__actions a:hover {
     text-decoration: underline;
