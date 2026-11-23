@@ -165,10 +165,10 @@ const { tracks, startIndex = 0, indexes, playerIndexes, previewCount, label } = 
   }
 
   .track-row__copy strong {
-    display: -webkit-box;
+    display: block;
     overflow: hidden;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     font-size: 0.94rem;
     line-height: 1.35;
   }

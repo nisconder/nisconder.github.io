@@ -2,6 +2,7 @@
 /** @typedef {{ kind: string, title: string, description: string, date: string, category: string, tags: string[], href: string, search: {title: string, tags: string, category: string, description: string, content: string} }} SearchRecord */
 
 export const normaliseSearch = (value) => String(value ?? '').normalize('NFKC').toLocaleLowerCase('zh-CN')
+export const searchTerms = query => [...new Set(normaliseSearch(query).split(/\s+/).filter(Boolean))]
 
 /** @returns {SearchRecord[]} */
 export function prepareSearchRecords(items) {
@@ -34,7 +35,7 @@ export function readSearchState(parameters) {
 
 /** @param {readonly SearchRecord[]} records @param {SearchState} state */
 export function searchRecords(records, state, limit = 20) {
-  const tokens = [...new Set(normaliseSearch(state.query).split(/\s+/).filter(Boolean))]
+  const tokens = searchTerms(state.query)
   const category = normaliseSearch(state.category)
   const kind = category ? '文章' : { article: '文章', series: '合集', project: '项目' }[state.type]
   if (!tokens.length && !category && !kind) return { matches: [], total: 0 }

@@ -1,11 +1,10 @@
-import { featuredSoftware, softwareStatusLabels } from '../data/software'
+import { featuredSoftware, softwareProjects, softwareStatusLabels } from '../data/software'
 import { getPlaylistTracks, isPlayableTrack } from './playlist'
-import { getPublishedSeries, getStandalonePosts } from './series'
+import { getPublishedSeries, getStandalonePosts, type BlogSeries } from './series'
 import {
   getPostCategory,
   getPostReadingMinutes,
   getPostSlug,
-  getPostTags,
   getPostUrl,
   getPublishedPosts,
   type PostEntry,
@@ -101,7 +100,7 @@ const getInterestCatalog = () => {
   return catalogPromise
 }
 
-export async function getInterestJourney(section: InterestSection, post?: PostEntry) {
+export async function getInterestJourney(section: InterestSection, post?: PostEntry, series?: BlogSeries) {
   const catalog = await getInterestCatalog()
   const relate = (item: InterestPoint | undefined, relation: string) => (
     item ? { ...item, relation } : undefined
@@ -116,10 +115,25 @@ export async function getInterestJourney(section: InterestSection, post?: PostEn
 
   if (section === 'article') {
     const slug = post ? getPostSlug(post) : ''
-    const technical = post
-      ? getPostCategory(post) === '技术'
-        || [post.data.title, ...getPostTags(post)].join(' ').match(/npm|代码|开发|技术/i)
-      : false
+    if (series && post) {
+      const next = series.posts[series.posts.findIndex(chapter => chapter.id === post.id) + 1]
+      const overview = {
+        section: '合集', relation: '返回合集总览', title: series.data.title,
+        description: `按阅读顺序查看全部 ${series.posts.length} 篇。`, href: series.href,
+      }
+      const project = softwareProjects.find(project => project.slug === series.data.relatedProject)
+      return uniquePoints([
+        next ? {
+          section: '下一章', relation: series.data.title, title: next.data.title,
+          description: `约 ${getPostReadingMinutes(next)} 分钟`, href: getPostUrl(next),
+        } : overview,
+        project ? {
+          section: '配套工具', relation: project.actionLabel ?? '打开配套项目', title: project.name,
+          description: shorten(project.summary), href: project.projectUrl ?? `/software/#${project.slug}`,
+          external: project.projectUrl?.startsWith('https://'),
+        } : overview,
+      ])
+    }
 
     if (slug === '2026-03-21-blog1') {
       return uniquePoints([
@@ -134,9 +148,12 @@ export async function getInterestJourney(section: InterestSection, post?: PostEn
       ])
     }
 
-    return technical
+    const project = post && softwareProjects.find(item =>
+      post.data.title.toLowerCase().includes(item.name.toLowerCase()))
+    return project
       ? uniquePoints([
-          relate(catalog.project, '这篇复盘对应的工具'),
+          { section: '项目', relation: '文中提到的项目', title: project.name,
+            description: shorten(project.summary), href: `/software/#${project.slug}` },
           relate(catalog.music ?? catalog.about, '读完以后换一种节奏'),
         ])
       : uniquePoints([

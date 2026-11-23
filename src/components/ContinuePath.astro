@@ -48,7 +48,7 @@ const headingId = `continue-path-${Astro.url.pathname.replace(/[^a-z0-9]+/gi, '-
                 <span class="continue-path__role">
                   {index === 0 ? '接着看' : '换个方向'} · {item.section}
                 </span>
-                <strong>{item.title}</strong>
+                <strong title={item.href === '/music/' ? item.title : undefined}>{item.title}</strong>
                 <span class="continue-path__relation">{item.relation}</span>
                 <span class="continue-path__description">{item.description}</span>
                 <span class="continue-path__arrow" aria-hidden="true">
@@ -179,6 +179,13 @@ const headingId = `continue-path-${Astro.url.pathname.replace(/[^a-z0-9]+/gi, '-
 
   .continue-path__item + .continue-path__item strong {
     font-size: clamp(1rem, 1.7vw, 1.18rem);
+  }
+
+  .continue-path__item a[href='/music/'] strong {
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .continue-path__arrow {

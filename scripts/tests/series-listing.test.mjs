@@ -44,12 +44,12 @@ test('homepage article totals include published collection chapters', () => {
   assert.equal(Number(link[1]), publishedPosts.length)
 })
 
-test('article index total and category counts include published collection chapters', () => {
+test('article index filters stay on the archive and count all published collection chapters', () => {
   const expected = new Map([['/articles/', publishedPosts.length]])
   for (const data of publishedPosts) {
     const category = Array.isArray(data.categories) ? data.categories[0] : data.categories
     if (!category) continue
-    const href = `/search/?category=${encodeURIComponent(category)}`
+    const href = `/articles/?category=${encodeURIComponent(category)}`
     expected.set(href, (expected.get(href) ?? 0) + 1)
   }
   assert.deepEqual(countedLinks(read('dist/articles/index.html'), 'category-index'), expected)
@@ -123,6 +123,18 @@ test(`ICS collection retains all ${chapters.length} configured chapters in order
     assert.match(html, /<div\b[^>]*data-reading-body[^>]*>[\s\S]+?<\/div>/, `${chapter.id} retains its article body`)
     assert.ok(hrefs(html).includes('/series/ics-8086/'), `${chapter.id} links back to its collection`)
     assert.match(html, new RegExp(`<link\\b[^>]*rel="canonical"[^>]*href="[^\"]*${chapter.url}"`), 'the public chapter URL remains canonical')
+  }
+})
+
+test('chapter recommendations follow the collection reading order and link to its lab', () => {
+  for (const [i, chapter] of chapters.entries()) {
+    const html = read(`dist${chapter.url}index.html`)
+    const navigation = html.match(/<section\b[^>]*class="[^"]*\bcontinue-path\b[^"]*"[^>]*>([\s\S]*?)<\/section>/)?.[1]
+    assert.ok(navigation, chapter.id)
+    assert.deepEqual(hrefs(navigation), [
+      chapters[i + 1]?.url ?? '/series/ics-8086/',
+      'https://nisconder.github.io/8086-step-lab/',
+    ], chapter.id)
   }
 })
 

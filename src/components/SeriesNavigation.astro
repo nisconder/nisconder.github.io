@@ -31,6 +31,7 @@ const next = series.posts[index + 1]
   .series-navigation__heading a { display:inline-flex; align-items:center; min-height:2.75rem; color:var(--color-text); font-weight:650; text-underline-offset:.25em; overflow-wrap:anywhere; }
   .series-navigation summary { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem 1rem; min-height:2.75rem; color:var(--color-secondary); font-size:.8125rem; cursor:pointer; }
   .series-navigation summary::after { margin-inline-start:auto; content:'+'; font:1.2rem var(--font-utility); }
+  .series-navigation summary span, .series-pagination__edge a { white-space: nowrap; }
   .series-navigation details[open] summary::after { content:'−'; }
   .series-navigation__collapse, .series-navigation details[open] .series-navigation__expand { display:none; }
   .series-navigation details[open] .series-navigation__collapse { display:inline; }

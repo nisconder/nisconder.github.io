@@ -174,7 +174,7 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
         {playlistPreview.map((track) => (
           <li>
             <a href={getTrackListeningUrl(track)}>
-              <span><strong>{track.title}</strong><small>{track.author}</small></span>
+              <span><strong title={track.title}>{track.title}</strong><small>{track.author}</small></span>
               <i aria-hidden="true">{isPlayableTrack(track) ? '→' : '↗'}</i>
             </a>
           </li>
@@ -631,12 +631,14 @@ const categoryHref = (category: string) => `/search/?category=${encodeURICompone
   }
 
   .music-panel li a:is(:hover, :focus-visible) strong { color: var(--color-primary); text-decoration: underline; }
-  .music-panel li a > span { display: grid; }
+  .music-panel li a > span { display: grid; min-width: 0; }
   .music-panel li i { color: var(--color-secondary); font-style: normal; }
 
   .music-panel li strong {
     font-size: var(--text-sm);
-    overflow-wrap: anywhere;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .music-panel li small {

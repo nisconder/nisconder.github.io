@@ -7,7 +7,7 @@ const root = resolve(import.meta.dirname, '../..')
 const read = file => readFileSync(resolve(root, file), 'utf8')
 
 test('series saves use the existing authenticated GitHub repository backend', () => {
-  const config = read('source/admin/config.yml')
+  const config = read('source/admin/config.yml').replace(/\r\n/g, '\n')
   const backend = config.match(/^backend:\s*\n([\s\S]*?)^locale:/m)?.[1]
   assert.ok(backend, 'One production backend is required')
   assert.match(backend, /^  name: github$/m)
@@ -18,6 +18,7 @@ test('series saves use the existing authenticated GitHub repository backend', ()
   assert.doesNotMatch(config, /^local_backend:|name:\s*(test-repo|proxy)\b/m)
   const series = config.slice(config.indexOf('  - name: series\n'))
   assert.match(series, /folder: source\/_series/)
+  assert.match(series, /name: relatedProject, widget: string, required: false/)
   assert.match(series, /name: chapters\s+widget: seriescards/)
   assert.match(read('source/admin/series-cards.js'), /CMS\.registerWidget\('seriescards'/)
   assert.match(read('source/admin/series-cards.js'), /this\.props\.onChange\(/)

@@ -27,7 +27,7 @@ const searchHref = (query: string) => `/search/?q=${encodeURIComponent(query)}`
 const categoryHref = (value: string) => `/search/?category=${encodeURIComponent(value)}`
 ---
 
-<article class="post-row">
+<article class="post-row" data-post-category={category ?? ''}>
   <div class="post-row__meta">
     <time datetime={datetime ?? date}>{date}</time>
     {

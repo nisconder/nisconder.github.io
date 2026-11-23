@@ -43,6 +43,7 @@ const series = defineCollection({
   schema: z.object({
     title: z.string().trim().min(1),
     description: z.string().trim().min(1),
+    relatedProject: optionalString,
     // CMS uses this when creating a filename; existing routes retain the file ID.
     slug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).optional(),
     draft: z.boolean().optional(),

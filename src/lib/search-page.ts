@@ -1,4 +1,4 @@
-import { readSearchState, type SearchState, type SearchRecord } from './search-core.mjs'
+import { normaliseSearch, readSearchState, searchTerms, type SearchState, type SearchRecord } from './search-core.mjs'
 import { createSearchSession, getCompactIndex } from './search-client.mjs'
 
 type SearchView = {
@@ -7,6 +7,35 @@ type SearchView = {
   total: number
   pending: boolean
   error: boolean
+}
+
+const tagLimit = 5
+const graphemes = typeof Intl.Segmenter === 'function' ? new Intl.Segmenter('zh-CN', { granularity: 'grapheme' }) : null
+
+function highlight(element: HTMLElement, value: string, terms: string[]) {
+  if (!terms.length) { element.textContent = value; return }
+  const normalized = normaliseSearch(value)
+  const matched = new Uint8Array(normalized.length)
+  for (const term of terms) {
+    for (let i = normalized.indexOf(term); i !== -1; i = normalized.indexOf(term, i + 1)) {
+      matched.fill(1, i, i + term.length)
+    }
+  }
+  if (!matched.includes(1)) { element.textContent = value; return }
+
+  // Keep the author's original characters when a full-width or combined glyph matches.
+  let offset = 0
+  let mark: HTMLElement | null = null
+  const parts = graphemes?.segment(value) ?? Array.from(value, segment => ({ segment }))
+  for (const { segment } of parts) {
+    const end = offset + normaliseSearch(segment).length
+    if (matched.subarray(offset, end).includes(1)) {
+      if (!mark) { mark = document.createElement('mark'); element.append(mark) }
+      mark.append(segment)
+    } else { mark = null; element.append(segment) }
+    offset = end
+  }
+  element.normalize()
 }
 
 export function initialiseSearch() {
@@ -24,6 +53,8 @@ export function initialiseSearch() {
   const pagePath = window.location.pathname
   const isActive = () => !signal.aborted && form.isConnected
   const categoryButtons = Array.from(form.querySelectorAll<HTMLButtonElement>('[data-category]'))
+  const typeButtons = form.querySelectorAll<HTMLButtonElement>('[data-search-type]')
+  const categories = form.querySelector<HTMLElement>('[data-category-filter]')
   let activeCategory = ''
   let activeType = ''
   let composing = false
@@ -51,7 +82,7 @@ export function initialiseSearch() {
     const scope = category ? `“${category}”分类` : (scopeNames[type] ?? '全站')
     status.setAttribute('aria-busy', String(pending))
     status.dataset.searchPhase = pending ? 'partial' : error ? 'error' : 'complete'
-    if (!hasSearch) status.textContent = '输入关键词，或选择一个文章分类。'
+    if (!hasSearch) status.textContent = '输入关键词，或按内容类型和文章分类浏览。'
     else if (pending) status.textContent = total ? `已在${scope}找到 ${total} 条，正在继续检索正文…` : '正在检索正文…'
     else if (error) {
       status.textContent = `${total ? `已在${scope}找到 ${total} 条。` : '标题、摘要和标签中暂未找到匹配。'}正文暂时无法载入。 `
@@ -67,11 +98,12 @@ export function initialiseSearch() {
     // Full text often confirms the same metadata matches. Keep those DOM nodes
     // and their focus intact instead of painting the same list a second time.
     const empty = hasSearch && !total && !pending && !error
-    const key = JSON.stringify([matches.map(({ item }) => item.href), empty])
+    const key = JSON.stringify([query, matches.map(({ item }) => item.href), empty])
     if (key === renderedKey) return
     renderedKey = key
     const fragment = document.createDocumentFragment()
-    for (const { item } of matches) {
+    const terms = searchTerms(query)
+    for (const [index, { item }] of matches.entries()) {
       const article = document.createElement('article')
       article.className = 'search-result'
       const meta = textElement('p', '', 'search-result__meta')
@@ -83,14 +115,45 @@ export function initialiseSearch() {
       if (item.category && item.date) meta.append(' · ')
       if (item.date) meta.append(item.date)
       const heading = document.createElement('h2')
-      heading.append(linkElement(item.href, item.title || '未命名内容'))
+      const title = linkElement(item.href, '')
+      highlight(title, item.title || '未命名内容', terms)
+      heading.append(title)
       article.append(meta, heading)
-      if (item.description) article.append(textElement('p', item.description, 'search-result__description'))
+      if (item.description) {
+        const description = textElement('p', '', 'search-result__description')
+        highlight(description, item.description, terms)
+        article.append(description)
+      }
       if (item.tags.length) {
         const tags = document.createElement('nav')
         tags.className = 'search-result__tags'
         tags.setAttribute('aria-label', `《${item.title || '未命名内容'}》的标签`)
-        for (const tag of item.tags) tags.append(linkElement(`/search/?q=${encodeURIComponent(tag)}`, `#${tag}`))
+        const ranked = item.tags.map(tag => {
+          const name = normaliseSearch(tag)
+          const score = terms.reduce((sum, term) => sum + (name === term ? 2 : Number(name.includes(term))), 0)
+          return { tag, score }
+        }).sort((a, b) => b.score - a.score)
+        const tagLink = ({ tag }: { tag: string }) => linkElement(`/search/?q=${encodeURIComponent(tag)}`, `#${tag}`)
+        tags.append(...ranked.slice(0, tagLimit).map(tagLink))
+        if (ranked.length > tagLimit) {
+          const count = ranked.length - tagLimit
+          const more = textElement('button', `+${count}`, 'search-result__more') as HTMLButtonElement
+          const extra = textElement('span', '', 'search-result__extra')
+          extra.id = `extra-tags-${index}`
+          extra.hidden = true
+          more.type = 'button'
+          more.setAttribute('aria-controls', extra.id)
+          more.setAttribute('aria-expanded', 'false')
+          more.setAttribute('aria-label', `展开其余 ${count} 个标签`)
+          more.addEventListener('click', () => {
+            if (!extra.childElementCount) extra.append(...ranked.slice(tagLimit).map(tagLink))
+            extra.hidden = !extra.hidden
+            more.setAttribute('aria-expanded', String(!extra.hidden))
+            more.textContent = extra.hidden ? `+${count}` : '收起标签'
+            more.setAttribute('aria-label', extra.hidden ? `展开其余 ${count} 个标签` : '收起标签')
+          })
+          tags.append(more, extra)
+        }
         article.append(tags)
       }
       fragment.append(article)
@@ -100,7 +163,9 @@ export function initialiseSearch() {
   }
 
   const session = createSearchSession({ compact, fullUrl: payload.fullUrl, onResults: render })
-  const updateCategoryButtons = () => {
+  const updateFilters = () => {
+    for (const button of typeButtons) button.setAttribute('aria-pressed', String(button.dataset.searchType === activeType))
+    if (categories) categories.hidden = Boolean(activeType && activeType !== 'article')
     for (const button of categoryButtons) {
       const category = button.dataset.category ?? ''
       button.setAttribute('aria-pressed', String(category ? category === activeCategory : activeType === 'article' && !activeCategory))
@@ -131,7 +196,7 @@ export function initialiseSearch() {
     activeCategory = state.category
     activeType = state.type
     input.value = state.query
-    updateCategoryButtons()
+    updateFilters()
     void session.run(state)
   }
 
@@ -157,7 +222,13 @@ export function initialiseSearch() {
   for (const button of categoryButtons) button.addEventListener('click', () => {
     activeCategory = button.dataset.category ?? ''
     activeType = 'article'
-    updateCategoryButtons()
+    updateFilters()
+    executeCurrent()
+  }, { signal })
+  for (const button of typeButtons) button.addEventListener('click', () => {
+    activeType = button.dataset.searchType ?? ''
+    if (activeType !== 'article') activeCategory = ''
+    updateFilters()
     executeCurrent()
   }, { signal })
   window.addEventListener('popstate', applyUrlState, { signal })

@@ -33,9 +33,9 @@ const playable = isPlayableTrack(track)
   <div class="turntable__notes">
     <p>{studio ? '当前曲目' : <span data-preview-status role="status">歌单选曲</span>}{studio && <span class="turntable__position" data-disc-position></span>}</p>
     {studio ? (
-      <h2 class="turntable__track" data-disc-title>{track.title}</h2>
+      <h2 class="turntable__track" title={track.title} data-disc-title>{track.title}</h2>
     ) : (
-      <strong class="turntable__track" data-disc-title>{track.title}</strong>
+      <strong class="turntable__track" title={track.title} data-disc-title>{track.title}</strong>
     )}
     <small data-disc-artist>{track.author}</small>
     {!studio && <div class="turntable__actions">
@@ -302,5 +302,17 @@ const playable = isPlayableTrack(track)
   @media (max-width: 43rem) {
     .turntable--studio { grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); grid-template-areas: 'disc notes' 'controls controls'; gap: 1rem; }
     .turntable--studio > :global(.studio-transport) { flex-direction: row; }
+  }
+  @media (max-width: 25rem) {
+    .turntable[data-mode='preview'], .turntable--studio {
+      grid-template-columns: minmax(0, 1fr);
+      justify-items: stretch;
+      gap: 0.65rem;
+    }
+    .turntable--studio { grid-template-areas: 'disc' 'notes' 'controls'; }
+    .turntable__deck, .turntable--studio .turntable__deck { width: min(100%, 13rem); justify-self: center; }
+    .turntable__notes { text-align: center; }
+    .turntable__actions, .turntable--studio > :global(.studio-transport) { justify-content: center; }
+    .turntable .turntable__track { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   }
 </style>

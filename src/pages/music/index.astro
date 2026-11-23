@@ -76,7 +76,7 @@ const interestPoints = await getInterestJourney('music')
       </header>
       <div id="music-playlist-panel" data-playlist-panel>
         <section class="studio-group" aria-labelledby="playable-tracks-title">
-          <h3 id="playable-tracks-title">站内试听 <span>{playableTracks.length}</span></h3>
+          <h3 id="playable-tracks-title"><strong data-playable-heading>站内试听</strong><span data-playable-count>{playableTracks.length} 首</span></h3>
           {playableTracks.length ? (
             <MusicTrackList tracks={playableTracks} indexes={playableIndexes} playerIndexes={playerIndexes} previewCount={previewCount} label="可站内播放的曲目" />
           ) : <p class="studio-empty">暂无可试听曲目。</p>}
@@ -208,6 +208,8 @@ const interestPoints = await getInterestJourney('music')
       const tracksNode = document.querySelector('[data-player-tracks]')
       const listToggle = document.querySelector('[data-playlist-toggle]')
       const listToggleLabel = document.querySelector('[data-playlist-toggle-label]')
+      const playableHeading = document.querySelector('[data-playable-heading]')
+      const playableCount = document.querySelector('[data-playable-count]')
       const externalNode = document.querySelector('[data-player-external]')
       const trackControls = [...document.querySelectorAll('[data-track-control]')]
 
@@ -270,9 +272,18 @@ const interestPoints = await getInterestJourney('music')
         }
       }
 
+      const updateListCount = () => {
+        if (!playableHeading || !playableCount) return
+        const limit = Math.min(Number(studio.dataset.previewCount), tracks.length)
+        const preview = Boolean(listToggle) && !listExpanded && limit < tracks.length
+        const visible = limit + Number(activeIndex() >= limit)
+        playableHeading.textContent = preview ? '精选可试听' : '站内试听'
+        playableCount.textContent = (preview ? visible + ' / ' : '') + tracks.length + ' 首'
+      }
       const setListState = expanded => {
         if (!active() || !listToggle) return
         listExpanded = expanded
+        updateListCount()
         studio.classList.toggle('has-preview', true)
         studio.classList.toggle('is-list-open', expanded)
         listToggle.hidden = false
@@ -331,7 +342,11 @@ const interestPoints = await getInterestJourney('music')
             ], { duration: 430, easing: 'cubic-bezier(.22,.7,.24,1)' })
           }
         }
-        if (discTitle) discTitle.textContent = track.name
+        if (discTitle) {
+          discTitle.textContent = track.name
+          discTitle.title = track.name
+        }
+        updateListCount()
         if (discArtist) discArtist.textContent = track.artist
         if (discPosition) discPosition.textContent = String(track.playlistIndex + 1).padStart(2, '0') + ' / ' + studio.dataset.total
         if (updateUrl && window.location) {
@@ -836,7 +851,15 @@ const interestPoints = await getInterestJourney('music')
   .music-engine :global(.aplayer-bar-wrap:focus-visible) { outline: 2px solid #eed8ac; outline-offset: 2px; }
   .music-engine :global(.aplayer-time) { position: static; height: auto; white-space: nowrap; }
   .music-engine :global(.aplayer-time-inner) { color: #d2dfdb; font-variant-numeric: tabular-nums; }
-  .music-engine :global(.aplayer-time .aplayer-icon path) { fill: #cce4d7; }
+  .music-engine:global(.aplayer) :global(.aplayer-time .aplayer-icon) {
+    width: 2rem; height: 2rem; padding: 0.35rem; border-radius: var(--control-radius);
+    background: transparent; color: #f1f5d5; opacity: 1; vertical-align: middle;
+  }
+  .music-engine:global(.aplayer) :global(.aplayer-time .aplayer-icon svg) { display: block; width: 100%; height: 100%; }
+  .music-engine:global(.aplayer) :global(.aplayer-time .aplayer-icon path) { fill: currentColor; }
+  .music-engine:global(.aplayer) :global(.aplayer-time .aplayer-icon:is(:hover, :focus-visible)) {
+    background: #496052; color: #fff; outline: 2px solid #e4e6b8; outline-offset: -2px;
+  }
   .music-engine :global(.aplayer-bar), .music-engine :global(.aplayer-played), .music-engine :global(.aplayer-loaded) { min-height: 4px; }
   .music-engine :global(.aplayer-played), .music-engine :global(.aplayer-thumb) { background: #b5dacf !important; }
 

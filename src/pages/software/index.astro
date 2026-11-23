@@ -90,7 +90,7 @@ const interestPoints = await getInterestJourney('software')
       </label>
       <div class="software-filter__footer">
         <output data-software-count aria-live="polite">显示 {softwareProjects.length} 个项目 · 维护优先</output>
-        <button type="reset">清除筛选</button>
+        <button type="reset" disabled>清除筛选</button>
       </div>
     </form>
     <p id="software-sort-note" class="software-sort-note">
@@ -234,6 +234,13 @@ const interestPoints = await getInterestJourney('software')
 
   .software-filter button {
     padding-inline: 1rem;
+  }
+
+  .software-filter button:disabled {
+    border-color: var(--color-line);
+    background: transparent;
+    color: var(--color-muted);
+    cursor: default;
   }
 
   .software-empty {
@@ -481,6 +488,7 @@ const interestPoints = await getInterestJourney('software')
     const output = document.querySelector('[data-software-count]')
     const empty = document.querySelector('[data-software-empty]')
     const clear = document.querySelector('[data-software-clear]')
+    const reset = form?.querySelector('button[type="reset"]')
     if (!(form instanceof HTMLFormElement)
       || !(grid instanceof HTMLElement)
       || !(output instanceof HTMLOutputElement)) return
@@ -541,6 +549,7 @@ const interestPoints = await getInterestJourney('software')
       const kind = String(data.get('kind') ?? '')
       const status = String(data.get('status') ?? '')
       const sort = String(data.get('sort') ?? 'priority')
+      if (reset) reset.disabled = !query && !kind && !status && sort === 'priority'
       let visible = 0
 
       sortCards(sort)

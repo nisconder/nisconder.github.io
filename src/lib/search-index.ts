@@ -15,7 +15,7 @@ export async function getSearchIndexData() {
       category: getPostCategory(post), tags: getPostTags(post), url: getPostUrl(post),
     })),
     ...series.map(item => ({
-      kind: '合集', title: item.data.title, description: item.data.description,
+      kind: '合集', title: item.data.title, description: `共 ${item.posts.length} 篇。${item.data.description}`,
       content: item.posts.map(post => post.data.title).join(' '), category: '系列笔记',
       tags: [...new Set(item.posts.flatMap(getPostTags))], url: item.href,
     })),
