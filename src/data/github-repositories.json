@@ -1,7 +1,7 @@
 {
   "version": 1,
   "owner": "nisconder",
-  "syncedAt": "2026-11-23T09:45:56.418Z",
+  "syncedAt": "2026-11-23T10:51:57.783Z",
   "repositories": [
     {
       "id": 1449359414,
@@ -82,7 +82,7 @@
       "language": "JavaScript",
       "stars": 3,
       "createdAt": "2025-11-15T02:08:55Z",
-      "pushedAt": "2026-11-23T09:45:36Z",
+      "pushedAt": "2026-11-23T10:51:36Z",
       "topics": []
     },
     {
@@ -92,7 +92,7 @@
       "sourceUrl": "https://github.com/nisconder/npm-safe",
       "projectUrl": "https://www.npmjs.com/package/@npm-safe/core",
       "language": "TypeScript",
-      "stars": 9,
+      "stars": 10,
       "createdAt": "2026-07-29T10:29:10Z",
       "pushedAt": "2026-11-19T07:55:23Z",
       "topics": [
