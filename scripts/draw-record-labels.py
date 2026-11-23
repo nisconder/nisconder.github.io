@@ -1,4 +1,4 @@
-"""Pack the approved portrait-and-mark artwork into the turntable's WebP sheets."""
+"""Pack the blog's record-center illustrations into the turntable's WebP sheets."""
 import json
 from pathlib import Path
 

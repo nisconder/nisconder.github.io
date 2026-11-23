@@ -189,7 +189,7 @@ test('the home selection opens the same record on the music page', () => {
   assert.ok(music.match(/<audio\b[^>]*>/)[0].includes(persist), 'the same audio can continue into the playlist')
 })
 
-test('record center labels include all six portrait and masthead illustrations', () => {
+test('record center labels include all six local illustrations', () => {
   assert.deepEqual(prints, ['overprint', 'cutout', 'window', 'pixel', 'clay', 'glass'])
   for (const print of prints) {
     const artwork = readFileSync(new URL(`../../src/assets/record-prints/${print}.webp`, import.meta.url))
