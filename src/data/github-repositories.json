@@ -1,7 +1,7 @@
 {
   "version": 1,
   "owner": "nisconder",
-  "syncedAt": "2026-11-23T12:19:14.510Z",
+  "syncedAt": "2026-11-28T10:36:28.471Z",
   "repositories": [
     {
       "id": 1449359414,
@@ -31,6 +31,18 @@
       "stars": 4,
       "createdAt": "2026-01-27T11:29:03Z",
       "pushedAt": "2026-11-13T02:41:38Z",
+      "topics": []
+    },
+    {
+      "id": 1475374982,
+      "name": "Bifrost",
+      "description": "Native Windows collaboration between Codex and Antigravity over MCP and A2A.",
+      "sourceUrl": "https://github.com/nisconder/Bifrost",
+      "projectUrl": null,
+      "language": "C#",
+      "stars": 1,
+      "createdAt": "2026-11-28T08:40:17Z",
+      "pushedAt": "2026-11-28T09:02:31Z",
       "topics": []
     },
     {
